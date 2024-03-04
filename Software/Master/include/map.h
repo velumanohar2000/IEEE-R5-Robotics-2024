@@ -35,3 +35,4 @@ double calc_slope(struct Coordinate *curr_reading);
 void map_point(int distance, int angle);
 void clear_map();
 void print_map();
+int find_local_min();

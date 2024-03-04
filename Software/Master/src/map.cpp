@@ -54,8 +54,8 @@ double deg2rad(double deg) { return deg * (PI / 180); }
 void map_point(int distance, int angle) {
 
   double rad = deg2rad(angle);
-  int gridX = (distance * (int)cos(rad));// TODO: revert castings
-  int gridY = (distance * (int)sin(rad));
+  int gridX = (int)(distance * cos(rad));
+  int gridY = (int)(distance * sin(rad));
 
   printf("%d @ %d =  X: %d, Y: %d\n", distance, angle ,gridX, gridY);
 
@@ -71,13 +71,29 @@ void map_point(int distance, int angle) {
     local_maxes[local_max_index] = curr;
     local_max_index++;
   } else {
-    for(int i = 0; i < 4; i++){
-      if(local_maxes[i]->h < curr->h){
-        local_maxes[i] = curr;
-        //TODO: break out of loop
-        break;
-      }
+    int min = find_local_min();
+    if(local_maxes[min]->h < curr->h){
+        local_maxes[min] = curr;
     }
   }
   //TODO: if curr is not a max, free it
+}
+
+/*
+* This function is used to find the smallest local max in the local_maxes array
+* ----------------------------------------------------------------------------
+* @return int: The index of the smallest local max
+*/
+int find_local_min(){
+  //find the smallest in local_maxes and return its index
+  struct Coordinate *min = local_maxes[0];
+  int min_index = 0;
+  for(int i = 1; i < 4; i++){
+    if(local_maxes[i]->h < min->h){
+      min = local_maxes[i];
+      min_index = i;
+    }
+  }
+  return min_index;
+  
 }
