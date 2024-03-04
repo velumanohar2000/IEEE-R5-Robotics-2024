@@ -52,7 +52,7 @@ double deg2rad(double deg) { return deg * (PI / 180); }
 * @param char *polarCoord: The polar coordinate string to be mapped
 */
 void map_point(int distance, int angle) {
-
+  if (distance < 0) return;
   double rad = deg2rad(angle);
   int gridX = (int)(distance * cos(rad));
   int gridY = (int)(distance * sin(rad));
