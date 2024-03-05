@@ -3,6 +3,7 @@
 #include "lrf.h"
 #include "Wire.h"
 #include "map.h"
+#include "comms_config.h"
 
 Servo myservo; // create servo object to control a servo
 // 16 servo objects can be created on the ESP32
@@ -32,6 +33,7 @@ void setup()
                                        // using default min/max of 1000us and 2000us
                                        // different servos may require different min/max settings
                                        // for an accurate 0 to 180 sweep
+  switch_tfmini_to_i2c();
 }
 int distance;
 

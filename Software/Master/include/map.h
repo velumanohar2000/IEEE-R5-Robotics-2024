@@ -1,3 +1,9 @@
+/*
+ * lrf.h
+ *
+ *  Created on: Mar 3, 2024
+ *      Author: Rodrigo Munoz
+ */
 #pragma once
 #include <math.h>
 #include <stdio.h>
