@@ -24,4 +24,6 @@ typedef struct _lrf_packet
 }lrf_packet;
 
 int16_t getLrfDistance(uint8_t address);
+void switch_tfmini_to_i2c();
 #endif /* LRF_H_ */
+

@@ -1,7 +1,10 @@
 
+#pragma once
 #include "Arduino.h"
 #include "Wire.h"
 #include "lrf.h"
+
+#define TF_MINI_S_I2C_ADDR 0x10
 
 uint8_t trig[] = {0x5A, 0x04, 0x04, 0x62};
 uint8_t FR_0[] = {0x5A, 0x06, 0x03, 0x00, 0x00, 0x5A + 0x06 + 0x03};  		// Sets frame rate to 0.
@@ -9,6 +12,19 @@ uint8_t save[] = {0x5A, 0x04, 0x11, 0x6F};									// Saves config
 uint8_t req_data_cm[] = {0x5a, 0x05, 0x00, 0x01, 0x60};
 uint8_t req_data_mm[] = {0x5a, 0x05, 0x00, 0x06, 0x65};
 uint8_t system_reset[] = {0x5A, 0x04,0x02, 0x60};
+uint8_t i2c_cmd[] = {0x5A, 0x05, 0x0A, 0x01};
+
+
+
+/*
+* Switches the TFMini to I2C mode
+*/
+void switch_tfmini_to_i2c() {
+  // use uart to send the i2c_cmd to the tf mini s
+  Serial.write(i2c_cmd, sizeof(i2c_cmd));
+  Serial.write(system_reset, sizeof(system_reset));
+  delay(1000);
+} 
 
 
 int16_t getLrfDistance(uint8_t address)
