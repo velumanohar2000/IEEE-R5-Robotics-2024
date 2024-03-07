@@ -64,6 +64,6 @@ void loop() {
     }
   }
 
-  motor1.drive((uint16_t)xboxController.xboxNotif.trigRT / 4 + (-1 * (uint16_t)xboxController.xboxNotif.trigRT / 4), 1);
-  motor2.drive((uint16_t)xboxController.xboxNotif.trigRT / 4 + (-1 * (uint16_t)xboxController.xboxNotif.trigRT / 4), 1);
+  motor1.drive((uint16_t)xboxController.xboxNotif.trigRT / 4 + (-1 * (uint16_t)xboxController.xboxNotif.trigLT / 4));
+  motor2.drive((uint16_t)xboxController.xboxNotif.trigRT / 4 + (-1 * (uint16_t)xboxController.xboxNotif.trigLT / 4));
 }
