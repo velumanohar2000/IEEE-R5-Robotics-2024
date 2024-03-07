@@ -64,6 +64,20 @@ void loop() {
     }
   }
 
-  motor1.drive((uint16_t)xboxController.xboxNotif.trigRT / 4 + (-1 * (uint16_t)xboxController.xboxNotif.trigLT / 4));
-  motor2.drive((uint16_t)xboxController.xboxNotif.trigRT / 4 + (-1 * (uint16_t)xboxController.xboxNotif.trigLT / 4));
+  uint16_t LT = (uint16_t)xboxController.xboxNotif.trigLT / 4;
+  uint16_t RT = (uint16_t)xboxController.xboxNotif.trigRT / 4;
+
+  int speeeeed = RT - LT;
+
+  Serial.println(speeeeed);
+
+  motor1.drive(speeeeed);
+  motor2.drive(speeeeed);
+
+  // forward(motor1, motor2, 255);
+
+
+
+  delay(10);
+
 }
