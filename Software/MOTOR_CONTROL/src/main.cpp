@@ -9,7 +9,12 @@
 #define TIMER_INTERVAL_MS 5000
 #define FORWARD 1
 #define BACKWARD 0
+#define RIGHT 1
+#define LEFT 0
 #define STOP 0
+
+// #define MODE_TURN 1
+#define MODE_RAMP 0
 
 bool direction = true;
 
@@ -76,7 +81,27 @@ void setup() {
 
 }
 
+void turn(bool direction)
+{
+  if(direction == RIGHT)
+  {
+    digitalWrite(MOTORA_IN_1, HIGH);
+    digitalWrite(MOTORA_IN_2, LOW);
+    digitalWrite(MOTORB_IN_3, LOW);
+    digitalWrite(MOTORB_IN_4, HIGH);
+  }
+  else
+  {
+    digitalWrite(MOTORA_IN_1, LOW);
+    digitalWrite(MOTORA_IN_2, HIGH);
+    digitalWrite(MOTORB_IN_3, HIGH);
+    digitalWrite(MOTORB_IN_4, LOW);
+  }
+}
+
 void loop() {
+
+#ifdef MODE_RAMP
   static uint16_t i = 0;
   for(i = 100; i < 256; i++)
   {
@@ -92,4 +117,17 @@ void loop() {
   }
   stop();
   delay(5000);
+#endif
+
+#ifdef MODE_TURN
+  turn(RIGHT);
+  delay(1000);
+  standby();
+  delay(100);
+  turn(LEFT);
+  delay(1000);
+  standby();
+  delay(100);
+
+#endif
 }
