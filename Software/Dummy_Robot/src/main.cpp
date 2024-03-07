@@ -2,12 +2,16 @@
   Bit Bangers Dummy Robot Project
   github.com/Bit-Bangers-UTA/Senior-Design
 
+  ** This code currently does not work **
+
   ESP32-C3 to SmartCar Pinout:
   STBY: 0 -> 3
   PWMA: 1 -> 5
   PWMB: 2 -> 6
   AINA: 3 -> 7
   BIN1: 10 -> 8
+  3V3 -> 5V0
+  GND -> GND
 */
 
 #include <Arduino.h>
@@ -64,20 +68,15 @@ void loop() {
     }
   }
 
-  uint16_t LT = (uint16_t)xboxController.xboxNotif.trigLT / 4;
-  uint16_t RT = (uint16_t)xboxController.xboxNotif.trigRT / 4;
+  uint16_t rev = (uint16_t)xboxController.xboxNotif.trigLT / 4;
+  uint16_t fwd = (uint16_t)xboxController.xboxNotif.trigRT / 4;
 
-  int speeeeed = RT - LT;
+  int speeeeed = fwd - rev;
 
   Serial.println(speeeeed);
 
   motor1.drive(speeeeed);
   motor2.drive(speeeeed);
 
-  // forward(motor1, motor2, 255);
-
-
-
   delay(10);
-
 }
