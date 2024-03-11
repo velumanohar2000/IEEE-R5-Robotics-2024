@@ -1,9 +1,12 @@
 /*
-  Bit Bangers ESP-NOW "Kill Switch" Receiver Library
-  github.com/munozr1/Senior-Design
+ * Bit Bangers ESP-NOW "Kill Switch" Receiver Library
+ * github.com/Bit-Bangers-UTA/Senior-Design
+ *
+ * Authors:
+ * Rolando Rosales
+*/
 
-  Original Code:
-  
+/*
   Rui Santos
   Complete project details at https://RandomNerdTutorials.com/esp-now-esp32-arduino-ide/
   
@@ -14,30 +17,23 @@
   copies or substantial portions of the Software.
 */
 
-/*
- ----------------------------------- Libraries ---------------------------------
-*/
+// Libraries ------------------------------------------------------------------
+
 #include <esp_now.h>
 #include <WiFi.h>
 #include "Kill_SW_RX.h"
 
-/*
-------------------------------------- Defines ----------------------------------
-*/
+// Defines --------------------------------------------------------------------
 
-/*
------------------------------------- Structures --------------------------------
-*/
+// Variables & Constants ------------------------------------------------------
 
-/*
---------------------------------  Global Variables -----------------------------
-*/
 bool toggleLED = false;
 char msg[32];
 
-/*
------------------------------------- Functions ---------------------------------
-*/
+// Structures & Classes -------------------------------------------------------
+
+// Functions ------------------------------------------------------------------
+
 // callback function that will be executed when data is received
 void cb(const uint8_t * mac, const uint8_t *incomingData, int len) {
   memcpy(&msg, incomingData, sizeof(msg));

@@ -25,7 +25,7 @@
 #define PUSH_BUTTON 1 // Push button connected to pin 3
 #define IR_TX_PIN 2 // IR LED connected to pin 2
 
-// Variables ------------------------------------------------------------------
+// Variables & Constants ------------------------------------------------------
 
 // IR control
 const uint32_t kill_code = 0xAF83F03B; // Code to unalive the robot

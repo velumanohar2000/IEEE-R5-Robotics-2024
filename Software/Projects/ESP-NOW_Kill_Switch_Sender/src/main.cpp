@@ -1,9 +1,20 @@
 /*
-  Bit Bangers ESP-NOW "Kill Switch" Sender Code
-  github.com/munozr1/Senior-Design
+ * Bit Bangers ESP-NOW "Kill Switch" Sender Code
+ * github.com/Bit-Bangers-UTA/Senior-Design
+ *
+ * ** This code currently does not work **
 
-  Original Code:
+ * Hardware setup:
+ * STBY: ESP32 0 -> SmartCar Pin 3
+ * PWMA: ESP32 1 -> SmartCar Pin 5
+ * PWMB: ESP32 GPIO 2 -> SmartCar Pin 6
+ * AINA: ESP32 GPIO 3 -> SmartCar Pin 7
+ * BIN1: ESP32 GPIO 10 -> SmartCar Pin 8
+ * ESP32 3V3 -> SmartCar 5V0
+ * ESP32 GND -> SmartCar GND
+*/
 
+/*
   Rui Santos
   Complete project details at https://RandomNerdTutorials.com/esp-now-esp32-arduino-ide/
   
@@ -14,27 +25,17 @@
   copies or substantial portions of the Software.
 */
 
-/*
- ----------------------------------- Libraries ---------------------------------
-*/
+// Libraries ------------------------------------------------------------------
+
 #include <esp_now.h>
 #include <WiFi.h>
 
-/*
-------------------------------------- Defines ----------------------------------
-*/
+// Defines --------------------------------------------------------------------
+
 #define PUSH_BUTTON 8
 
-/*
------------------------------------- Structures --------------------------------
-*/
-typedef struct struct_message { // Structure example to send data
-  char a[32];
-} struct_message;
+// Variables & Constants ------------------------------------------------------
 
-/*
---------------------------------  Global Variables -----------------------------
-*/
 uint8_t esp32MacAddr[] = {0x84, 0xfc, 0xe6, 0x01, 0x02, 0xb0}; // Receiver MAC Address
 bool ledState = HIGH; // the current state of the output pin
 bool buttonState; // the current reading from the input pin
@@ -42,9 +43,14 @@ bool lastButtonState = LOW; // the previous reading from the input pin
 struct_message myData; // Struct that holds sender data
 esp_now_peer_info_t peerInfo;
 
-/*
------------------------------------- Functions ---------------------------------
-*/
+// Structures & Classes -------------------------------------------------------
+
+typedef struct struct_message { // Structure example to send data
+  char a[32];
+} struct_message;
+
+// Functions ------------------------------------------------------------------
+
 // Callback when data is sent
 void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) {
   Serial.print("\r\nLast Packet Send Status:\t");

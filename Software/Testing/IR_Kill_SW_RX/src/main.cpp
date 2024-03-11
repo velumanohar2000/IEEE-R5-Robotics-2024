@@ -21,7 +21,7 @@
 
 #define IR_RX_PIN 3
 
-// Variables ------------------------------------------------------------------
+// Variables & Constants ------------------------------------------------------
 
 decode_results results;
 const uint32_t kill_code = 0xAF83F03B;

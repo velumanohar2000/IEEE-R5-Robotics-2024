@@ -1,11 +1,14 @@
 /*
-  Bit Bangers Modified SparkFun_TB6612.cpp for ELEGOO SmartCar-Shield-V1.1
-  github.com/munozr1/Senior-Design
-
-  Changed:
-  Remove In2pin as already provided by shield inverter chip
-  Remove references to motor2 (we're only using one motor)
-  Remove left and right functions (just fwd and bckwd)
+ * Bit Bangers Modified SparkFun_TB6612.cpp for ELEGOO SmartCar-Shield-V1.1
+ * github.com/Bit-Bangers-UTA/Senior-Design
+ * 
+ * Authors:
+ * Rolando Rosales
+ *
+ * Changes:
+ * Remove In2pin as already provided by shield inverter chip
+ * Remove references to motor2 (we're only using one motor)
+ * Remove left and right functions (just fwd and bckwd)
 */
 
 /******************************************************************************
@@ -28,8 +31,18 @@ Developed on Arduino 1.6.4
 Developed with ROB-9457
 ******************************************************************************/
 
+// Libraries ------------------------------------------------------------------
+
 #include "TB6612_SmartCar.h"
 #include <Arduino.h>
+
+// Defines --------------------------------------------------------------------
+
+// Variables & Constants ------------------------------------------------------
+
+// Structures & Classes -------------------------------------------------------
+
+// Functions ------------------------------------------------------------------
 
 Motor::Motor(int In1pin, int PWMpin, int offset, int STBYpin)
 {

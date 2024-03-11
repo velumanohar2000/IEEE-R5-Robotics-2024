@@ -1,22 +1,26 @@
 /*
-  Bit Bangers Dummy Robot Project
-  github.com/Bit-Bangers-UTA/Senior-Design
-
-  ** This code currently does not work **
-
-  ESP32-C3 to SmartCar Pinout:
-  STBY: 0 -> 3
-  PWMA: 1 -> 5
-  PWMB: 2 -> 6
-  AINA: 3 -> 7
-  BIN1: 10 -> 8
-  3V3 -> 5V0
-  GND -> GND
+ * Bit Bangers Dummy Robot Project
+ * github.com/Bit-Bangers-UTA/Senior-Design
+ *
+ * ** This code currently does not work **
+ *
+ * Hardware setup:
+ * STBY: ESP32 0 -> SmartCar Pin 3
+ * PWMA: ESP32 1 -> SmartCar Pin 5
+ * PWMB: ESP32 GPIO 2 -> SmartCar Pin 6
+ * AINA: ESP32 GPIO 3 -> SmartCar Pin 7
+ * BIN1: ESP32 GPIO 10 -> SmartCar Pin 8
+ * ESP32 3V3 -> SmartCar 5V0
+ * ESP32 GND -> SmartCar GND
 */
+
+// Libraries ------------------------------------------------------------------
 
 #include <Arduino.h>
 #include <XboxSeriesXControllerESP32_asukiaaa.hpp>
 #include <SparkFun_TB6612.h>
+
+// Defines --------------------------------------------------------------------
 
 #define AIN1 3
 #define BIN1 10
@@ -24,13 +28,18 @@
 #define PWMB 2
 #define STBY 0
 
-XboxSeriesXControllerESP32_asukiaaa::Core xboxController;
+// Variables & Constants ------------------------------------------------------
 
 const int offsetA = 1;
 const int offsetB = 1;
 
+// Structures & Classes -------------------------------------------------------
+
+XboxSeriesXControllerESP32_asukiaaa::Core xboxController;
 Motor motor1 = Motor(AIN1, 0, PWMA, offsetA, STBY);
 Motor motor2 = Motor(BIN1, 0, PWMB, offsetB, STBY);
+
+// Functions ------------------------------------------------------------------
 
 void setup() {
   Serial.begin(115200);

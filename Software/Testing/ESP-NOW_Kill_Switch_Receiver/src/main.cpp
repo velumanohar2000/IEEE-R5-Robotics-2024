@@ -1,27 +1,23 @@
 /*
-  Bit Bangers ESP-NOW "Kill Switch" Receiver Test Function
-  github.com/munozr1/Senior-Design
-
-/*
- ----------------------------------- Libraries ---------------------------------
+ * Bit Bangers ESP-NOW "Kill Switch" Receiver Test Program
+ * github.com/Bit-Bangers-UTA/Senior-Design
+ * 
+ * Authors:
+ * Rolando Rosales
 */
+
+// Libraries ------------------------------------------------------------------
+
 #include <Kill_SW_RX.h>
 
-/*
-------------------------------------- Defines ----------------------------------
-*/
+// Defines --------------------------------------------------------------------
 
-/*
------------------------------------- Structures --------------------------------
-*/
+// Variables & Constants ------------------------------------------------------
 
-/*
---------------------------------  Global Variables -----------------------------
-*/
+// Structures & Classes -------------------------------------------------------
 
-/*
------------------------------------- Functions ---------------------------------
-*/
+// Functions ------------------------------------------------------------------
+
 void setup() {
   // Starts the kill switch RX demo
   initKillRX();

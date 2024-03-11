@@ -1,6 +1,9 @@
 /*
-  Bit Bangers ESP-NOW "Kill Switch" Receiver Library
-  github.com/munozr1/Senior-Design
+ * Bit Bangers ESP-NOW "Kill Switch" Receiver Library
+ * github.com/Bit-Bangers-UTA/Senior-Design
+ * 
+ * Authors:
+ * Rolando Rosales
 */
 
 #ifndef KILL_SW_RX_h
