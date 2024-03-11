@@ -24,7 +24,7 @@
 // Variables ------------------------------------------------------------------
 
 decode_results results;
-const uint32_t kill_code = 0x1A54FB9;
+const uint32_t kill_code = 0xAF83F03B;
 bool LED_STATE = false;
 
 // Structures & Classes -------------------------------------------------------
