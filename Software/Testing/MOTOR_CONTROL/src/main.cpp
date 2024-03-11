@@ -14,7 +14,8 @@
 #define STOP 0
 
 // #define MODE_TURN 1
-#define MODE_RAMP 0
+// #define MODE_RAMP 1
+#define MODE_HALF 1
 
 bool direction = true;
 
@@ -101,33 +102,37 @@ void turn(bool direction)
 
 void loop() {
 
-#ifdef MODE_RAMP
-  static uint16_t i = 0;
-  for(i = 100; i < 256; i++)
-  {
-    move(FORWARD, i);
-    delay(50);
-  }
-  stop();
-  delay(5000);
-  for(i = 100; i < 256; i++)
-  {
-    move(BACKWARD, i);
-    delay(50);
-  }
-  stop();
-  delay(5000);
-#endif
+  #ifdef MODE_HALF
+    move(FORWARD, 128);
+  #endif
 
-#ifdef MODE_TURN
-  turn(RIGHT);
-  delay(1000);
-  standby();
-  delay(100);
-  turn(LEFT);
-  delay(1000);
-  standby();
-  delay(100);
+  #ifdef MODE_RAMP
+    static uint16_t i = 0;
+    for(i = 100; i < 256; i++)
+    {
+      move(FORWARD, i);
+      delay(50);
+    }
+    stop();
+    delay(5000);
+    for(i = 100; i < 256; i++)
+    {
+      move(BACKWARD, i);
+      delay(50);
+    }
+    stop();
+    delay(5000);
+  #endif
 
-#endif
+  #ifdef MODE_TURN
+    turn(RIGHT);
+    delay(1000);
+    standby();
+    delay(100);
+    turn(LEFT);
+    delay(1000);
+    standby();
+    delay(100);
+
+  #endif
 }
