@@ -1,17 +1,31 @@
 /*
-  Bit Bangers Bluetooth LE Xbox Core Controller Dummy Robot Example
-  github.com/Bit-Bangers-UTA/Senior-Design
+ * Bit Bangers Bluetooth LE Xbox Core Controller Dummy Robot Example
+ * github.com/Bit-Bangers-UTA/Senior-Design
+ *
+ * Authors: 
+ * Rolando Rosales
+ *
+ * This isn't a fully fleshed out library just yet
+ * All this does is report the necessary values from the controller for control
+ * I used a Xbox 1914 controller specifically to test it
+ * 
+ * Requires asukiaaa/XboxSeriesXControllerESP32_asukiaaa@^1.0.9 library
+ */
 
-  This isn't a fully fleshed out library just yet
-  All this does is report the necessary values from the controller for control
-  I (Rolando) used a Xbox 1914 controller specifically to test it
-  Import asukiaaa/XboxSeriesXControllerESP32_asukiaaa@^1.0.9 for other projects
-*/
+// Libraries ------------------------------------------------------------------
 
 #include <Arduino.h>
 #include <XboxSeriesXControllerESP32_asukiaaa.hpp>
 
+// Defines --------------------------------------------------------------------
+
+// Variables ------------------------------------------------------------------
+
+// Structures & Classes -------------------------------------------------------
+
 XboxSeriesXControllerESP32_asukiaaa::Core xboxController;
+
+// Functions ------------------------------------------------------------------
 
 void setup() {
   Serial.begin(115200);
