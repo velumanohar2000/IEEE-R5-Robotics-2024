@@ -1,10 +1,13 @@
 #include <Arduino.h>
+#include <Wire.h>
+#include "SparkFun_VL53L1X.h" 
 
 #define LIGHT 3
 #define MOTORA_IN_1 3
 #define MOTORA_IN_2 2
 #define MOTORB_IN_3 6
 #define MOTORB_IN_4 7
+#define BACK_MOTOR 0
 
 #define TIMER_INTERVAL_MS 5000
 #define FORWARD 1
@@ -18,6 +21,10 @@
 #define MODE_HALF 1
 
 bool direction = true;
+int distance = 4000;
+float distanceInches = 4000.0;
+
+SFEVL53L1X distanceSensor;
 
 void move(bool direction)
 {
@@ -27,6 +34,7 @@ void move(bool direction)
     digitalWrite(MOTORA_IN_2, LOW);
     digitalWrite(MOTORB_IN_3, HIGH);
     digitalWrite(MOTORB_IN_4, LOW);
+    digitalWrite(BACK_MOTOR, HIGH);
 
   }
   else
@@ -63,6 +71,15 @@ void stop()
   digitalWrite(MOTORB_IN_3, HIGH);
   digitalWrite(MOTORA_IN_2, HIGH);
   digitalWrite(MOTORB_IN_4, HIGH);
+  digitalWrite(BACK_MOTOR, LOW);
+}
+
+void stop(bool PWM)
+{
+  analogWrite(MOTORA_IN_1, 255);
+  analogWrite(MOTORB_IN_3, 255);
+  analogWrite(MOTORA_IN_2, 255);
+  analogWrite(MOTORB_IN_4, 255);
 }
 
 void standby()
@@ -79,6 +96,16 @@ void setup() {
   pinMode(MOTORA_IN_2, OUTPUT);
   pinMode(MOTORB_IN_3, OUTPUT);
   pinMode(MOTORB_IN_4, OUTPUT);
+  pinMode(BACK_MOTOR, OUTPUT);
+  Wire.begin(9, 8);
+  Serial.begin(115200);
+  if (distanceSensor.begin() != 0) //Begin returns 0 on a good init
+  {
+    Serial.println("Sensor failed to begin. Please check wiring. Freezing...");
+    while (1)
+      ;
+  }
+  Serial.println("Sensor online!");
 
 }
 
@@ -103,7 +130,27 @@ void turn(bool direction)
 void loop() {
 
   #ifdef MODE_HALF
-    move(FORWARD, 128);
+  if(distanceInches > 10.0)
+    move(FORWARD);
+  else
+    stop();
+
+  distanceSensor.startRanging(); //Write configuration bytes to initiate measurement
+  while (!distanceSensor.checkForDataReady())
+  {
+    delay(1);
+  }
+  distance = distanceSensor.getDistance(); //Get the result of the measurement from the sensor
+  distanceSensor.clearInterrupt();
+  distanceSensor.stopRanging();
+  distanceInches = distance * 0.0393701;
+  Serial.printf("Distance (in): %f\n", distanceInches);
+  
+  // if(distanceInches < 4.0)
+  // {
+  //   stop(1);
+  //   while(1);
+  // }
   #endif
 
   #ifdef MODE_RAMP

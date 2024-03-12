@@ -58,8 +58,8 @@ void loop(void)
   float distanceInches = distance * 0.0393701;
   float distanceFeet = distanceInches / 12.0;
 
-  Serial.print("\tDistance(ft): ");
-  Serial.print(distanceFeet, 2);
+  Serial.print("\tDistance(in): ");
+  Serial.print(distanceInches, 2);
 
   Serial.println();
 }
