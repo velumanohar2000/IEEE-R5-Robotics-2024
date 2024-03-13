@@ -1,6 +1,6 @@
 #include <Arduino.h>
 #include <Wire.h>
-#include "SparkFun_VL53L1X.h" 
+// #include "SparkFun_VL53L1X.h" 
 
 #define LIGHT 3
 #define MOTORA_IN_1 3
@@ -21,10 +21,10 @@
 #define MODE_HALF 1
 
 bool direction = true;
-int distance = 4000;
-float distanceInches = 4000.0;
+// int distance = 4000;
+// float distanceInches = 4000.0;
 
-SFEVL53L1X distanceSensor;
+// SFEVL53L1X distanceSensor;
 
 void move(bool direction)
 {
@@ -91,21 +91,21 @@ void standby()
 }
 
 
-void setup() {
+void initMotors() {
   pinMode(MOTORA_IN_1, OUTPUT);
   pinMode(MOTORA_IN_2, OUTPUT);
   pinMode(MOTORB_IN_3, OUTPUT);
   pinMode(MOTORB_IN_4, OUTPUT);
   pinMode(BACK_MOTOR, OUTPUT);
-  Wire.begin(9, 8);
-  Serial.begin(115200);
-  if (distanceSensor.begin() != 0) //Begin returns 0 on a good init
-  {
-    Serial.println("Sensor failed to begin. Please check wiring. Freezing...");
-    while (1)
-      ;
-  }
-  Serial.println("Sensor online!");
+  // Wire.begin(9, 8);
+  // Serial.begin(115200);
+  // if (distanceSensor.begin() != 0) //Begin returns 0 on a good init
+  // {
+  //   Serial.println("Sensor failed to begin. Please check wiring. Freezing...");
+  //   while (1)
+  //     ;
+  // }
+  // Serial.println("Sensor online!");
 
 }
 
@@ -127,61 +127,59 @@ void turn(bool direction)
   }
 }
 
-void loop() {
+// void loop() {
 
-  #ifdef MODE_HALF
-  if(distanceInches > 10.0)
-    // move(FORWARD);
-    turn(LEFT);
-  else
-  turn(RIGHT);
-    // stop();
+//   // #ifdef MODE_HALF
+//   // if(distanceInches > 10.0)
+//   //   move(FORWARD);
+//   // else
+//   //   stop();
 
-  distanceSensor.startRanging(); //Write configuration bytes to initiate measurement
-  while (!distanceSensor.checkForDataReady())
-  {
-    delay(1);
-  }
-  distance = distanceSensor.getDistance(); //Get the result of the measurement from the sensor
-  distanceSensor.clearInterrupt();
-  distanceSensor.stopRanging();
-  distanceInches = distance * 0.0393701;
-  Serial.printf("Distance (in): %f\n", distanceInches);
+//   // distanceSensor.startRanging(); //Write configuration bytes to initiate measurement
+//   // while (!distanceSensor.checkForDataReady())
+//   // {
+//   //   delay(1);
+//   // }
+//   // distance = distanceSensor.getDistance(); //Get the result of the measurement from the sensor
+//   // distanceSensor.clearInterrupt();
+//   // distanceSensor.stopRanging();
+//   // distanceInches = distance * 0.0393701;
+//   // Serial.printf("Distance (in): %f\n", distanceInches);
   
-  // if(distanceInches < 4.0)
-  // {
-  //   stop(1);
-  //   while(1);
-  // }
-  #endif
+//   // if(distanceInches < 4.0)
+//   // {
+//   //   stop(1);
+//   //   while(1);
+//   // }
+//   // #endif
 
-  #ifdef MODE_RAMP
-    static uint16_t i = 0;
-    for(i = 100; i < 256; i++)
-    {
-      move(FORWARD, i);
-      delay(50);
-    }
-    stop();
-    delay(5000);
-    for(i = 100; i < 256; i++)
-    {
-      move(BACKWARD, i);
-      delay(50);
-    }
-    stop();
-    delay(5000);
-  #endif
+//   #ifdef MODE_RAMP
+//     static uint16_t i = 0;
+//     for(i = 100; i < 256; i++)
+//     {
+//       move(FORWARD, i);
+//       delay(50);
+//     }
+//     stop();
+//     delay(5000);
+//     for(i = 100; i < 256; i++)
+//     {
+//       move(BACKWARD, i);
+//       delay(50);
+//     }
+//     stop();
+//     delay(5000);
+//   #endif
 
-  #ifdef MODE_TURN
-    turn(RIGHT);
-    delay(1000);
-    standby();
-    delay(100);
-    turn(LEFT);
-    delay(1000);
-    standby();
-    delay(100);
+//   #ifdef MODE_TURN
+//     turn(RIGHT);
+//     delay(1000);
+//     standby();
+//     delay(100);
+//     turn(LEFT);
+//     delay(1000);
+//     standby();
+//     delay(100);
 
-  #endif
-}
+//   #endif
+// }

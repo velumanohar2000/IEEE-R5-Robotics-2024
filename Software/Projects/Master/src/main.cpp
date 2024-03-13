@@ -3,7 +3,13 @@
 #include "lrf.h"
 #include "Wire.h"
 #include "map.h"
+#include "MOTOR_CONTROL.h"
+#include "VL53L1X.h"
+// #define VELU
+
 Servo myservo; // create servo object to control a servo
+SFEVL53L1X distanceSensor;
+
 // 16 servo objects can be created on the ESP32
 
 int pos = 0; // variable to store the servo position
@@ -19,8 +25,11 @@ int local_max_index = 0;
 
 void setup()
 {
-  Serial.begin(115200);
-  Wire.begin(9,8);
+  initMotors();
+  initVL53L1X();
+  #ifdef VELU
+  // Serial.begin(115200);
+  // Wire.begin(9,8);
   // Allow allocation of all timers
   ESP32PWM::allocateTimer(0);
   ESP32PWM::allocateTimer(1);
@@ -31,11 +40,13 @@ void setup()
                                        // using default min/max of 1000us and 2000us
                                        // different servos may require different min/max settings
                                        // for an accurate 0 to 180 sweep
-
+  #endif
 }
 int distance;
+float distanceInches = 1000;
 
 void loop(){
+  #ifdef VELU
   for (pos = 0; pos <= 180; pos += 1)
   { // goes from 0 degrees to 180 degrees
     // in steps of 1 degree
@@ -67,4 +78,32 @@ void loop(){
     printf("X: %d, Y: %d\n", local_maxes[i]->x, local_maxes[i]->y);
   }
   delay(1000);
+  #endif
+
+// move(FORWARD);
+// delay(1000);
+// move(BACKWARD);
+// turn(LEFT);
+// digitalWrite(MOTORA_IN_1, LOW);
+//     digitalWrite(MOTORA_IN_2, HIGH);
+//     digitalWrite(MOTORB_IN_3, LOW);
+//     digitalWrite(MOTORB_IN_4, HIGH);
+// delay(1000);
+  if(distanceInches > 10.0)
+    move(FORWARD);
+  else
+    stop();
+  
+  distanceInches = getDistanceVL53L1X(UNIT_INCHES);
+
+  distanceSensor.startRanging(); //Write configuration bytes to initiate measurement
+  while (!distanceSensor.checkForDataReady())
+  {
+    delay(1);
+  }
+  distance = distanceSensor.getDistance(); //Get the result of the measurement from the sensor
+  distanceSensor.clearInterrupt();
+  distanceSensor.stopRanging();
+  distanceInches = distance * 0.0393701;
+  Serial.printf("Distance (in): %f\n", distanceInches);
 }
