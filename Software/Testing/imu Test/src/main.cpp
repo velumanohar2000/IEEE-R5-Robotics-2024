@@ -1,53 +1,104 @@
 #include <Arduino.h>
-#include "SparkFun_BNO08x_Arduino_Library.h"  // CTRL+Click here to get the library: http://librarymanager/All#SparkFun_BNO08x
-BNO08x myIMU;
+#include "Wire.h"
+#include "Adafruit_BNO08x.h"
+#include "math.h"
 
-//#define BNO08X_INT  A4
-#define BNO08X_INT  -1
-//#define BNO08X_RST  A5
-#define BNO08X_RST  -1
-#define BNO08X_ADDR 0x4B 
-// In the documetation it says I2C protocols are broken and may not work well with ESPRESSIF ESP32
+#define BNO08X_RESET -1
 
-void setReports(void) {
+Adafruit_BNO08x bno08x;
+sh2_SensorValue_t sensorValue;
+
+float xAccel;
+
+
+void setReports(sh2_SensorId_t reportType, uint32_t interval)
+{
   Serial.println("Setting desired reports");
-  if (myIMU.enableRotationVector() == true) {
-    Serial.println(F("Rotation vector enabled"));
-    Serial.println(F("Output in form i, j, k, real, accuracy"));
-  } else {
-    Serial.println("Could not enable rotation vector");
+  if (!bno08x.enableReport(reportType, interval)) // Top frequency is about 250Hz but this report is more accurate
+  {
+    Serial.println("Could not enable stabilized remote vector");
   }
 }
-void setup() {
+void reports()
+{
+  setReports(SH2_LINEAR_ACCELERATION, 1000);
+  setReports(SH2_MAGNETIC_FIELD_CALIBRATED, 5000);
+}
+void setup(void)
+{
+
   Serial.begin(115200);
-  pinMode(LED_BUILTIN, OUTPUT);
-  while(!Serial) delay(10); // Wait for Serial to become available.
-  // Necessary for boards with native USB (like the SAMD51 Thing+).
-  // For a final version of a project that does not need serial debug (or a USB cable plugged in),
-  // Comment out this while loop, or it will prevent the remaining code from running.
-  
-  Serial.println();
-  Serial.println("BNO08x Acceleration and Heading Example");
 
-  Wire.begin(9,8);
+  Serial.println("Adafruit BNO08x test!");
 
-  // if (myIMU.begin(BNO08X_ADDR, Wire, BNO08X_INT, BNO08X_RST) == false) {
-  //   Serial.println("BNO08x not detected at default I2C address. Check your jumpers and the hookup guide. Freezing...");
-  //   while (1)
-  //     ;
-  //}
-  Serial.println("BNO08x found!");
+  Wire.begin(9, 8);
+  if (!bno08x.begin_I2C())
+  {
+    Serial.println("Failed to find BNO08x chip");
+    while (1)
+    {
+      delay(10);
+    }
+  }
+  Serial.println("BNO08x Found!");
 
-  setReports();
+  reports();
 
   Serial.println("Reading events");
-  delay(100);
-}
-
-
-
-void loop() {
-  digitalWrite(LED_BUILTIN,~digitalRead(BUILTIN_LED));
   delay(1000);
 }
 
+// Constants for compass calibration
+float offsetX = 0.0; // Offset along the x-axis
+float offsetY = 0.0; // Offset along the y-axis
+float magX;
+float magY;
+float heading;
+// Function to calculate compass heading
+float calculateHeading(float x, float y)
+{
+  // Apply calibration offsets
+  x -= offsetX;
+  y -= offsetY;
+
+  // Calculate heading angle
+  float heading = atan2(y, x) * 180.0 / M_PI;
+
+  // Ensure the angle is within [0, 360) range
+  if (heading < 0)
+  {
+    heading += 360.0;
+  }
+
+  return heading;
+}
+
+void loop()
+{
+  // Read magnetic field strength along x and y axes
+  if (bno08x.wasReset())
+  {
+    Serial.print("sensor was reset ");
+    reports();
+  }
+  if (bno08x.getSensorEvent(&sensorValue))
+  {
+    switch (sensorValue.sensorId)
+    {
+    case SH2_MAGNETIC_FIELD_CALIBRATED:
+    {
+      magX = sensorValue.un.magneticField.x; 
+      magY = sensorValue.un.magneticField.y; 
+    }
+    }
+  
+
+  // Calculate compass heading
+  heading = calculateHeading(magX, magY);
+
+  // Print heading
+  Serial.print("Heading: ");
+  Serial.println(heading);
+  }
+  delay(100); 
+}
