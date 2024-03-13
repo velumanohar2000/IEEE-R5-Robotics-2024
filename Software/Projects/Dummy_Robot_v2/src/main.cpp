@@ -10,8 +10,6 @@
  * ESP32 GPIO 6 -> Motor Controller IN3
  * ESP32 GPIO 5 -> Motor Controller IN2
  * ESP32 GPIO 4 -> Motor Controller IN1
- * MOTORA both right wheels
- * MOTORB both left wheels
  * 
  * Xbox Controller required for remote operation
  * 
