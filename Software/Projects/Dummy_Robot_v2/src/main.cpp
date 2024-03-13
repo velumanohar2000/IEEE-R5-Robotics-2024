@@ -25,10 +25,14 @@
 
 // Defines --------------------------------------------------------------------
 
+// Hardware Pins
 #define A_IN_4 7
 #define A_IN_3 6
 #define A_IN_2 5
 #define A_IN_1 4
+
+// Preprocessor Directives
+// #define PRINT_DEBUG 1
 
 // Variables & Constants ------------------------------------------------------
 
@@ -67,7 +71,7 @@ void stop()
 void left()
 {
   digitalWrite(A_IN_1, 1);
-  digitalWrite(A_IN_2, 1);
+  digitalWrite(A_IN_2, 0);
   digitalWrite(A_IN_3, 0);
   digitalWrite(A_IN_4, 0);
 }
@@ -77,7 +81,7 @@ void right()
   digitalWrite(A_IN_1, 0);
   digitalWrite(A_IN_2, 0);
   digitalWrite(A_IN_3, 1);
-  digitalWrite(A_IN_4, 1);
+  digitalWrite(A_IN_4, 0);
 }
 
 void stall()
@@ -103,19 +107,21 @@ void loop() {
   xboxController.onLoop();
 
   if (xboxController.isConnected()) {
-    Serial.print("D-pad Left: ");
-    Serial.println(xboxController.xboxNotif.btnDirLeft);
+    #ifdef PRINT_DEBUG
+      Serial.print("Left Bumper: ");
+      Serial.println(xboxController.xboxNotif.btnLB);
 
-    Serial.print("D-pad Right: ");
-    Serial.println(xboxController.xboxNotif.btnDirRight);
+      Serial.print("Right Bumper: ");
+      Serial.println(xboxController.xboxNotif.btnRB);
 
-    Serial.print("Right Trigger: ");
-    Serial.println(xboxController.xboxNotif.trigRT);
+      Serial.print("Right Trigger: ");
+      Serial.println(xboxController.xboxNotif.trigRT);
 
-    Serial.print("Left Trigger: ");
-    Serial.println(xboxController.xboxNotif.trigLT);
+      Serial.print("Left Trigger: ");
+      Serial.println(xboxController.xboxNotif.trigLT);
 
-    Serial.println();
+      Serial.println();
+    #endif
   }
   else {
     Serial.println("Not connected");
@@ -126,10 +132,10 @@ void loop() {
     }
   }
 
-  if (xboxController.xboxNotif.btnDirLeft) {
+  if (xboxController.xboxNotif.btnLB) {
     left();
   }
-  else if (xboxController.xboxNotif.btnDirRight) {
+  else if (xboxController.xboxNotif.btnRB) {
     right();
   }
   else if ((xboxController.xboxNotif.trigRT > deadzone) && (xboxController.xboxNotif.trigLT > deadzone)) {
@@ -144,4 +150,6 @@ void loop() {
   else {
     stop();
   }
+
+  delay(100);
 }
