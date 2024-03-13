@@ -11,7 +11,7 @@
  * ESP32 GPIO 5 -> Motor Controller IN2
  * ESP32 GPIO 4 -> Motor Controller IN1
  * 
- * Xbox Controller required for remote operation
+ * Xbox 1914 required for remote operation
  * 
  * asukiaaa/XboxSeriesXControllerESP32_asukiaaa@^1.0.9 required
 */
