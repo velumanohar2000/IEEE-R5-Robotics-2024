@@ -21,8 +21,8 @@ void setReports(sh2_SensorId_t reportType, uint32_t interval)
 }
 void reports()
 {
-  setReports(SH2_LINEAR_ACCELERATION, 1000);
-  setReports(SH2_MAGNETIC_FIELD_CALIBRATED, 5000);
+  setReports(SH2_LINEAR_ACCELERATION, 2000);
+  setReports(SH2_MAGNETIC_FIELD_CALIBRATED, 1000);
 }
 void setup(void)
 {
