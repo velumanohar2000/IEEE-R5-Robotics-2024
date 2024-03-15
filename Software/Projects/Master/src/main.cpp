@@ -6,6 +6,8 @@
 #include "MOTOR_CONTROL.h"
 #include "VL53L1X.h"
 // #define VELU
+#define MAIN
+// #define TURNS
 
 Servo myservo; // create servo object to control a servo
 SFEVL53L1X distanceSensor;
@@ -89,6 +91,7 @@ void loop(){
 //     digitalWrite(MOTORB_IN_3, LOW);
 //     digitalWrite(MOTORB_IN_4, HIGH);
 // delay(1000);
+#ifdef MAIN
   if(distanceInches > 10.0)
     move(FORWARD);
   else
@@ -106,4 +109,24 @@ void loop(){
   distanceSensor.stopRanging();
   distanceInches = distance * 0.0393701;
   Serial.printf("Distance (in): %f\n", distanceInches);
+#endif
+
+#ifdef TURNS
+  move(FORWARD);
+  delay(500);
+  turn(RIGHT);
+  delay(250);
+  move(FORWARD);
+  delay(500);
+  turn(LEFT);
+  delay(250);
+  move(BACKWARD);
+  delay(500);
+  turn(RIGHT);
+  delay(250);
+  move(BACKWARD);
+  delay(500);
+  turn(LEFT);
+  delay(250);
+#endif
 }
