@@ -97,6 +97,8 @@ void loop(){
     */
     distanceUltrasonic = ultrasonic.read();
 
+    Serial.println(distanceUltrasonic);
+
     /*
       Idea behind logic below is that we want to always be going forward until forward whisker tells us to stop.
       Also we need to be going in a straight line always so we don't run into the wall or the post
@@ -151,7 +153,7 @@ void loop(){
       move(FORWARD, 128);
   }
   else
-    stop();
+    stop(0);
   
   /*
     This fn suddenly stopped working so I had to copy the code instead of calling the fn from lib
