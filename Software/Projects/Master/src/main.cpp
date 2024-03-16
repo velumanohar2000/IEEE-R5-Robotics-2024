@@ -1,3 +1,5 @@
+// Libraries ------------------------------------------------------------------
+
 #include "Arduino.h"
 #include <ESP32Servo.h>
 #include "lrf.h"
@@ -6,33 +8,60 @@
 #include "motor_control.h"
 #include "VL53L1X.h"
 #include "Ultrasonic.h"
-// #define VELU
+
+// Defines --------------------------------------------------------------------
+
+// Preprocessor Directives
 #define MAIN
+// #define VELU
 // #define TURNS
 
+// Motors
 #define MOTORA_IN_1 3
 #define MOTORA_IN_2 2
 #define MOTORB_IN_3 6
 #define MOTORB_IN_4 7
 
+// Whisker
+#define WHISKER_STOP_DIS 10
+#define MAX_PRELIM_DIST 60
+
+// LRF
+#define LRF_ADDRESS_1 0x10
+#define LRF_ADDRESS_2 0x20
+
+// Variables & Constants ------------------------------------------------------
+
+// Servo
+int pos = 0; // variable to store the servo position
+// Recommended PWM GPIO pins on the ESP32 include 2,4,12-19,21-23,25-27,32-33
+int servoPin = 2;
+
+// Map
+// create map and buffer
+struct Coordinate *local_maxes[4];
+int local_max_index = 0;
+
+// Ultrasonic Sensor
+int distanceUltrasonic = 100;         // ultrasonic
+float distanceInUltrasonic;           // ultrasonic
+
+// Whisker
+int whiskDistance;                           // whisker
+float whiskDistanceInch = 1000;            // whisker
+
+// Structures & Classes -------------------------------------------------------
+
+// Servo
 Servo myservo; // create servo object to control a servo
 SFEVL53L1X distanceSensor;
 
 // 16 servo objects can be created on the ESP32
 
-int pos = 0; // variable to store the servo position
-// Recommended PWM GPIO pins on the ESP32 include 2,4,12-19,21-23,25-27,32-33
-int servoPin = 2;
-
-#define LRF_ADDRESS_1 0x10
-#define LRF_ADDRESS_2 0x20
-
-// create map and buffer
-struct Coordinate *local_maxes[4];
-int local_max_index = 0;
+// Ultrasonic Sensor
 Ultrasonic ultrasonic(0, 1);
-int distanceUltrasonic = 100;         // ultrasonic
-float distanceInUltrasonic;           // ultrasonic
+
+// Functions ------------------------------------------------------------------
 
 void setup()
 {
@@ -53,8 +82,6 @@ void setup()
                                        // for an accurate 0 to 180 sweep
   #endif
 }
-int distance;                           // whisker
-float distanceInches = 1000;            // whisker
 
 void loop(){
   #ifdef VELU
@@ -95,14 +122,14 @@ void loop(){
   /*
     same main if else condition, if distance on whiskers read less than 10 inches then stop if not keep going
   */
-  if(distanceInches > 10.0)
+  if(whiskDistanceInch > WHISKER_STOP_DIS)
   {
     /*
       distanceUltrasonic is in centimeters, maybe i should use inches instead for testing
     */
     distanceUltrasonic = ultrasonic.read();
 
-    Serial.println(distanceUltrasonic);
+    Serial.printf("Ultras dis (cm): %d\n", distanceUltrasonic);
 
     /*
       Idea behind logic below is that we want to always be going forward until forward whisker tells us to stop.
@@ -124,7 +151,12 @@ void loop(){
     Also I had wired the GPIO for motor control backwards so for the if statement, if we need to go towards the wall we need to be "turning right"
     since my gpio was backwards i had to turn left. but again, draft code, will be changed.
     */
-    if(distanceUltrasonic > 12)
+    // if the Ultrasonic distance is longer than game field, just stop
+    if(distanceUltrasonic > MAX_PRELIM_DIST)
+    {
+      stop();
+    }
+    else if(distanceUltrasonic > 12)
     {
       // while(distanceInUltrasonic > 6)
       {
@@ -157,8 +189,6 @@ void loop(){
     else
       move(FORWARD, 128);
   }
-  else
-    stop();
   
   /*
     This fn suddenly stopped working so I had to copy the code instead of calling the fn from lib
@@ -174,11 +204,11 @@ void loop(){
   {
     delay(1);
   }
-  distance = distanceSensor.getDistance(); //Get the result of the measurement from the sensor
+  whiskDistance = distanceSensor.getDistance(); //Get the result of the measurement from the sensor
   distanceSensor.clearInterrupt();
   distanceSensor.stopRanging();
-  distanceInches = distance * 0.0393701;
-  Serial.printf("Distance (in): %f\n", distanceInches);
+  whiskDistanceInch = whiskDistance * 0.0393701;
+  Serial.printf("Whisker dis (in): %f\n", whiskDistanceInch);
 #endif
 
 #ifdef TURNS
