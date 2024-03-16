@@ -161,12 +161,13 @@ void loop(){
     {
       stop();
     }
-    else if(ultraDistance > 12)
+    else if(ultraDistance > 7)
     {
       // while(distanceInUltrasonic > 6)
       {
         turn(LEFT);
-        delay(25);
+        delay(10);
+        /*
         move(FORWARD, 128);
         delay(25);
         turn(RIGHT);
@@ -174,14 +175,16 @@ void loop(){
         move(FORWARD, 128);
         delay(25);
         // distanceUltrasonic = ultrasonic.read();
+        */
       }
     }
-    else if(ultraDistance < 8)
+    else if(ultraDistance < 4)
     {
       // while(distanceInUltrasonic < 5)
       {
         turn(RIGHT);
-        delay(25);
+        delay(10);
+        /*
         move(FORWARD, 128);
         delay(25);
         turn(LEFT);
@@ -189,6 +192,7 @@ void loop(){
         move(FORWARD, 128);
         delay(25);
         // distanceUltrasonic = ultrasonic.read();
+        */
       }
     }
     else
