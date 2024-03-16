@@ -5,9 +5,10 @@
 #include "map.h"
 #include "MOTOR_CONTROL.h"
 #include "VL53L1X.h"
+#include "Ultrasonic.h"
 // #define VELU
-#define MAIN
-// #define TURNS
+// #define MAIN
+#define TURNS
 
 Servo myservo; // create servo object to control a servo
 SFEVL53L1X distanceSensor;
@@ -24,10 +25,13 @@ int servoPin = 2;
 // create map and buffer
 struct Coordinate *local_maxes[4];
 int local_max_index = 0;
+Ultrasonic ultrasonic(0, 1);
+int distanceUltrasonic = 100;
+float distanceInUltrasonic;
 
 void setup()
 {
-  initMotors();
+  // initMotors();
   initVL53L1X();
   #ifdef VELU
   // Serial.begin(115200);
@@ -92,12 +96,51 @@ void loop(){
 //     digitalWrite(MOTORB_IN_4, HIGH);
 // delay(1000);
 #ifdef MAIN
+  // distanceUltrasonic = ultrasonic.read();
+  // if(distanceUltrasonic > 25)
+  // turn(LEFT);
+  // else
+  // turn(RIGHT);
   if(distanceInches > 10.0)
-    move(FORWARD);
+  {
+    distanceUltrasonic = ultrasonic.read();
+    if(distanceUltrasonic > 12)
+    {
+      // while(distanceInUltrasonic > 6)
+      {
+        turn(LEFT, 128);
+        delay(25);
+        move(FORWARD, 128);
+        delay(25);
+        turn(RIGHT, 128);
+        delay(25);
+        move(FORWARD, 128);
+        delay(25);
+        distanceUltrasonic = ultrasonic.read();
+      }
+    }
+    else if(distanceUltrasonic < 8)
+    {
+      // while(distanceInUltrasonic < 5)
+      {
+        turn(RIGHT, 128);
+        delay(25);
+        move(FORWARD, 128);
+        delay(25);
+        turn(LEFT, 128);
+        delay(25);
+        move(FORWARD, 128);
+        delay(25);
+        distanceUltrasonic = ultrasonic.read();
+      }
+    }
+    else
+      move(FORWARD, 128);
+  }
   else
     stop();
   
-  distanceInches = getDistanceVL53L1X(UNIT_INCHES);
+  // distanceInches = getDistanceVL53L1X(distanceSensor, UNIT_INCHES);
 
   distanceSensor.startRanging(); //Write configuration bytes to initiate measurement
   while (!distanceSensor.checkForDataReady())
@@ -112,21 +155,13 @@ void loop(){
 #endif
 
 #ifdef TURNS
-  move(FORWARD);
-  delay(500);
-  turn(RIGHT);
-  delay(250);
-  move(FORWARD);
-  delay(500);
-  turn(LEFT);
-  delay(250);
-  move(BACKWARD);
-  delay(500);
-  turn(RIGHT);
-  delay(250);
-  move(BACKWARD);
-  delay(500);
-  turn(LEFT);
-  delay(250);
+  turn(RIGHT, 128);
+        // delay(500);
+        // move(FORWARD, 128);
+        // delay(500);
+        // turn(LEFT, 128);
+        // delay(500);
+        // move(FORWARD, 128);
+        // delay(500);
 #endif
 }

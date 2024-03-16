@@ -21,6 +21,6 @@ void stop();
 void stop(bool PWM);
 void standby();
 void turn(bool direction);
-void turn(bool direction);
+void turn(bool direction, uint16_t speed);
 void initMotors();
 

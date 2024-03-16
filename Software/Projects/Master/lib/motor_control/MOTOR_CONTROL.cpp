@@ -126,6 +126,23 @@ void turn(bool direction)
     digitalWrite(MOTORB_IN_4, LOW);
   }
 }
+void turn(bool direction, uint16_t speed)
+{
+  if(direction == RIGHT)
+  {
+    digitalWrite(MOTORA_IN_1, speed);
+    digitalWrite(MOTORA_IN_2, 10);
+    digitalWrite(MOTORB_IN_3, 10);
+    digitalWrite(MOTORB_IN_4, speed);
+  }
+  else
+  {
+    digitalWrite(MOTORA_IN_1, 10);
+    digitalWrite(MOTORA_IN_2, speed);
+    digitalWrite(MOTORB_IN_3, speed);
+    digitalWrite(MOTORB_IN_4, 10);
+  }
+}
 
 // void loop() {
 
