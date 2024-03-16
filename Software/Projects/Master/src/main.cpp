@@ -3,12 +3,17 @@
 #include "lrf.h"
 #include "Wire.h"
 #include "map.h"
-#include "MOTOR_CONTROL.h"
+#include "motor_control.h"
 #include "VL53L1X.h"
 #include "Ultrasonic.h"
 // #define VELU
 #define MAIN
 // #define TURNS
+
+#define MOTORA_IN_1 3
+#define MOTORA_IN_2 2
+#define MOTORB_IN_3 6
+#define MOTORB_IN_4 7
 
 Servo myservo; // create servo object to control a servo
 SFEVL53L1X distanceSensor;
@@ -31,7 +36,7 @@ float distanceInUltrasonic;           // ultrasonic
 
 void setup()
 {
-  // initMotors();
+  initMotors(MOTORA_IN_1, MOTORA_IN_2, MOTORB_IN_3, MOTORB_IN_4);
   initVL53L1X();
   #ifdef VELU
   // Serial.begin(115200);
@@ -153,7 +158,7 @@ void loop(){
       move(FORWARD, 128);
   }
   else
-    stop(0);
+    stop();
   
   /*
     This fn suddenly stopped working so I had to copy the code instead of calling the fn from lib
