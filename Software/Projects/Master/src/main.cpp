@@ -17,7 +17,7 @@
 // Defines --------------------------------------------------------------------
 
 // Preprocessor Directives
-#define MAIN
+#define PRELIMS
 // #define VELU
 // #define TURNS
 
@@ -123,7 +123,7 @@ void loop(){
   delay(1000);
   #endif
 
-#ifdef MAIN
+#ifdef PRELIMS
   /*
     same main if else condition, if distance on whiskers read less than 10 inches then stop if not keep going
   */
@@ -161,42 +161,43 @@ void loop(){
     {
       stop();
     }
-    else if(ultraDistance > 7)
+    else if(ultraDistance > 8)
     {
-      // while(distanceInUltrasonic > 6)
-      {
-        turn(LEFT);
-        delay(10);
-        /*
-        move(FORWARD, 128);
-        delay(25);
-        turn(RIGHT);
-        delay(25);
-        move(FORWARD, 128);
-        delay(25);
-        // distanceUltrasonic = ultrasonic.read();
-        */
-      }
+      turn(LEFT, 128);
+      delay(100);
+      move(FORWARD, 128);
+      delay(100);
+
+      /*
+      turn(RIGHT);
+      delay(25);
+      move(FORWARD, 128);
+      delay(25);
+      // distanceUltrasonic = ultrasonic.read();
+      d*/
     }
-    else if(ultraDistance < 4)
+    else if(ultraDistance < 5)
     {
-      // while(distanceInUltrasonic < 5)
-      {
-        turn(RIGHT);
-        delay(10);
-        /*
-        move(FORWARD, 128);
-        delay(25);
-        turn(LEFT);
-        delay(25);
-        move(FORWARD, 128);
-        delay(25);
-        // distanceUltrasonic = ultrasonic.read();
-        */
-      }
+      turn(RIGHT, 128);
+      delay(100);
+      
+      move(FORWARD, 128);
+      delay(25);
+
+      /*
+      turn(LEFT);
+      delay(25);
+      move(FORWARD, 128);
+      delay(25);
+      // distanceUltrasonic = ultrasonic.read();
+      */
     }
     else
       move(FORWARD, 128);
+  }
+  else
+  {
+    stop();
   }
   
   /*
