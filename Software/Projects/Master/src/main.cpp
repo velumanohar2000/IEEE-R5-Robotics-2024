@@ -1,3 +1,8 @@
+/*
+ * Bit Bangers Master Robot
+ * github.com/Bit-Bangers-UTA/Senior-Design
+*/
+
 // Libraries ------------------------------------------------------------------
 
 #include "Arduino.h"
