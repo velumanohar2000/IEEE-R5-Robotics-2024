@@ -7,8 +7,8 @@
 #include "VL53L1X.h"
 #include "Ultrasonic.h"
 // #define VELU
-// #define MAIN
-#define TURNS
+#define MAIN
+// #define TURNS
 
 Servo myservo; // create servo object to control a servo
 SFEVL53L1X distanceSensor;
@@ -26,8 +26,8 @@ int servoPin = 2;
 struct Coordinate *local_maxes[4];
 int local_max_index = 0;
 Ultrasonic ultrasonic(0, 1);
-int distanceUltrasonic = 100;
-float distanceInUltrasonic;
+int distanceUltrasonic = 100;         // ultrasonic
+float distanceInUltrasonic;           // ultrasonic
 
 void setup()
 {
@@ -48,8 +48,8 @@ void setup()
                                        // for an accurate 0 to 180 sweep
   #endif
 }
-int distance;
-float distanceInches = 1000;
+int distance;                           // whisker
+float distanceInches = 1000;            // whisker
 
 void loop(){
   #ifdef VELU
@@ -86,52 +86,65 @@ void loop(){
   delay(1000);
   #endif
 
-// move(FORWARD);
-// delay(1000);
-// move(BACKWARD);
-// turn(LEFT);
-// digitalWrite(MOTORA_IN_1, LOW);
-//     digitalWrite(MOTORA_IN_2, HIGH);
-//     digitalWrite(MOTORB_IN_3, LOW);
-//     digitalWrite(MOTORB_IN_4, HIGH);
-// delay(1000);
 #ifdef MAIN
-  // distanceUltrasonic = ultrasonic.read();
-  // if(distanceUltrasonic > 25)
-  // turn(LEFT);
-  // else
-  // turn(RIGHT);
+  /*
+    same main if else condition, if distance on whiskers read less than 10 inches then stop if not keep going
+  */
   if(distanceInches > 10.0)
   {
+    /*
+      distanceUltrasonic is in centimeters, maybe i should use inches instead for testing
+    */
     distanceUltrasonic = ultrasonic.read();
+
+    /*
+      Idea behind logic below is that we want to always be going forward until forward whisker tells us to stop.
+      Also we need to be going in a straight line always so we don't run into the wall or the post
+
+      So if we're too far away from the wall
+        i)    we would need to turn into it slightly.
+        ii)   go forward slightly in the new direction.
+        iii)  turn away for the same amount of time as step 1 to straighten out the car so we don't run into the side wall
+
+      else if we're too close to the wall
+        i)    we would need to turn away from it slightly.
+        ii)   go forward slightly in the new direction.
+        iii)  turn towards the wall for the same amount of time as step 1 to straighten out the car so we don't run into the post
+
+    This is obviously a draft algo (doesn't work either lol) so can be changed if needed, most of the time i was trying to get the whisker
+    and the US to work together so i came up with this algo at the very end.
+
+    Also I had wired the GPIO for motor control backwards so for the if statement, if we need to go towards the wall we need to be "turning right"
+    since my gpio was backwards i had to turn left. but again, draft code, will be changed.
+    */
     if(distanceUltrasonic > 12)
     {
       // while(distanceInUltrasonic > 6)
       {
-        turn(LEFT, 128);
+        turn(LEFT);
         delay(25);
         move(FORWARD, 128);
         delay(25);
-        turn(RIGHT, 128);
+        turn(RIGHT);
         delay(25);
         move(FORWARD, 128);
         delay(25);
-        distanceUltrasonic = ultrasonic.read();
+        // distanceUltrasonic = ultrasonic.read();
       }
     }
     else if(distanceUltrasonic < 8)
     {
       // while(distanceInUltrasonic < 5)
       {
-        turn(RIGHT, 128);
+        turn(RIGHT);
         delay(25);
         move(FORWARD, 128);
         delay(25);
-        turn(LEFT, 128);
+        turn(LEFT);
         delay(25);
         move(FORWARD, 128);
         delay(25);
-        distanceUltrasonic = ultrasonic.read();
+        // distanceUltrasonic = ultrasonic.read();
       }
     }
     else
@@ -140,8 +153,15 @@ void loop(){
   else
     stop();
   
+  /*
+    This fn suddenly stopped working so I had to copy the code instead of calling the fn from lib
+  */
+
   // distanceInches = getDistanceVL53L1X(distanceSensor, UNIT_INCHES);
 
+  /*
+    same code for getting data for whisker
+  */
   distanceSensor.startRanging(); //Write configuration bytes to initiate measurement
   while (!distanceSensor.checkForDataReady())
   {
@@ -155,13 +175,17 @@ void loop(){
 #endif
 
 #ifdef TURNS
-  turn(RIGHT, 128);
-        // delay(500);
-        // move(FORWARD, 128);
-        // delay(500);
-        // turn(LEFT, 128);
-        // delay(500);
-        // move(FORWARD, 128);
-        // delay(500);
+/*
+  also added code to turn using PWM but doesn't work with the test code below
+*/
+
+  // turn(RIGHT, 128);
+  // delay(500);
+  // move(FORWARD, 128);
+  // delay(500);
+  // turn(LEFT, 128);
+  // delay(500);
+  // move(FORWARD, 128);
+  // delay(500);
 #endif
 }

@@ -126,21 +126,56 @@ void turn(bool direction)
     digitalWrite(MOTORB_IN_4, LOW);
   }
 }
+
+/*
+  basic idea for PWM, instead of going full speed, provide a param to control speed
+*/
+
 void turn(bool direction, uint16_t speed)
 {
   if(direction == RIGHT)
   {
-    digitalWrite(MOTORA_IN_1, speed);
-    digitalWrite(MOTORA_IN_2, 10);
-    digitalWrite(MOTORB_IN_3, 10);
-    digitalWrite(MOTORB_IN_4, speed);
+    analogWrite(MOTORA_IN_1, speed);
+    analogWrite(MOTORA_IN_2, 0);
+    analogWrite(MOTORB_IN_3, 0);
+    analogWrite(MOTORB_IN_4, speed);
   }
   else
   {
-    digitalWrite(MOTORA_IN_1, 10);
-    digitalWrite(MOTORA_IN_2, speed);
-    digitalWrite(MOTORB_IN_3, speed);
-    digitalWrite(MOTORB_IN_4, 10);
+    analogWrite(MOTORA_IN_1, 0);
+    analogWrite(MOTORA_IN_2, speed);
+    analogWrite(MOTORB_IN_3, speed);
+    analogWrite(MOTORB_IN_4, 0);
+  }
+}
+
+void turn(bool direction, uint16_t speed, uint16_t currentAngle, uint16_t requiredAngle)
+{
+  /*
+  coded this without testing. Idea behind is that when were turning, we will never get the exact angle unless we use interrupts
+  so for now, i multiplied the angles with a large value so we have some room for error. We keep turning as long as we're within that error range.
+
+  After coding this i realized that we need interrupts since having slight error in angle would completely change the vector.
+  If we're planning on using the same while code then we need to turn very slowly
+  */
+  uint64_t currentAngleError = currentAngle * 1000;
+  uint64_t requiredAngleError = requiredAngle * 1000;
+  while((currentAngleError > (requiredAngleError+50)) ||  (currentAngleError < (requiredAngleError-50)))
+  {
+    if(direction == RIGHT)
+    {
+      digitalWrite(MOTORA_IN_1, speed);
+      digitalWrite(MOTORA_IN_2, 0);
+      digitalWrite(MOTORB_IN_3, 0);
+      digitalWrite(MOTORB_IN_4, speed);
+    }
+    else
+    {
+      digitalWrite(MOTORA_IN_1, 0);
+      digitalWrite(MOTORA_IN_2, speed);
+      digitalWrite(MOTORB_IN_3, speed);
+      digitalWrite(MOTORB_IN_4, 0);
+    }
   }
 }
 
