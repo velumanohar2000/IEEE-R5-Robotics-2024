@@ -43,8 +43,8 @@ struct Coordinate *local_maxes[4];
 int local_max_index = 0;
 
 // Ultrasonic Sensor
-int distanceUltrasonic = 100;         // ultrasonic
-float distanceInUltrasonic;           // ultrasonic
+int ultraDistance = 100;         // ultrasonic
+float ultraDistanceInch;           // ultrasonic
 
 // Whisker
 int whiskDistance;                           // whisker
@@ -127,9 +127,9 @@ void loop(){
     /*
       distanceUltrasonic is in centimeters, maybe i should use inches instead for testing
     */
-    distanceUltrasonic = ultrasonic.read();
+    ultraDistance = ultrasonic.read();
 
-    Serial.printf("Ultras dis (cm): %d\n", distanceUltrasonic);
+    Serial.printf("Ultras dis (cm): %d\n", ultraDistance);
 
     /*
       Idea behind logic below is that we want to always be going forward until forward whisker tells us to stop.
@@ -152,11 +152,11 @@ void loop(){
     since my gpio was backwards i had to turn left. but again, draft code, will be changed.
     */
     // if the Ultrasonic distance is longer than game field, just stop
-    if(distanceUltrasonic > MAX_PRELIM_DIST)
+    if(ultraDistance > MAX_PRELIM_DIST)
     {
       stop();
     }
-    else if(distanceUltrasonic > 12)
+    else if(ultraDistance > 12)
     {
       // while(distanceInUltrasonic > 6)
       {
@@ -171,7 +171,7 @@ void loop(){
         // distanceUltrasonic = ultrasonic.read();
       }
     }
-    else if(distanceUltrasonic < 8)
+    else if(ultraDistance < 8)
     {
       // while(distanceInUltrasonic < 5)
       {
