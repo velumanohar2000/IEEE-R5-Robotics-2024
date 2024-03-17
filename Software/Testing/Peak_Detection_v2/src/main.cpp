@@ -13,12 +13,6 @@ int servoPin = 2;
 
 #define BUFFER_SIZE 20
 
-float avgDistance = 0;
-uint16_t sumDistance = 0;
-uint16_t cirBuffer[BUFFER_SIZE] = {0};
-uint16_t bufferIndex = 0;
-uint8_t fillBuffer = 0;
-uint8_t restartBuffer = 0;
 bool rotateTo180 = true;
 
 int32_t distance[200] = {0};
@@ -75,7 +69,6 @@ void findLocationMaxMax()
   // Calculate x coordinate using pythagorean theorem
   x = sqrt(pow(a, 2) - pow(y, 2));
 }
-
 
 void findLocalMinimaAndMaxima(int32_t arr[], int n, int neighborhood)
 {
@@ -171,21 +164,20 @@ void loop()
       int neighborhood = 30; // You can adjust this to be larger or smaller
 
       findLocalMinimaAndMaxima(distance, n, neighborhood);
-      printf("maxima counter: %d\n", maximaCounter);
-      if (maximaCounter == 2 || minimaCounter == 2 && minimaCounter + maximaCounter < 5)
+      if (maximaCounter == 2 && minimaCounter == 2)
       {
-        if (minimaCounter == 2)
-        {
-          findLocationMinMax();
-          printf("location calculated with 1 max and 1 min value is:\nx: %f cm (%f ft)\ny: %f cm (%f ft)\n", x, x / (2.54 * 12), y, y / (2.54 * 12));
-        }
+
+        findLocationMinMax();
+        printf("location calculated with 1 max and 1 min value is:\nx: %f cm (%f ft)\ny: %f cm (%f ft)\n", x, x / (2.54 * 12), y, y / (2.54 * 12));
 
         findLocationMaxMax();
         printf("location calculated with 2 max valeus is:\nx: %f cm (%f ft)\ny: %f cm (%f ft)\n", x, x / (2.54 * 12), y, y / (2.54 * 12));
       }
       else
       {
-        Serial.println("Not enough Max/min values");
+        Serial.println("Incorrect number of Max and min values, expecting 2 min and and 2 max");
+        printf("maxima counter: %d\nminima counter: %d\n", maximaCounter, minimaCounter);
+
       }
     }
     else
@@ -203,7 +195,7 @@ void loop()
         // if (abs(distance[distIndex] - distance[distIndex - 1]) > 50)
         //   distance[distIndex] = distance[distIndex - 1];
       }
-      //printf("%d %d\n", distance[distIndex], pos);
+      // printf("%d %d\n", distance[distIndex], pos);
       distIndex++;
     }
   }
@@ -220,110 +212,3 @@ void loop()
     minimaCounter = 0;
   }
 }
-
-
-
-// // Helper function to check if current element is a local minimum
-// bool isLocalMinimum(int32_t arr[], int i, int n, int neighborhood)
-// {
-//   for (int j = i - neighborhood; j <= i + neighborhood; j++)
-//   {
-//     if (j >= 0 && j < n && j != i && arr[j] <= arr[i])
-//     {
-//       return false;
-//     }
-//   }
-//   return true;
-// }
-
-// // Helper function to check if current element is a local maximum
-// bool isLocalMaximum(int32_t arr[], int i, int n, int neighborhood)
-// {
-//   for (int j = i - neighborhood; j <= i + neighborhood; j++)
-//   {
-//     if (j >= 0 && j < n && j != i && arr[j] >= arr[i])
-//     {
-//       return false;
-//     }
-//   }
-//   return true;
-// }
-// else
-// {
-//   pos -= 2;
-//   if (pos == 0)
-//   {
-//     rotateTo180 = true;
-//   }
-// }
-
-// else
-// {
-//   if (abs(distance[distIndex] - avgDistance) <= 50 || fillBuffer < BUFFER_SIZE)
-//   {
-//     sumDistance -= cirBuffer[bufferIndex];
-//     sumDistance += distance[distIndex];
-//     avgDistance = sumDistance / BUFFER_SIZE;
-//     cirBuffer[bufferIndex] = distance[distIndex];
-//     bufferIndex = (bufferIndex + 1) % BUFFER_SIZE;
-//     if (fillBuffer < BUFFER_SIZE)
-//     {
-//       fillBuffer++;
-//     }
-//     restartBuffer = 0;
-//   }
-//   else
-//   {
-
-//     // if unable to get a reading for 40 times it will reset the buffer
-//     // Unsure if we want this or not
-//     restartBuffer++;
-//     if (restartBuffer >= 40)
-//     {
-//       fillBuffer = 0;
-//       restartBuffer = 0;
-//     }
-//   }
-// }
-
-// for (int i = 0; i < n; i++)
-// {
-//   // Local minima condition
-//   if ((i == 0 || arr[i - 1] > arr[i]) && (i == n - 1 || arr[i] < arr[i + 1]))
-//   {
-//     printf("Local Minima found at index %d, value: %d\n", i, arr[i]);
-//     myservo.write(i * 2);
-//     minimaValues[minimaCounter] = arr[i];
-//     minimaCounter++;
-//     delay(2000);
-//   }
-//   // Local maxima condition
-//   if ((i == 0 || arr[i - 1] < arr[i]) && (i == n - 1 || arr[i] > arr[i + 1]))
-//   {
-//     printf("Local Maxima found at index %d, value: %d\n", i, arr[i]);
-//     myservo.write(i * 2);
-//     maximaValues[maximaCounter] = arr[i];
-//     maximaCounter++;
-//     delay(2000);
-//   }
-// }
-//}
-// // Check for local minimum
-// if (isLocalMinimum(arr, i, n, neighborhood))
-// {
-//   printf("Local Minima found at index %d, value: %d\n", i, arr[i]);
-//   myservo.write(i * 2);
-//   minimaValues[minimaCounter] = arr[i];
-//   minimaCounter++;
-//   delay(2000);
-// }
-// // Check for local maximum
-// if (isLocalMaximum(arr, i, n, neighborhood))
-// {
-//   printf("Local Maxima found at index %d, value: %d\n", i, arr[i]);
-//   myservo.write(i * 2);
-//   maximaValues[maximaCounter] = arr[i];
-//   maximaCounter++;
-
-//   delay(2000);
-// }
