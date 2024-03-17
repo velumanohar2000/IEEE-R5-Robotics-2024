@@ -1,3 +1,11 @@
+/*
+Ideas to fix the problem when car is diagonal to the wall:
+
+Get the highest max and lowest min every 90 degrees. 
+
+*/ 
+
+
 
 #include "Arduino.h"
 #include <ESP32Servo.h>
