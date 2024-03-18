@@ -314,8 +314,11 @@ void loop(){
     else
     {
       stop();
+      delay(1000);
       wallFound = true;
       nextAngle += 90.0;
+      if(nextAngle > 360)
+        nextAngle -= 360;
     }
     getWhiskerDistance();
   }
