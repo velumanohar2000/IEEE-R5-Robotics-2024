@@ -13,13 +13,16 @@
 #include "motor_control.h"
 #include "VL53L1X.h"
 #include "Ultrasonic.h"
+#include <Adafruit_BNO08x.h>
+#include "math.h"
+#include "BNO085_heading_acceleration.h"
 
 // Defines --------------------------------------------------------------------
 
 // Preprocessor Directives
-#define PRELIMS
+// #define PRELIMS
 // #define VELU
-// #define TURNS
+#define TURNS
 
 // Motors
 #define MOTORA_IN_1 3
@@ -55,6 +58,10 @@ float ultraDistanceInch;           // ultrasonic
 int whiskDistance;                           // whisker
 float whiskDistanceInch = 1000;            // whisker
 
+// IMU
+float heading = -1;             // IMU
+float test = 0.0;
+
 // Structures & Classes -------------------------------------------------------
 
 // Servo
@@ -66,12 +73,21 @@ SFEVL53L1X distanceSensor;
 // Ultrasonic Sensor
 Ultrasonic ultrasonic(0, 1);
 
+// IMU
+Adafruit_BNO08x bno08x;
+sh2_SensorValue_t sensorValue;
+
 // Functions ------------------------------------------------------------------
 
 void setup()
 {
+  Wire.begin(9, 8);
+  Serial.begin(115200);
+  // Serial.println("Adafruit BNO08x test!");
+  // Wire.begin(9, 8);
   initMotors(MOTORA_IN_1, MOTORA_IN_2, MOTORB_IN_3, MOTORB_IN_4);
   initVL53L1X();
+  setupBNO085(&bno08x);
   #ifdef VELU
   // Serial.begin(115200);
   // Wire.begin(9,8);
@@ -225,14 +241,48 @@ void loop(){
 /*
   also added code to turn using PWM but doesn't work with the test code below
 */
+  // while((heading > (test + 1)) || (heading < (test - 1)) )
+  {
+    if (bno08x.getSensorEvent(&sensorValue))
+      {
+        switch (sensorValue.sensorId)
+        {
+        case SH2_LINEAR_ACCELERATION:
+        {
+          // TODO adjust reports function
+          Serial.print("Acceleration (x): ");
+          float xAccel = sensorValue.un.linearAcceleration.x;
+          Serial.println(xAccel);
+          break;
+        }
+        case SH2_ARVR_STABILIZED_RV:
+        {
+          heading = calculateHeading(sensorValue.un.arvrStabilizedRV.i, sensorValue.un.arvrStabilizedRV.j, sensorValue.un.arvrStabilizedRV.k, sensorValue.un.arvrStabilizedRV.real);
+          Serial.print("Heading: ");
+          Serial.println(heading);
+          break;
+        }
+        }
+      }
+      // turn(LEFT, 100);
+      // delay(100);
 
-  // turn(RIGHT, 128);
+  }
+  // move(FORWARD, 100);
   // delay(500);
-  // move(FORWARD, 128);
+  // standby();
+  // delay(100);
+  // move(BACKWARD, 100);
   // delay(500);
-  // turn(LEFT, 128);
-  // delay(500);
-  // move(FORWARD, 128);
-  // delay(500);
+  // standby();
+  // delay(100);
+  // test += 45;
+  // if(test > 360)
+  //   test -=360;
+
+
+
+
+  
 #endif
 }

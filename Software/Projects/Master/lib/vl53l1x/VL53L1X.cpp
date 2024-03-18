@@ -28,9 +28,9 @@ extern SFEVL53L1X distanceSensor;
 
 void initVL53L1X(void)
 {
-  Wire.begin(9, 8);
+  // Wire.begin(9, 8);
 
-  Serial.begin(115200);
+  // Serial.begin(115200);
   Serial.println("VL53L1X Qwiic Test");
 
   if (distanceSensor.begin() != 0) //Begin returns 0 on a good init
