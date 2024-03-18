@@ -21,8 +21,9 @@
 
 // Preprocessor Directives
 // #define PRELIMS
+#define PRELIMS_DRAFT
 // #define VELU
-#define TURNS
+// #define TURNS
 
 // Motors
 #define MOTORA_IN_1 3
@@ -57,11 +58,14 @@ float ultraDistanceInch;           // ultrasonic
 // Whisker
 int whiskDistance;                           // whisker
 float whiskDistanceInch = 1000;            // whisker
+bool wallFound = false;
 
 // IMU
 float heading = -1;             // IMU
 float test = 0.0;
-
+float firstHeading = -1;
+bool northEstablished = false;
+float nextAngle, currentAngle = 0.0;
 // Structures & Classes -------------------------------------------------------
 
 // Servo
@@ -78,6 +82,42 @@ Adafruit_BNO08x bno08x;
 sh2_SensorValue_t sensorValue;
 
 // Functions ------------------------------------------------------------------
+
+float getHeading()
+{
+  float retVal;
+  if (bno08x.getSensorEvent(&sensorValue))
+  {
+    switch (sensorValue.sensorId)
+    {
+    case SH2_LINEAR_ACCELERATION:
+    {
+      retVal = -1;
+      break;
+    }
+    case SH2_ARVR_STABILIZED_RV:
+    {
+      retVal = calculateHeading(sensorValue.un.arvrStabilizedRV.i, sensorValue.un.arvrStabilizedRV.j, sensorValue.un.arvrStabilizedRV.k, sensorValue.un.arvrStabilizedRV.real);
+      break;
+    }
+    }
+  }
+  return retVal;
+}
+
+void getWhiskerDistance()
+{
+  distanceSensor.startRanging(); //Write configuration bytes to initiate measurement
+  while (!distanceSensor.checkForDataReady())
+  {
+    delay(1);
+  }
+  whiskDistance = distanceSensor.getDistance(); //Get the result of the measurement from the sensor
+  distanceSensor.clearInterrupt();
+  distanceSensor.stopRanging();
+  whiskDistanceInch = whiskDistance * 0.0393701;
+  // Serial.printf("Whisker dis (in): %f\n", whiskDistanceInch);
+}
 
 void setup()
 {
@@ -237,6 +277,63 @@ void loop(){
   Serial.printf("Whisker dis (in): %f\n", whiskDistanceInch);
 #endif
 
+#ifdef PRELIMS_DRAFT
+  while((firstHeading != -1) && !northEstablished)
+  {
+    firstHeading = getHeading();
+    if(firstHeading != -1)
+      northEstablished = true;
+  }
+  if(!wallFound)
+  {
+    if(whiskDistanceInch > WHISKER_STOP_DIS)
+    {
+      ultraDistance = ultrasonic.read();
+      if(ultraDistance > MAX_PRELIM_DIST)
+      {
+        stop();
+      }
+      else if(ultraDistance > 8)
+      {
+        turn(LEFT, 128);
+        delay(100);
+        move(FORWARD, 128);
+        delay(100);
+      }
+      else if(ultraDistance < 5)
+      {
+        turn(RIGHT, 128);
+        delay(100);
+        
+        move(FORWARD, 128);
+        delay(25);
+      }
+      else
+        move(FORWARD, 128);
+    }
+    else
+    {
+      stop();
+      wallFound = true;
+      nextAngle += 90.0;
+    }
+    getWhiskerDistance();
+  }
+  else
+  {
+    currentAngle = getHeading() - firstHeading;
+    if(currentAngle < 0)
+      currentAngle += 360;
+    while((currentAngle > (nextAngle + 1)) || (currentAngle < (nextAngle - 1)) )
+    {
+      turn(LEFT, 128);
+    }
+    wallFound = false;
+  }
+  
+
+#endif
+
 #ifdef TURNS
 /*
   also added code to turn using PWM but doesn't work with the test code below
@@ -286,3 +383,61 @@ void loop(){
   
 #endif
 }
+
+
+/*
+#include <Wire.h>
+#include <Adafruit_BNO08x.h>
+#include "math.h"
+#include "BNO085_heading_acceleration.h"
+
+#define BNO08X_RESET -1
+
+Adafruit_BNO08x bno08x;
+sh2_SensorValue_t sensorValue;
+
+void setup()
+{
+  setupBNO085(&bno08x);
+}
+
+float fakeNorth = 0;;
+bool firstReading = true;
+
+void loop()
+{
+  checkReset(&bno08x);
+
+  if (bno08x.getSensorEvent(&sensorValue))
+  {
+    switch (sensorValue.sensorId)
+    {
+    case SH2_LINEAR_ACCELERATION:
+    {
+      //TODO adjust reports function
+      Serial.print("Acceleration (x): ");
+      float xAccel = sensorValue.un.linearAcceleration.x;
+      Serial.println(xAccel);
+      break;
+    }
+    case SH2_ARVR_STABILIZED_RV:
+    {
+      float heading = calculateHeading(sensorValue.un.arvrStabilizedRV.i, sensorValue.un.arvrStabilizedRV.j, sensorValue.un.arvrStabilizedRV.k, sensorValue.un.arvrStabilizedRV.real);
+      heading -= fakeNorth;
+      if(heading < 0)
+        heading += 360;
+      if(firstReading)
+      {
+        fakeNorth = heading;
+        firstReading = false;
+      }
+      Serial.print("Heading: ");
+      Serial.println(heading);
+      break;
+    }
+    }
+  }
+  delay(100);
+}
+
+*/
