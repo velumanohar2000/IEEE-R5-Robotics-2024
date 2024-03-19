@@ -28,18 +28,18 @@ extern SFEVL53L1X distanceSensor;
 
 void initVL53L1X(void)
 {
-  // Wire.begin(9, 8);
+  Wire.begin(9, 8);
 
   // Serial.begin(115200);
-  Serial.println("VL53L1X Qwiic Test");
+  // Serial.println("VL53L1X Qwiic Test");
 
   if (distanceSensor.begin() != 0) //Begin returns 0 on a good init
   {
-    Serial.println("Sensor failed to begin. Please check wiring. Freezing...");
+    // Serial.println("Sensor failed to begin. Please check wiring. Freezing...");
     while (1)
       ;
   }
-  Serial.println("Sensor online!");
+  // Serial.println("Sensor online!");
 }
 
 int getDistanceVL53L1X(uint8_t unit)

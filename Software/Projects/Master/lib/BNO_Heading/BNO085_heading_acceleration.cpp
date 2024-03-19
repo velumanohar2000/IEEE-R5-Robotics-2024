@@ -6,17 +6,17 @@
 
 void setReports(Adafruit_BNO08x *bno08x, sh2_SensorId_t reportType, uint32_t interval)
 {
-  Serial.println("Setting desired reports");
+  // Serial.println("Setting desired reports");
   if (!bno08x->enableReport(reportType, interval)) // Top frequency is about 250Hz but this report is more accurate
   {
-    Serial.println("Could not enable stabilized remote vector");
+    // Serial.println("Could not enable stabilized remote vector");
   }
 }
 
 void reports(Adafruit_BNO08x *bno08x)
 {
-  setReports(bno08x, SH2_LINEAR_ACCELERATION, 500);
-  setReports(bno08x, SH2_ARVR_STABILIZED_RV, 2000);
+  // setReports(bno08x, SH2_LINEAR_ACCELERATION, 500);
+  setReports(bno08x, SH2_ARVR_STABILIZED_RV, 1000);
 }
 
 
@@ -27,15 +27,15 @@ void setupBNO085(Adafruit_BNO08x *bno08x)
   // Wire.begin(9, 8);
   if (!bno08x->begin_I2C())
   {
-    Serial.println("Failed to find BNO08x chip");
+    // Serial.println("Failed to find BNO08x chip");
     while (1)
     {
       delay(10);
     }
   }
-  Serial.println("BNO08x Found!");
+  // Serial.println("BNO08x Found!");
   reports(bno08x);
-  Serial.println("Reading events");
+  // Serial.println("Reading events");
   delay(1000);
 }
 
@@ -55,7 +55,7 @@ void checkReset(Adafruit_BNO08x *bno08x)
 {
   if (bno08x->wasReset())
   {
-    Serial.print("sensor was reset ");
+    // Serial.print("sensor was reset ");
     reports(bno08x);
   }
 }

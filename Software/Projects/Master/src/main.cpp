@@ -6,6 +6,7 @@
 // Libraries ------------------------------------------------------------------
 
 #include "Arduino.h"
+#include <stdbool.h>
 #include <ESP32Servo.h>
 #include "lrf.h"
 #include "Wire.h"
@@ -19,11 +20,15 @@
 
 // Defines --------------------------------------------------------------------
 
+// Modes
+
 // Preprocessor Directives
 // #define PRELIMS
 #define PRELIMS_DRAFT
+// #define CHECK_I2C
 // #define VELU
 // #define TURNS
+// #define TURNS_2
 
 // Motors
 #define MOTORA_IN_1 3
@@ -32,7 +37,7 @@
 #define MOTORB_IN_4 7
 
 // Whisker
-#define WHISKER_STOP_DIS 10
+#define WHISKER_STOP_DIS 5
 #define MAX_PRELIM_DIST 60
 
 // LRF
@@ -61,11 +66,13 @@ float whiskDistanceInch = 1000;            // whisker
 bool wallFound = false;
 
 // IMU
-float heading = -1;             // IMU
-float test = 0.0;
-float firstHeading = -1;
+float heading = -1.0;             // IMU
+float test = 45.0;
+float firstHeading = -1.0;
 bool northEstablished = false;
-float nextAngle, currentAngle = 0.0;
+float nextAngle = 0.0;
+float currentAngle = -1;
+uint16_t speed = 128;
 // Structures & Classes -------------------------------------------------------
 
 // Servo
@@ -85,23 +92,27 @@ sh2_SensorValue_t sensorValue;
 
 float getHeading()
 {
-  float retVal;
+  float retVal = -1;
+  // if (bno08x.getSensorEvent(&sensorValue))
+  // {
+  //   switch (sensorValue.sensorId)
+  //   {
+  //   case SH2_LINEAR_ACCELERATION:
+  //   {
+  //     retVal = sensorValue.un.linearAcceleration.x;
+  //     retVal = -1.0;
+  //     break;
+  //   }
+  //   case SH2_ARVR_STABILIZED_RV:
+  //   {
+  //     retVal = calculateHeading(sensorValue.un.arvrStabilizedRV.i, sensorValue.un.arvrStabilizedRV.j, sensorValue.un.arvrStabilizedRV.k, sensorValue.un.arvrStabilizedRV.real);
+  //     break;
+  //   }
+  //   }
+  // }
   if (bno08x.getSensorEvent(&sensorValue))
-  {
-    switch (sensorValue.sensorId)
-    {
-    case SH2_LINEAR_ACCELERATION:
-    {
-      retVal = -1;
-      break;
-    }
-    case SH2_ARVR_STABILIZED_RV:
-    {
-      retVal = calculateHeading(sensorValue.un.arvrStabilizedRV.i, sensorValue.un.arvrStabilizedRV.j, sensorValue.un.arvrStabilizedRV.k, sensorValue.un.arvrStabilizedRV.real);
-      break;
-    }
-    }
-  }
+    retVal = calculateHeading(sensorValue.un.arvrStabilizedRV.i, sensorValue.un.arvrStabilizedRV.j, sensorValue.un.arvrStabilizedRV.k, sensorValue.un.arvrStabilizedRV.real);
+  //     
   return retVal;
 }
 
@@ -121,13 +132,14 @@ void getWhiskerDistance()
 
 void setup()
 {
-  Wire.begin(9, 8);
   Serial.begin(115200);
+  Wire.begin(9, 8);
   // Serial.println("Adafruit BNO08x test!");
   // Wire.begin(9, 8);
   initMotors(MOTORA_IN_1, MOTORA_IN_2, MOTORB_IN_3, MOTORB_IN_4);
   initVL53L1X();
   setupBNO085(&bno08x);
+  // northEstablished = false;
   #ifdef VELU
   // Serial.begin(115200);
   // Wire.begin(9,8);
@@ -278,11 +290,16 @@ void loop(){
 #endif
 
 #ifdef PRELIMS_DRAFT
-  while((firstHeading != -1) && !northEstablished)
+  while((firstHeading == -1.0) && (!northEstablished))
   {
     firstHeading = getHeading();
-    if(firstHeading != -1)
+    // delay(100);
+    if(firstHeading != -1.0)
+    {
       northEstablished = true;
+      Serial.print("heading is: ");
+      Serial.println(firstHeading);
+    }
   }
   if(!wallFound)
   {
@@ -319,21 +336,104 @@ void loop(){
       nextAngle += 90.0;
       if(nextAngle > 360)
         nextAngle -= 360;
+        Serial.print("nextAngle is: ");
+      Serial.println(nextAngle);
     }
     getWhiskerDistance();
   }
   else
   {
-    currentAngle = getHeading() - firstHeading;
-    if(currentAngle < 0)
-      currentAngle += 360;
-    while((currentAngle > (nextAngle + 1)) || (currentAngle < (nextAngle - 1)) )
+    while(currentAngle == -1)
     {
-      turn(LEFT, 128);
+      currentAngle = getHeading();
+      // delay(100);
     }
+    currentAngle = (currentAngle + firstHeading);
+
+      Serial.print("currentAngle is: ");
+      Serial.println(currentAngle);
+    
+    if(currentAngle > 360)
+      currentAngle -= 360;
+    while((currentAngle > (nextAngle + 10)) || (currentAngle < (nextAngle - 10)) )
+    {
+      currentAngle = abs(getHeading() - firstHeading);
+      Serial.print("pointing at: ");
+      Serial.println(currentAngle);
+      delay(100);
+      turn(RIGHT, 115);
+    }
+    stop();
+    delay(1000);
+    getWhiskerDistance();
     wallFound = false;
   }
   
+
+#endif
+
+#ifdef CHECK_I2C
+
+  // Serial.println("begin: ");
+  // if(northEstablished)
+  // {
+  //   Serial.println("true");
+  // }
+  // else
+  //   Serial.println("false");
+
+  // delay(5000);
+  // if(northEstablished)
+  // {
+  //   Serial.print("Heading established: ");
+  //   Serial.println(heading);
+  // }
+  // else
+  // {
+  //   Serial.println("no: ");
+  //   firstHeading = getHeading();
+  //   delay(100);
+  //   Serial.println(firstHeading);
+  //   if(firstHeading != -1.0)
+  //     northEstablished = true;
+  // }
+  //   Serial.println("Heading not established");
+  // else
+  // {
+  //   Serial.print("Heading established: ");
+  //   Serial.println(heading);
+  // }
+  // while((firstHeading == -1.0) && (northEstablished == false))
+  //   {
+  //     // delay(5000);
+  //     firstHeading = getHeading();
+  //     delay(100);
+  //     if(firstHeading != -1.0)
+  //     {
+  //       northEstablished = true;
+  //       Serial.printf(" Inside First heading = %0.2f\n",firstHeading);
+  //     }
+  //     else
+  //     {
+  //       Serial.println("no");
+  //     }
+  //   }
+  getWhiskerDistance();
+  Serial.printf("Whisker: ");
+  Serial.print(whiskDistanceInch);
+  delay(10);
+  heading = getHeading();
+  if(heading != -1)
+  {
+  Serial.printf("\n\t\tIMU: ");
+  Serial.println(heading);
+
+  }
+  else
+  {
+    Serial.println();
+  }
+  delay(100);
 
 #endif
 
@@ -341,33 +441,39 @@ void loop(){
 /*
   also added code to turn using PWM but doesn't work with the test code below
 */
-  // while((heading > (test + 1)) || (heading < (test - 1)) )
+  while((floor(heading) >= (test + 10)) || (floor(heading) <= (test - 10)) )
   {
-    if (bno08x.getSensorEvent(&sensorValue))
+
+          // Serial.print("cjec");
+    // if (bno08x.getSensorEvent(&sensorValue))
       {
-        switch (sensorValue.sensorId)
+        // switch (sensorValue.sensorId)
+        // {
+        // case SH2_LINEAR_ACCELERATION:
+        // {
+        //   // TODO adjust reports function
+        //   // Serial.print("Acceleration (x): ");
+        //   float xAccel = sensorValue.un.linearAcceleration.x;
+        //   Serial.println(xAccel);
+        //   break;
+        // }
+        // case SH2_ARVR_STABILIZED_RV:
         {
-        case SH2_LINEAR_ACCELERATION:
-        {
-          // TODO adjust reports function
-          Serial.print("Acceleration (x): ");
-          float xAccel = sensorValue.un.linearAcceleration.x;
-          Serial.println(xAccel);
-          break;
-        }
-        case SH2_ARVR_STABILIZED_RV:
-        {
-          heading = calculateHeading(sensorValue.un.arvrStabilizedRV.i, sensorValue.un.arvrStabilizedRV.j, sensorValue.un.arvrStabilizedRV.k, sensorValue.un.arvrStabilizedRV.real);
+          heading = getHeading(); //calculateHeading(sensorValue.un.arvrStabilizedRV.i, sensorValue.un.arvrStabilizedRV.j, sensorValue.un.arvrStabilizedRV.k, sensorValue.un.arvrStabilizedRV.real);
           Serial.print("Heading: ");
-          Serial.println(heading);
-          break;
+          Serial.print(heading);
+          Serial.print("\ttest: ");
+          Serial.println(test);
+          // break;
         }
-        }
+        // }
       }
-      // turn(LEFT, 100);
-      // delay(100);
+      turn(LEFT, 120);
+      delay(100);
 
   }
+  stop();
+  delay(500);
   // move(FORWARD, 100);
   // delay(500);
   // standby();
@@ -376,14 +482,49 @@ void loop(){
   // delay(500);
   // standby();
   // delay(100);
-  // test += 45;
-  // if(test > 360)
-  //   test -=360;
+  test += 45;
+  if(test > 360)
+    test -=360;
 
 
 
 
   
+#endif
+
+#ifdef TURNS_2
+  // while((floor(heading) >= (test + 3)) || (floor(heading) <= (test - 3)) )
+  while(1)
+  {
+    heading = getHeading();
+
+
+  }
+    // if((test == 0 ) || (test == 360 ))
+    // {
+
+    // }
+    if(((test+2) >= heading) && ((test-2) <= heading))
+    {
+      // speed = 128;
+      stop();
+      test += 45;
+      if(test > 360)
+        test -=360;
+        delay(500);
+
+    }
+    else if((test) <= heading)
+    {
+      turn(RIGHT, speed);
+      // speed -= 10;
+    }
+    else
+    {
+      turn(LEFT, speed);
+      // speed -= 10;
+    }
+    
 #endif
 }
 
