@@ -1,11 +1,9 @@
 /*
 Ideas to fix the problem when car is diagonal to the wall:
 
-Get the highest max and lowest min every 90 degrees. 
+Get the highest max and lowest min every 90 degrees.
 
-*/ 
-
-
+*/
 
 #include "Arduino.h"
 #include <ESP32Servo.h>
@@ -18,8 +16,10 @@ int pos = -2; // variable to store the servo position
 int servoPin = 2;
 
 #define LRF_ADDRESS_1 0x10
-
 #define BUFFER_SIZE 20
+
+#define ANGLE 0
+#define DISTANCE 1
 
 bool rotateTo180 = true;
 
@@ -31,8 +31,11 @@ uint16_t inflectionPos;
 uint8_t maximaCounter = 0;
 uint8_t minimaCounter = 0;
 
-uint8_t maximaValues[4] = {0};
-uint8_t minimaValues[4] = {0};
+uint8_t inflectionCounter = 0;
+int16_t oldInflectionIndex = -10;
+
+uint8_t maximaProps[4][2] = {{0}, {0}};
+uint8_t minimaProps[4][2] = {{0}, {0}};
 
 uint16_t possiblePeak;
 uint16_t possibleValley;
@@ -55,8 +58,8 @@ void setup()
 }
 void findLocationMinMax()
 {
-  y = minimaValues[1];
-  float c = maximaValues[0];
+  y = minimaProps[0][DISTANCE];
+  float c = maximaProps[0][DISTANCE];
 
   // Calculate x coordinate using pythagorean theorem
   x = sqrt(pow(c, 2) - pow(y, 2));
@@ -64,8 +67,8 @@ void findLocationMinMax()
 
 void findLocationMaxMax()
 {
-  float a = maximaValues[0];
-  float b = maximaValues[1];
+  float a = maximaProps[0][DISTANCE];
+  float b = maximaProps[1][DISTANCE];
   float c = 243.84;
 
   // Calculate semi-perimeter
@@ -95,12 +98,23 @@ void findLocalMinimaAndMaxima(int32_t arr[], int n, int neighborhood)
           positiveSlopeCounter++;
           if (positiveSlopeCounter == 2) // for noisy data
           {
-            // Valley Detected
-            printf("Local Minima found at index %d, value: %d\n", i, arr[i]);
-            myservo.write(i * 2);
-            minimaValues[minimaCounter] = arr[possibleValley];
-            minimaCounter++;
-            delay(2000);
+
+            if (inflectionCounter != 0 && possibleValley <= 90 && abs(possibleValley - oldInflectionIndex) > 10) // disregard first minimum most likely inaccurate
+            {
+              minimaProps[minimaCounter][ANGLE] = possibleValley;
+              minimaProps[minimaCounter][DISTANCE] = arr[possibleValley];
+              myservo.write(possibleValley * 2);
+              minimaCounter++;
+
+              oldInflectionIndex = possibleValley;
+
+              // Valley Detected
+              printf("Local Minima found at index %d, value: %d\n", possibleValley, arr[possibleValley]);
+
+              myservo.write(possibleValley * 2);
+              delay(2000);
+            }
+            inflectionCounter++;
             startPositiveCounter = false;
             positiveSlopeCounter = 0;
           }
@@ -130,11 +144,23 @@ void findLocalMinimaAndMaxima(int32_t arr[], int n, int neighborhood)
           if (negativeSlopeCounter == 2) // for noisy data
           {
             // Peak Detected
-            printf("Local Maxima found at index %d, value: %d\n", i, arr[i]);
-            myservo.write(i * 2);
-            maximaValues[maximaCounter] = arr[possiblePeak];
-            maximaCounter++;
-            delay(2000);
+            // printf("Local Maxima found at index %d, value: %d\n", i, arr[i]);
+            // myservo.write(i * 2);
+            // maximaValues[maximaCounter] = arr[possiblePeak];
+            // maximaCounter++;
+            // delay(2000);
+
+            if (possiblePeak <= 90 && abs(possiblePeak - oldInflectionIndex) > 10) // disregard first minimum most likely inaccurate
+            {
+              maximaProps[maximaCounter][ANGLE] = possiblePeak;
+              maximaProps[maximaCounter][DISTANCE] = arr[possiblePeak];
+              maximaCounter++;
+              oldInflectionIndex = possiblePeak;
+              printf("Local Maxima found at index %d, value: %d\n", possiblePeak, arr[possiblePeak]);
+              myservo.write(possiblePeak * 2);
+              delay(2000);
+            }
+            inflectionCounter++;
             startNegativeCounter = false;
             negativeSlopeCounter = 0;
           }
@@ -172,21 +198,20 @@ void loop()
       int neighborhood = 30; // You can adjust this to be larger or smaller
 
       findLocalMinimaAndMaxima(distance, n, neighborhood);
-      if (maximaCounter == 2 && minimaCounter == 2)
-      {
+      // if (maximaCounter == 2 && minimaCounter == 2)
+      // {
 
-        findLocationMinMax();
-        printf("location calculated with 1 max and 1 min value is:\nx: %f cm (%f ft)\ny: %f cm (%f ft)\n", x, x / (2.54 * 12), y, y / (2.54 * 12));
+      findLocationMinMax();
+      printf("location calculated with 1 max and 1 min value is:\nx: %f cm (%f ft)\ny: %f cm (%f ft)\n", x, x / (2.54 * 12), y, y / (2.54 * 12));
 
-        findLocationMaxMax();
-        printf("location calculated with 2 max valeus is:\nx: %f cm (%f ft)\ny: %f cm (%f ft)\n", x, x / (2.54 * 12), y, y / (2.54 * 12));
-      }
-      else
-      {
-        Serial.println("Incorrect number of Max and min values, expecting 2 min and and 2 max");
-        printf("maxima counter: %d\nminima counter: %d\n", maximaCounter, minimaCounter);
-
-      }
+      findLocationMaxMax();
+      printf("location calculated with 2 max valeus is:\nx: %f cm (%f ft)\ny: %f cm (%f ft)\n", x, x / (2.54 * 12), y, y / (2.54 * 12));
+      // }
+      // else
+      // {
+      //   Serial.println("Incorrect number of Max and min values, expecting 2 min and and 2 max");
+      //   printf("maxima counter: %d\nminima counter: %d\n", maximaCounter, minimaCounter);
+      // }
     }
     else
     {
@@ -218,5 +243,6 @@ void loop()
     distIndex = 0;
     maximaCounter = 0;
     minimaCounter = 0;
+    inflectionCounter = 0;
   }
 }
