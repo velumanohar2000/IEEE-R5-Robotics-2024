@@ -127,14 +127,14 @@ void turn(bool direction, uint16_t speed)
     analogWrite(in1, speed);
     analogWrite(in2, NO_SPEED);
     analogWrite(in3, NO_SPEED);
-    analogWrite(in4, speed);
-    // analogWrite(in4, NO_SPEED);
+    // analogWrite(in4, speed);
+    analogWrite(in4, NO_SPEED);
   }
   else
   {
     analogWrite(in1, NO_SPEED);
-    analogWrite(in2, speed);
-    // analogWrite(in2, NO_SPEED);
+    // analogWrite(in2, speed);
+    analogWrite(in2, NO_SPEED);
     analogWrite(in3, speed);
     analogWrite(in4, NO_SPEED);
   }

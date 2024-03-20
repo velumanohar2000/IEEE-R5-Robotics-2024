@@ -37,7 +37,7 @@
 #define MOTORB_IN_4 7
 
 // Whisker
-#define WHISKER_STOP_DIS 5
+#define WHISKER_STOP_DIS 8
 #define MAX_PRELIM_DIST 60
 
 // LRF
@@ -78,6 +78,12 @@ uint16_t speed = 128;
 // Servo
 Servo myservo; // create servo object to control a servo
 SFEVL53L1X distanceSensor;
+float dt = 0;
+float millisOld = 0;
+unsigned long lastTime, currentTime = 0;
+float x, y, z = 0;
+float thetaZ = 0;
+float angle = 0;
 
 // 16 servo objects can be created on the ESP32
 
@@ -93,6 +99,7 @@ sh2_SensorValue_t sensorValue;
 float getHeading()
 {
   float retVal = -1;
+  float z = 0;
   // if (bno08x.getSensorEvent(&sensorValue))
   // {
   //   switch (sensorValue.sensorId)
@@ -111,9 +118,31 @@ float getHeading()
   //   }
   // }
   if (bno08x.getSensorEvent(&sensorValue))
-    retVal = calculateHeading(sensorValue.un.arvrStabilizedRV.i, sensorValue.un.arvrStabilizedRV.j, sensorValue.un.arvrStabilizedRV.k, sensorValue.un.arvrStabilizedRV.real);
-  //     
+  {
+    switch (sensorValue.sensorId)
+    {
+      case SH2_GYROSCOPE_CALIBRATED:
+      {
+        z = sensorValue.un.gyroscope.z;
+        break;
+      }
+      default:
+        break;
+    }
+  currentTime = micros();
+  dt = (currentTime - lastTime)/1000000.0;
+  lastTime = currentTime;
+  thetaZ += z*dt;
+  angle = thetaZ*(180/M_PI);
+  if(angle > 360)
+    angle -= 360;
+  else if(angle < 0)
+    angle += 360;
+
+  retVal = angle;
+  }
   return retVal;
+
 }
 
 void getWhiskerDistance()
@@ -157,7 +186,7 @@ void setup()
 }
 
 void loop(){
-  #ifdef VELU
+#ifdef VELU
   for (pos = 0; pos <= 180; pos += 1)
   { // goes from 0 degrees to 180 degrees
     // in steps of 1 degree
@@ -189,7 +218,7 @@ void loop(){
     printf("X: %d, Y: %d\n", local_maxes[i]->x, local_maxes[i]->y);
   }
   delay(1000);
-  #endif
+#endif
 
 #ifdef PRELIMS
   /*
@@ -290,17 +319,17 @@ void loop(){
 #endif
 
 #ifdef PRELIMS_DRAFT
-  while((firstHeading == -1.0) && (!northEstablished))
-  {
-    firstHeading = getHeading();
-    // delay(100);
-    if(firstHeading != -1.0)
-    {
-      northEstablished = true;
-      Serial.print("heading is: ");
-      Serial.println(firstHeading);
-    }
-  }
+  // while((firstHeading == -1.0) && (!northEstablished))
+  // {
+  //   firstHeading = getHeading();
+  //   // delay(100);
+  //   if(firstHeading != -1.0)
+  //   {
+  //     northEstablished = true;
+  //     Serial.print("heading is: ");
+  //     Serial.println(firstHeading);
+  //   }
+  // }
   if(!wallFound)
   {
     if(whiskDistanceInch > WHISKER_STOP_DIS)
@@ -336,32 +365,32 @@ void loop(){
       nextAngle += 90.0;
       if(nextAngle > 360)
         nextAngle -= 360;
-        Serial.print("nextAngle is: ");
+      Serial.print("nextAngle is: ");
       Serial.println(nextAngle);
     }
     getWhiskerDistance();
   }
   else
   {
-    while(currentAngle == -1)
+    // while(currentAngle == -1)
+    // {
+    //   currentAngle = getHeading();
+    //   // delay(100);
+    // }
+    currentAngle = getHeading();
+
+      // Serial.print("currentAngle is: ");
+      // Serial.println(currentAngle);
+    
+    // if(currentAngle > 360)
+    //   currentAngle -= 360;
+    while((currentAngle > (nextAngle + 2)) || (currentAngle < (nextAngle - 2)) )
     {
       currentAngle = getHeading();
-      // delay(100);
-    }
-    currentAngle = (currentAngle + firstHeading);
-
-      Serial.print("currentAngle is: ");
-      Serial.println(currentAngle);
-    
-    if(currentAngle > 360)
-      currentAngle -= 360;
-    while((currentAngle > (nextAngle + 10)) || (currentAngle < (nextAngle - 10)) )
-    {
-      currentAngle = abs(getHeading() - firstHeading);
       Serial.print("pointing at: ");
       Serial.println(currentAngle);
-      delay(100);
-      turn(RIGHT, 115);
+      // delay(100);
+      turn(RIGHT, 90);
     }
     stop();
     delay(1000);
@@ -441,7 +470,7 @@ void loop(){
 /*
   also added code to turn using PWM but doesn't work with the test code below
 */
-  while((floor(heading) >= (test + 10)) || (floor(heading) <= (test - 10)) )
+  while((floor(heading) >= (test+1)) || (floor(heading) <= (test - 1)) )
   {
 
           // Serial.print("cjec");
@@ -468,8 +497,10 @@ void loop(){
         }
         // }
       }
-      turn(LEFT, 120);
-      delay(100);
+      turn(RIGHT, 90);
+      // delay(50);
+      // stop();
+      // delay(5);
 
   }
   stop();
@@ -485,6 +516,8 @@ void loop(){
   test += 45;
   if(test > 360)
     test -=360;
+  else if(test == 360)
+    test = 0;
 
 
 
