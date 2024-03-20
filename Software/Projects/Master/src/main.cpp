@@ -6,6 +6,7 @@
 // Libraries ------------------------------------------------------------------
 
 #include "Arduino.h"
+#include <stdbool.h>
 #include <ESP32Servo.h>
 #include "lrf.h"
 #include "Wire.h"
@@ -13,13 +14,21 @@
 #include "motor_control.h"
 #include "VL53L1X.h"
 #include "Ultrasonic.h"
+#include <Adafruit_BNO08x.h>
+#include "math.h"
+#include "BNO085_heading_acceleration.h"
 
 // Defines --------------------------------------------------------------------
 
+// Modes
+
 // Preprocessor Directives
-#define PRELIMS
+// #define PRELIMS
+#define PRELIMS_DRAFT
+// #define CHECK_I2C
 // #define VELU
 // #define TURNS
+// #define TURNS_2
 
 // Motors
 #define MOTORA_IN_1 3
@@ -28,7 +37,7 @@
 #define MOTORB_IN_4 7
 
 // Whisker
-#define WHISKER_STOP_DIS 10
+#define WHISKER_STOP_DIS 8
 #define MAX_PRELIM_DIST 60
 
 // LRF
@@ -54,24 +63,112 @@ float ultraDistanceInch;           // ultrasonic
 // Whisker
 int whiskDistance;                           // whisker
 float whiskDistanceInch = 1000;            // whisker
+bool wallFound = false;
 
+// IMU
+float heading = -1.0;             // IMU
+float test = 45.0;
+float firstHeading = -1.0;
+bool northEstablished = false;
+float nextAngle = 0.0;
+float currentAngle = -1;
+uint16_t speed = 128;
 // Structures & Classes -------------------------------------------------------
 
 // Servo
 Servo myservo; // create servo object to control a servo
 SFEVL53L1X distanceSensor;
+float dt = 0;
+float millisOld = 0;
+unsigned long lastTime, currentTime = 0;
+float x, y, z = 0;
+float thetaZ = 0;
+float angle = 0;
 
 // 16 servo objects can be created on the ESP32
 
 // Ultrasonic Sensor
 Ultrasonic ultrasonic(0, 1);
 
+// IMU
+Adafruit_BNO08x bno08x;
+sh2_SensorValue_t sensorValue;
+
 // Functions ------------------------------------------------------------------
+
+float getHeading()
+{
+  float retVal = -1;
+  float z = 0;
+  // if (bno08x.getSensorEvent(&sensorValue))
+  // {
+  //   switch (sensorValue.sensorId)
+  //   {
+  //   case SH2_LINEAR_ACCELERATION:
+  //   {
+  //     retVal = sensorValue.un.linearAcceleration.x;
+  //     retVal = -1.0;
+  //     break;
+  //   }
+  //   case SH2_ARVR_STABILIZED_RV:
+  //   {
+  //     retVal = calculateHeading(sensorValue.un.arvrStabilizedRV.i, sensorValue.un.arvrStabilizedRV.j, sensorValue.un.arvrStabilizedRV.k, sensorValue.un.arvrStabilizedRV.real);
+  //     break;
+  //   }
+  //   }
+  // }
+  if (bno08x.getSensorEvent(&sensorValue))
+  {
+    switch (sensorValue.sensorId)
+    {
+      case SH2_GYROSCOPE_CALIBRATED:
+      {
+        z = sensorValue.un.gyroscope.z;
+        break;
+      }
+      default:
+        break;
+    }
+  currentTime = micros();
+  dt = (currentTime - lastTime)/1000000.0;
+  lastTime = currentTime;
+  thetaZ += z*dt;
+  angle = thetaZ*(180/M_PI);
+  if(angle > 360)
+    angle -= 360;
+  else if(angle < 0)
+    angle += 360;
+
+  retVal = angle;
+  }
+  return retVal;
+
+}
+
+void getWhiskerDistance()
+{
+  distanceSensor.startRanging(); //Write configuration bytes to initiate measurement
+  while (!distanceSensor.checkForDataReady())
+  {
+    delay(1);
+  }
+  whiskDistance = distanceSensor.getDistance(); //Get the result of the measurement from the sensor
+  distanceSensor.clearInterrupt();
+  distanceSensor.stopRanging();
+  whiskDistanceInch = whiskDistance * 0.0393701;
+  // Serial.printf("Whisker dis (in): %f\n", whiskDistanceInch);
+}
 
 void setup()
 {
+  Serial.begin(115200);
+  Wire.begin(9, 8);
+  // Serial.println("Adafruit BNO08x test!");
+  // Wire.begin(9, 8);
   initMotors(MOTORA_IN_1, MOTORA_IN_2, MOTORB_IN_3, MOTORB_IN_4);
   initVL53L1X();
+  setupBNO085(&bno08x);
+  // northEstablished = false;
   #ifdef VELU
   // Serial.begin(115200);
   // Wire.begin(9,8);
@@ -89,7 +186,7 @@ void setup()
 }
 
 void loop(){
-  #ifdef VELU
+#ifdef VELU
   for (pos = 0; pos <= 180; pos += 1)
   { // goes from 0 degrees to 180 degrees
     // in steps of 1 degree
@@ -121,7 +218,7 @@ void loop(){
     printf("X: %d, Y: %d\n", local_maxes[i]->x, local_maxes[i]->y);
   }
   delay(1000);
-  #endif
+#endif
 
 #ifdef PRELIMS
   /*
@@ -221,18 +318,303 @@ void loop(){
   Serial.printf("Whisker dis (in): %f\n", whiskDistanceInch);
 #endif
 
+#ifdef PRELIMS_DRAFT
+  // while((firstHeading == -1.0) && (!northEstablished))
+  // {
+  //   firstHeading = getHeading();
+  //   // delay(100);
+  //   if(firstHeading != -1.0)
+  //   {
+  //     northEstablished = true;
+  //     Serial.print("heading is: ");
+  //     Serial.println(firstHeading);
+  //   }
+  // }
+  if(!wallFound)
+  {
+    if(whiskDistanceInch > WHISKER_STOP_DIS)
+    {
+      ultraDistance = ultrasonic.read();
+      if(ultraDistance > MAX_PRELIM_DIST)
+      {
+        stop();
+      }
+      else if(ultraDistance > 8)
+      {
+        turn(LEFT, 128);
+        delay(100);
+        move(FORWARD, 128);
+        delay(100);
+      }
+      else if(ultraDistance < 5)
+      {
+        turn(RIGHT, 128);
+        delay(100);
+        
+        move(FORWARD, 128);
+        delay(25);
+      }
+      else
+        move(FORWARD, 128);
+    }
+    else
+    {
+      stop();
+      delay(1000);
+      wallFound = true;
+      nextAngle += 90.0;
+      if(nextAngle > 360)
+        nextAngle -= 360;
+      Serial.print("nextAngle is: ");
+      Serial.println(nextAngle);
+    }
+    getWhiskerDistance();
+  }
+  else
+  {
+    // while(currentAngle == -1)
+    // {
+    //   currentAngle = getHeading();
+    //   // delay(100);
+    // }
+    currentAngle = getHeading();
+
+      // Serial.print("currentAngle is: ");
+      // Serial.println(currentAngle);
+    
+    // if(currentAngle > 360)
+    //   currentAngle -= 360;
+    while((currentAngle > (nextAngle + 2)) || (currentAngle < (nextAngle - 2)) )
+    {
+      currentAngle = getHeading();
+      Serial.print("pointing at: ");
+      Serial.println(currentAngle);
+      // delay(100);
+      turn(RIGHT, 90);
+    }
+    stop();
+    delay(1000);
+    getWhiskerDistance();
+    wallFound = false;
+  }
+  
+
+#endif
+
+#ifdef CHECK_I2C
+
+  // Serial.println("begin: ");
+  // if(northEstablished)
+  // {
+  //   Serial.println("true");
+  // }
+  // else
+  //   Serial.println("false");
+
+  // delay(5000);
+  // if(northEstablished)
+  // {
+  //   Serial.print("Heading established: ");
+  //   Serial.println(heading);
+  // }
+  // else
+  // {
+  //   Serial.println("no: ");
+  //   firstHeading = getHeading();
+  //   delay(100);
+  //   Serial.println(firstHeading);
+  //   if(firstHeading != -1.0)
+  //     northEstablished = true;
+  // }
+  //   Serial.println("Heading not established");
+  // else
+  // {
+  //   Serial.print("Heading established: ");
+  //   Serial.println(heading);
+  // }
+  // while((firstHeading == -1.0) && (northEstablished == false))
+  //   {
+  //     // delay(5000);
+  //     firstHeading = getHeading();
+  //     delay(100);
+  //     if(firstHeading != -1.0)
+  //     {
+  //       northEstablished = true;
+  //       Serial.printf(" Inside First heading = %0.2f\n",firstHeading);
+  //     }
+  //     else
+  //     {
+  //       Serial.println("no");
+  //     }
+  //   }
+  getWhiskerDistance();
+  Serial.printf("Whisker: ");
+  Serial.print(whiskDistanceInch);
+  delay(10);
+  heading = getHeading();
+  if(heading != -1)
+  {
+  Serial.printf("\n\t\tIMU: ");
+  Serial.println(heading);
+
+  }
+  else
+  {
+    Serial.println();
+  }
+  delay(100);
+
+#endif
+
 #ifdef TURNS
 /*
   also added code to turn using PWM but doesn't work with the test code below
 */
+  while((floor(heading) >= (test+1)) || (floor(heading) <= (test - 1)) )
+  {
 
-  // turn(RIGHT, 128);
+          // Serial.print("cjec");
+    // if (bno08x.getSensorEvent(&sensorValue))
+      {
+        // switch (sensorValue.sensorId)
+        // {
+        // case SH2_LINEAR_ACCELERATION:
+        // {
+        //   // TODO adjust reports function
+        //   // Serial.print("Acceleration (x): ");
+        //   float xAccel = sensorValue.un.linearAcceleration.x;
+        //   Serial.println(xAccel);
+        //   break;
+        // }
+        // case SH2_ARVR_STABILIZED_RV:
+        {
+          heading = getHeading(); //calculateHeading(sensorValue.un.arvrStabilizedRV.i, sensorValue.un.arvrStabilizedRV.j, sensorValue.un.arvrStabilizedRV.k, sensorValue.un.arvrStabilizedRV.real);
+          Serial.print("Heading: ");
+          Serial.print(heading);
+          Serial.print("\ttest: ");
+          Serial.println(test);
+          // break;
+        }
+        // }
+      }
+      turn(RIGHT, 90);
+      // delay(50);
+      // stop();
+      // delay(5);
+
+  }
+  stop();
+  delay(500);
+  // move(FORWARD, 100);
   // delay(500);
-  // move(FORWARD, 128);
+  // standby();
+  // delay(100);
+  // move(BACKWARD, 100);
   // delay(500);
-  // turn(LEFT, 128);
-  // delay(500);
-  // move(FORWARD, 128);
-  // delay(500);
+  // standby();
+  // delay(100);
+  test += 45;
+  if(test > 360)
+    test -=360;
+  else if(test == 360)
+    test = 0;
+
+
+
+
+  
+#endif
+
+#ifdef TURNS_2
+  // while((floor(heading) >= (test + 3)) || (floor(heading) <= (test - 3)) )
+  while(1)
+  {
+    heading = getHeading();
+
+
+  }
+    // if((test == 0 ) || (test == 360 ))
+    // {
+
+    // }
+    if(((test+2) >= heading) && ((test-2) <= heading))
+    {
+      // speed = 128;
+      stop();
+      test += 45;
+      if(test > 360)
+        test -=360;
+        delay(500);
+
+    }
+    else if((test) <= heading)
+    {
+      turn(RIGHT, speed);
+      // speed -= 10;
+    }
+    else
+    {
+      turn(LEFT, speed);
+      // speed -= 10;
+    }
+    
 #endif
 }
+
+
+/*
+#include <Wire.h>
+#include <Adafruit_BNO08x.h>
+#include "math.h"
+#include "BNO085_heading_acceleration.h"
+
+#define BNO08X_RESET -1
+
+Adafruit_BNO08x bno08x;
+sh2_SensorValue_t sensorValue;
+
+void setup()
+{
+  setupBNO085(&bno08x);
+}
+
+float fakeNorth = 0;;
+bool firstReading = true;
+
+void loop()
+{
+  checkReset(&bno08x);
+
+  if (bno08x.getSensorEvent(&sensorValue))
+  {
+    switch (sensorValue.sensorId)
+    {
+    case SH2_LINEAR_ACCELERATION:
+    {
+      //TODO adjust reports function
+      Serial.print("Acceleration (x): ");
+      float xAccel = sensorValue.un.linearAcceleration.x;
+      Serial.println(xAccel);
+      break;
+    }
+    case SH2_ARVR_STABILIZED_RV:
+    {
+      float heading = calculateHeading(sensorValue.un.arvrStabilizedRV.i, sensorValue.un.arvrStabilizedRV.j, sensorValue.un.arvrStabilizedRV.k, sensorValue.un.arvrStabilizedRV.real);
+      heading -= fakeNorth;
+      if(heading < 0)
+        heading += 360;
+      if(firstReading)
+      {
+        fakeNorth = heading;
+        firstReading = false;
+      }
+      Serial.print("Heading: ");
+      Serial.println(heading);
+      break;
+    }
+    }
+  }
+  delay(100);
+}
+
+*/
