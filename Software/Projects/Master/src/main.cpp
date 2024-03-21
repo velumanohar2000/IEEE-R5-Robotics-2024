@@ -17,6 +17,8 @@
 #include <Adafruit_BNO08x.h>
 #include "math.h"
 #include "BNO085_heading_acceleration.h"
+// #include "SafeString.h"
+#include "millisDelay.h"
 
 // Defines --------------------------------------------------------------------
 
@@ -24,17 +26,24 @@
 
 // Preprocessor Directives
 // #define PRELIMS
-#define PRELIMS_DRAFT
+// #define PRELIMS_DRAFT
+// #define PRELIMS_DRAFT_V2
 // #define CHECK_I2C
 // #define VELU
 // #define TURNS
 // #define TURNS_2
+// #define TURNS_3
+#define TURNS_4
+// #define INTERRUPTS_CHECK
 
 // Motors
-#define MOTORA_IN_1 3
-#define MOTORA_IN_2 2
-#define MOTORB_IN_3 6
-#define MOTORB_IN_4 7
+#define MOTORA_IN_1 7
+#define MOTORA_IN_2 6
+#define MOTORB_IN_3 2
+#define MOTORB_IN_4 3
+
+//IMU
+#define IMU_INTERRUPT 10
 
 // Whisker
 #define WHISKER_STOP_DIS 8
@@ -45,6 +54,12 @@
 #define LRF_ADDRESS_2 0x20
 
 // Variables & Constants ------------------------------------------------------
+
+/*
+counter = 1
+++
+360 * counter
+*/
 
 // Servo
 int pos = 0; // variable to store the servo position
@@ -66,13 +81,14 @@ float whiskDistanceInch = 1000;            // whisker
 bool wallFound = false;
 
 // IMU
-float heading = -1.0;             // IMU
 float test = 45.0;
-float firstHeading = -1.0;
-bool northEstablished = false;
-float nextAngle = 0.0;
-float currentAngle = -1;
+float nextAngle = 90.0;
 uint16_t speed = 128;
+// #define TIRE_DELAY 100
+// millisDelay tireDelay;
+// float angleDiff = 0;
+// float startingangle = 0;
+uint32_t m = 0;
 // Structures & Classes -------------------------------------------------------
 
 // Servo
@@ -83,7 +99,8 @@ float millisOld = 0;
 unsigned long lastTime, currentTime = 0;
 float x, y, z = 0;
 float thetaZ = 0;
-float angle = 0;
+// float angle = 0;
+uint32_t timeDifference = 0;
 
 // 16 servo objects can be created on the ESP32
 
@@ -95,9 +112,37 @@ Adafruit_BNO08x bno08x;
 sh2_SensorValue_t sensorValue;
 
 // Functions ------------------------------------------------------------------
+// void IRAM_ATTR imuIsr() {
+//   // newDataFlag = true;
+//   Serial.println("triggered");
+//   if (bno08x.getSensorEvent(&sensorValue))
+//   {
+//     switch (sensorValue.sensorId)
+//     {
+//       case SH2_GYROSCOPE_CALIBRATED:
+//       {
+//         z = sensorValue.un.gyroscope.z;
+//         break;
+//       }
+//       default:
+//         break;
+//     }
+//   currentTime = micros();
+//   dt = (currentTime - lastTime - 0)/1000000.0;
+//   lastTime = currentTime;
+//   thetaZ += z*dt;
+//   angle = thetaZ*(180/M_PI);
+//   if(angle > 360)
+//     angle -= 360;
+//   else if(angle < 0)
+//     angle += 360;
+//   }
+// }
 
 float getHeading()
 {
+
+  float angle = 0;
   float retVal = -1;
   float z = 0;
   // if (bno08x.getSensorEvent(&sensorValue))
@@ -134,14 +179,79 @@ float getHeading()
   lastTime = currentTime;
   thetaZ += z*dt;
   angle = thetaZ*(180/M_PI);
-  if(angle > 360)
-    angle -= 360;
-  else if(angle < 0)
-    angle += 360;
 
+  Serial.print(angle);
+  if(angle >= 359)
+    angle -= 359;
+  else if(angle < 0)
+    angle += 359;
+  Serial.printf("\t");
+  Serial.println(angle);
+  // if(angle == 0);
+    // angle = 359;
   retVal = angle;
   }
   return retVal;
+
+}
+
+void turnToGoalHeading(float goal)
+{
+  float currentAngle = -1;
+  if(goal == 0)
+    goal = 359;
+  int32_t counter = 0;
+  int32_t speed = 100;
+  while(currentAngle == -1)
+    currentAngle = getHeading();
+  float absVal = 0;
+  float angleDiff = goal - currentAngle;
+  absVal = abs(angleDiff);
+
+  while(absVal > 8)
+  {
+    Serial.print("abs: ");
+    Serial.print(absVal);
+    Serial.print(" angle: ");
+    Serial.print(currentAngle);
+
+    if((angleDiff >= 0) && (absVal <= 180))
+    {
+      Serial.print(" case 1: ");
+      // Serial.printf("Speed = %f\n", speed + (-1 * counter));
+      turn(LEFT, speed);
+    }
+    else if((angleDiff < 0) && (absVal <= 180))
+    {
+      Serial.print(" case 2: ");
+      // Serial.printf("Speed = %f\n", speed + (-1 * counter));
+      turn(RIGHT, speed);
+    }
+    else if((angleDiff >= 0) && (absVal >= 180))
+    {
+      Serial.print(" case 3: ");
+      // Serial.printf("Speed = %f\n", speed + (-1 * counter));
+      turn(RIGHT, speed);
+    }
+    else
+    {
+      Serial.print(" case 4: ");
+      // Serial.printf("Speed = %f\n", speed + (-1 * counter));
+      turn(LEFT, speed);
+    }
+    counter++;
+    if(counter > 12)
+      counter = 5;
+    currentAngle = getHeading();
+    if(currentAngle > 360)
+      currentAngle -= 360;
+    if(currentAngle < 0)
+      currentAngle += 360;
+    Serial.println(goal);
+    absVal = 0;
+    angleDiff = goal - currentAngle;
+    absVal = abs(angleDiff);
+  }
 
 }
 
@@ -163,7 +273,9 @@ void setup()
 {
   Serial.begin(115200);
   Wire.begin(9, 8);
-  // Serial.println("Adafruit BNO08x test!");
+  // pinMode(IMU_INTERRUPT, INPUT);
+  // attachInterrupt(digitalPinToInterrupt(IMU_INTERRUPT), imuIsr, FALLING);
+  Serial.println("Adafruit BNO08x test!");
   // Wire.begin(9, 8);
   initMotors(MOTORA_IN_1, MOTORA_IN_2, MOTORB_IN_3, MOTORB_IN_4);
   initVL53L1X();
@@ -186,6 +298,7 @@ void setup()
 }
 
 void loop(){
+float currentAngle = -1;
 #ifdef VELU
   for (pos = 0; pos <= 180; pos += 1)
   { // goes from 0 degrees to 180 degrees
@@ -332,6 +445,7 @@ void loop(){
   // }
   if(!wallFound)
   {
+    currentAngle = getHeading();
     if(whiskDistanceInch > WHISKER_STOP_DIS)
     {
       ultraDistance = ultrasonic.read();
@@ -342,17 +456,29 @@ void loop(){
       else if(ultraDistance > 8)
       {
         turn(LEFT, 128);
-        delay(100);
+        tireDelay.start(TIRE_DELAY);
+        while(!tireDelay.justFinished())
+          currentAngle = getHeading();
+        // delay(100);
         move(FORWARD, 128);
-        delay(100);
+        tireDelay.start(TIRE_DELAY);
+        while(!tireDelay.justFinished())
+         currentAngle = getHeading();
+        // delay(100);
       }
       else if(ultraDistance < 5)
       {
         turn(RIGHT, 128);
-        delay(100);
+        tireDelay.start(TIRE_DELAY);
+        while(!tireDelay.justFinished())
+          currentAngle = getHeading();
+        // delay(100);
         
         move(FORWARD, 128);
-        delay(25);
+        tireDelay.start(TIRE_DELAY);
+        while(!tireDelay.justFinished())
+          currentAngle = getHeading();
+        // delay(25);
       }
       else
         move(FORWARD, 128);
@@ -360,7 +486,7 @@ void loop(){
     else
     {
       stop();
-      delay(1000);
+      delay(50);
       wallFound = true;
       nextAngle += 90.0;
       if(nextAngle > 360)
@@ -372,19 +498,19 @@ void loop(){
   }
   else
   {
-    // while(currentAngle == -1)
-    // {
-    //   currentAngle = getHeading();
-    //   // delay(100);
-    // }
-    currentAngle = getHeading();
+    while(currentAngle == -1)
+    {
+      currentAngle = getHeading();
+      // delay(100);
+    }
+    // currentAngle = getHeading();
 
       // Serial.print("currentAngle is: ");
       // Serial.println(currentAngle);
     
     // if(currentAngle > 360)
     //   currentAngle -= 360;
-    while((currentAngle > (nextAngle + 2)) || (currentAngle < (nextAngle - 2)) )
+    while((currentAngle > (nextAngle + 1)) || (currentAngle < (nextAngle - 1)) )
     {
       currentAngle = getHeading();
       Serial.print("pointing at: ");
@@ -393,12 +519,128 @@ void loop(){
       turn(RIGHT, 90);
     }
     stop();
-    delay(1000);
+    // static uint32_t i = 0;
+    // for(i = 0; i < 16*1000000; i++)
+    //   asm volatile ("nop\n\t");
+    tireDelay.start(TIRE_DELAY);
+    while(!tireDelay.justFinished())
+      currentAngle = getHeading();
+    // delay(100);
+    // timeDifference = 1000 * 1000;
     getWhiskerDistance();
     wallFound = false;
   }
   
 
+#endif
+
+#ifdef PRELIMS_DRAFT_V2
+if(!wallFound)
+  {
+    currentAngle = getHeading();
+    Serial.println("1");
+    if(whiskDistanceInch > WHISKER_STOP_DIS)
+    {
+      ultraDistance = ultrasonic.read();
+      if(ultraDistance > MAX_PRELIM_DIST)
+      {
+
+    Serial.println("2");
+        currentAngle = getHeading();
+        angleDiff = currentAngle - startingangle;
+        stop();
+      }
+      else if(/*ultraDistance > 8 ||*/ (angleDiff > 1))
+      {
+
+    Serial.println("3");
+        angleDiff = currentAngle - startingangle;
+        while(currentAngle < 1)
+        {
+
+    Serial.println("4");
+          turn(LEFT, 128);
+          currentAngle = getHeading();
+          angleDiff = currentAngle - startingangle;
+        }
+          move(FORWARD, 128);
+      }
+      else if(/*ultraDistance < 5 ||*/ (angleDiff < 1))
+      {
+
+    Serial.println("5");
+        angleDiff = startingangle - currentAngle;
+        while(currentAngle > 1)
+        {
+
+    Serial.println("6");
+          turn(RIGHT, 128);        
+          currentAngle = getHeading();
+          angleDiff = startingangle - currentAngle;
+        }
+        move(FORWARD, 128);
+      }
+      else
+      {
+        move(FORWARD, 128);
+
+    Serial.println("7");
+
+      }
+    }
+    else
+    {
+      stop();
+      for(m = 0; m < 5000; m++)
+        if((m%100) == 0)
+          currentAngle = getHeading();
+      // delay(1000);
+      wallFound = true;
+      startingangle += 90;
+      nextAngle += 90.0;
+      if(nextAngle > 360)
+        nextAngle -= 360;
+      if(startingangle > 360)
+        startingangle -= 360;
+      Serial.print("nextAngle is: ");
+      Serial.println(nextAngle);
+    }
+    getWhiskerDistance();
+  }
+  else
+  {
+    while(currentAngle == -1)
+    {
+      currentAngle = getHeading();
+      // delay(100);
+    }
+    // currentAngle = getHeading();
+
+      // Serial.print("currentAngle is: ");
+      // Serial.println(currentAngle);
+    
+    // if(currentAngle > 360)
+    //   currentAngle -= 360;
+    while((currentAngle > (nextAngle + 1)) || (currentAngle < (nextAngle - 1)) )
+    {
+      currentAngle = getHeading();
+      Serial.print("pointing at: ");
+      Serial.println(currentAngle);
+      // delay(100);
+      turn(RIGHT, 90);
+    }
+    stop();
+    for(m = 0; m < 5000; m++)
+        if((m%100) == 0)
+          currentAngle = getHeading();
+    // static uint32_t i = 0;
+    // for(i = 0; i < 16*1000000; i++)
+    //   asm volatile ("nop\n\t");
+    // delay(100);
+    // timeDifference = 1000 * 1000;
+    getWhiskerDistance();
+    wallFound = false;
+  }
 #endif
 
 #ifdef CHECK_I2C
@@ -505,6 +747,13 @@ void loop(){
   }
   stop();
   delay(500);
+  Serial.print(" current: ");
+          Serial.print(currentTime);
+          Serial.print("\tlast: ");
+          Serial.print(lastTime);
+          Serial.print("\tdiff: ");
+          Serial.print(timeDifference);
+  timeDifference = 500*1000;
   // move(FORWARD, 100);
   // delay(500);
   // standby();
@@ -526,95 +775,119 @@ void loop(){
 #endif
 
 #ifdef TURNS_2
-  // while((floor(heading) >= (test + 3)) || (floor(heading) <= (test - 3)) )
-  while(1)
-  {
-    heading = getHeading();
 
+  currentAngle = getHeading();
+  angleDiff = nextAngle - currentAngle;
+  if(abs(angleDiff) > 2)
+  {
+    if(angleDiff > 2)
+      while(angleDiff < nextAngle)
+      {
+        Serial.print("Current ");
+        Serial.print(currentAngle);
+        Serial.print("\tNext ");
+        Serial.print(nextAngle);
+        Serial.print("\tdiff ");
+        Serial.println(angleDiff);
+        turn(RIGHT, 128);
+        currentAngle = getHeading();
+        angleDiff = nextAngle - currentAngle;
+      }
+    else
+      while(angleDiff < nextAngle)
+        {
+          Serial.print("Current ");
+          Serial.print(currentAngle);
+          Serial.print("\tNext ");
+          Serial.print(nextAngle);
+          Serial.print("\tdiff ");
+          Serial.println(nextAngle);
+          turn(LEFT, 128);
+          currentAngle = getHeading();
+          angleDiff = nextAngle - currentAngle;
+        }
 
   }
-    // if((test == 0 ) || (test == 360 ))
-    // {
+  else
+  {
+    Serial.println("stop");
+    stop();
+    currentAngle = getHeading();
+    // while(1);
+    if(nextAngle == 90)
+      nextAngle = 0;
+      else
+      nextAngle = 90;
 
-    // }
-    if(((test+2) >= heading) && ((test-2) <= heading))
-    {
-      // speed = 128;
-      stop();
-      test += 45;
-      if(test > 360)
-        test -=360;
-        delay(500);
+  }
+  // while((floor(heading) >= (test + 3)) || (floor(heading) <= (test - 3)) )
+  // while(1)
+  // {
+  //   heading = getHeading();
 
-    }
-    else if((test) <= heading)
-    {
-      turn(RIGHT, speed);
-      // speed -= 10;
-    }
-    else
-    {
-      turn(LEFT, speed);
-      // speed -= 10;
-    }
+
+  // }
+  //   // if((test == 0 ) || (test == 360 ))
+  //   // {
+
+  //   // }
+  //   if(((test+2) >= heading) && ((test-2) <= heading))
+  //   {
+  //     // speed = 128;
+  //     stop();
+  //     test += 45;
+  //     if(test > 360)
+  //       test -=360;
+  //       delay(500);
+
+  //   }
+  //   else if((test) <= heading)
+  //   {
+  //     turn(RIGHT, speed);
+  //     // speed -= 10;
+  //   }
+  //   else
+  //   {
+  //     turn(LEFT, speed);
+  //     // speed -= 10;
+  //   }
     
 #endif
-}
 
+#ifdef INTERRUPTS_CHECK
+  
+#endif
 
-/*
-#include <Wire.h>
-#include <Adafruit_BNO08x.h>
-#include "math.h"
-#include "BNO085_heading_acceleration.h"
+#ifdef TURNS_3
 
-#define BNO08X_RESET -1
-
-Adafruit_BNO08x bno08x;
-sh2_SensorValue_t sensorValue;
-
-void setup()
-{
-  setupBNO085(&bno08x);
-}
-
-float fakeNorth = 0;;
-bool firstReading = true;
-
-void loop()
-{
-  checkReset(&bno08x);
-
-  if (bno08x.getSensorEvent(&sensorValue))
+  Serial.println("Start");
+  turnToGoalHeading(180);
+  Serial.print("Current Angle");
+  Serial.println(getHeading());
+  turnToGoalHeading(359);
+  Serial.print("Current Angle");
+  Serial.println(getHeading());
+  turnToGoalHeading(180);
+  Serial.print("Current Angle");
+  Serial.println(getHeading());
+  turnToGoalHeading(359);
+  Serial.print("Current Angle");
+  Serial.println(getHeading());
+  // turnToGoalHeading(0);
+  // Serial.print("Current Angle");
+  // Serial.println(getHeading());
+  // turnToGoalHeading(270);
+  // Serial.print("Current Angle");
+  // Serial.println(getHeading());
+    stop();
+    Serial.print("Stopped");
+  while(1)
   {
-    switch (sensorValue.sensorId)
-    {
-    case SH2_LINEAR_ACCELERATION:
-    {
-      //TODO adjust reports function
-      Serial.print("Acceleration (x): ");
-      float xAccel = sensorValue.un.linearAcceleration.x;
-      Serial.println(xAccel);
-      break;
-    }
-    case SH2_ARVR_STABILIZED_RV:
-    {
-      float heading = calculateHeading(sensorValue.un.arvrStabilizedRV.i, sensorValue.un.arvrStabilizedRV.j, sensorValue.un.arvrStabilizedRV.k, sensorValue.un.arvrStabilizedRV.real);
-      heading -= fakeNorth;
-      if(heading < 0)
-        heading += 360;
-      if(firstReading)
-      {
-        fakeNorth = heading;
-        firstReading = false;
-      }
-      Serial.print("Heading: ");
-      Serial.println(heading);
-      break;
-    }
-    }
   }
-  delay(100);
-}
+#endif
 
-*/
+#ifdef TURNS_4
+  float angle1 = getHeading();
+
+#endif
+}
