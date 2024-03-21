@@ -7,7 +7,7 @@
 void setReports(Adafruit_BNO08x *bno08x, sh2_SensorId_t reportType, uint32_t interval)
 {
   Serial.println("Setting desired reports");
-  if (!bno08x->enableReport(reportType, interval)) // Top frequency is about 250Hz but this report is more accurate
+  if (!bno08x->enableReport(reportType, interval)) 
   {
     Serial.println("Could not enable stabilized remote vector");
   }
@@ -15,8 +15,8 @@ void setReports(Adafruit_BNO08x *bno08x, sh2_SensorId_t reportType, uint32_t int
 
 void reports(Adafruit_BNO08x *bno08x)
 {
-  setReports(bno08x, SH2_LINEAR_ACCELERATION, 500);
-  setReports(bno08x, SH2_ARVR_STABILIZED_RV, 2000);
+  //setReports(bno08x, SH2_LINEAR_ACCELERATION, 500);
+  setReports(bno08x, SH2_ARVR_STABILIZED_RV, 300);
 }
 
 

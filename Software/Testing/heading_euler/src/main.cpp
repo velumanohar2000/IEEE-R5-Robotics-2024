@@ -3,7 +3,14 @@
 #include "math.h"
 #include "BNO085_heading_acceleration.h"
 
+/*
+* Make sure to use pull up resistors!!!
+* I am using 1k resitors in this demo
+*/
+
+
 #define BNO08X_RESET -1
+
 
 Adafruit_BNO08x bno08x;
 sh2_SensorValue_t sensorValue;
