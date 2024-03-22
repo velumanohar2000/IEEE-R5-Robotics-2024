@@ -3,12 +3,12 @@
 #include "motor_control_v2.h"
 
 /*LEFT MOTOR*/
-const uint8_t MOTOR_A_IN_1 = 8;
-const uint8_t MOTOR_A_IN_2 = 7;
+const uint8_t MOTOR_A_IN_1 = 41;
+const uint8_t MOTOR_A_IN_2 = 40;
 
 /*RIGHT MOTOR*/
-const uint8_t MOTOR_B_IN_3 = 5;
-const uint8_t MOTOR_B_IN_4 = 4;
+const uint8_t MOTOR_B_IN_3 = 39;
+const uint8_t MOTOR_B_IN_4 = 38;
 
 ESP32MotorControl motors;
 

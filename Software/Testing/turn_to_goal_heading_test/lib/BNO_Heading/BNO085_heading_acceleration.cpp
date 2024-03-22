@@ -16,7 +16,7 @@ void setReports(Adafruit_BNO08x *bno08x, sh2_SensorId_t reportType, uint32_t int
 void reports(Adafruit_BNO08x *bno08x)
 {
   // setReports(bno08x, SH2_LINEAR_ACCELERATION, 500);
-  setReports(bno08x, SH2_ARVR_STABILIZED_RV, 300);
+  setReports(bno08x, SH2_ARVR_STABILIZED_RV, 5000);
   // setReports(bno08x, SH2_GYROSCOPE_CALIBRATED, 2500);
 }
 
@@ -44,7 +44,6 @@ float calculateHeading(float i, float j, float k, float real)
 {
   float yaw = atan2(2.0f*(i*j+real*k),real*real+i*i-j*j-k*k);
   yaw *= 180.0f / M_PI;
-
   // Normalize heading angle
   if (yaw < 0) {
     yaw += 360.0f;
