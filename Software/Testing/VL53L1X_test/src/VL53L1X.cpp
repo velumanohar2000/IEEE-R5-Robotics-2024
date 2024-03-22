@@ -22,11 +22,11 @@
 #define SHUTDOWN_PIN 2
 #define INTERRUPT_PIN 3
 
-extern SFEVL53L1X distanceSensor;
+SFEVL53L1X distanceSensor;
 //Uncomment the following line to use the optional shutdown and interrupt pins.
 //SFEVL53L1X distanceSensor(Wire, SHUTDOWN_PIN, INTERRUPT_PIN);
 
-void initVL53L1X(void)
+void setup(void)
 {
   Wire.begin(9, 8);
 
@@ -42,7 +42,25 @@ void initVL53L1X(void)
   Serial.println("Sensor online!");
 }
 
-int getDistance(uint8_t unit)
+// int getDistance(uint8_t unit)
+// {
+//   distanceSensor.startRanging(); //Write configuration bytes to initiate measurement
+//   while (!distanceSensor.checkForDataReady())
+//   {
+//     delay(1);
+//   }
+//   int distance = distanceSensor.getDistance(); //Get the result of the measurement from the sensor
+//   distanceSensor.clearInterrupt();
+//   distanceSensor.stopRanging();
+//   if(unit == UNIT_INCHES) // inches
+//     return (distance * 0.0393701)/12;
+//   else if(unit == UNIT_FEET) // feet
+//     return distance * 0.0393701;
+//   else
+//     return distance; // mm
+// }
+
+void loop(void)
 {
   distanceSensor.startRanging(); //Write configuration bytes to initiate measurement
   while (!distanceSensor.checkForDataReady())
@@ -53,34 +71,14 @@ int getDistance(uint8_t unit)
   distanceSensor.clearInterrupt();
   distanceSensor.stopRanging();
 
-  if(unit == UNIT_INCHES) // inches
-    return (distance * 0.0393701)/12;
-  else if(unit == UNIT_FEET) // feet
-    return distance * 0.0393701;
-  else
-    return distance; // mm
+  Serial.print("Distance(mm): ");
+  Serial.print(distance);
 
+  float distanceInches = distance * 0.0393701;
+  float distanceFeet = distanceInches / 12.0;
+
+  Serial.print("\tDistance(in): ");
+  Serial.print(distanceInches, 2);
+
+  Serial.println();
 }
-
-// void loop(void)
-// {
-//   distanceSensor.startRanging(); //Write configuration bytes to initiate measurement
-//   while (!distanceSensor.checkForDataReady())
-//   {
-//     delay(1);
-//   }
-//   int distance = distanceSensor.getDistance(); //Get the result of the measurement from the sensor
-//   distanceSensor.clearInterrupt();
-//   distanceSensor.stopRanging();
-
-//   Serial.print("Distance(mm): ");
-//   Serial.print(distance);
-
-//   float distanceInches = distance * 0.0393701;
-//   float distanceFeet = distanceInches / 12.0;
-
-//   Serial.print("\tDistance(in): ");
-//   Serial.print(distanceInches, 2);
-
-//   Serial.println();
-// }

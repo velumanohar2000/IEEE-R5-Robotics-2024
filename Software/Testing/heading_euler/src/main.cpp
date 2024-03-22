@@ -1,7 +1,7 @@
 #include <Wire.h>
 #include <Adafruit_BNO08x.h>
 #include "math.h"
-#include "BNO085_heading_acceleration.h"
+#include "BNO085_heading.h"
 
 /*
 * Make sure to use pull up resistors!!!
@@ -23,7 +23,7 @@ void setup()
 
 void loop()
 {
-  checkReset(&bno08x);
+ // checkReset(&bno08x);
 
   if (bno08x.getSensorEvent(&sensorValue))
   {

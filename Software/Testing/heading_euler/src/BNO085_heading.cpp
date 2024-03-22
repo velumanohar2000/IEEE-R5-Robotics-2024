@@ -1,7 +1,7 @@
 #include <Wire.h>
 #include <Adafruit_BNO08x.h>
 #include "math.h"
-#include "BNO085_heading_acceleration.h"
+#include "BNO085_heading.h"
 
 
 void setReports(Adafruit_BNO08x *bno08x, sh2_SensorId_t reportType, uint32_t interval)

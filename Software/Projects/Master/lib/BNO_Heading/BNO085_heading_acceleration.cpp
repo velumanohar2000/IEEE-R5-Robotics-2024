@@ -16,8 +16,8 @@ void setReports(Adafruit_BNO08x *bno08x, sh2_SensorId_t reportType, uint32_t int
 void reports(Adafruit_BNO08x *bno08x)
 {
   // setReports(bno08x, SH2_LINEAR_ACCELERATION, 500);
-  // setReports(bno08x, SH2_ARVR_STABILIZED_RV, 1000);
-  setReports(bno08x, SH2_GYROSCOPE_CALIBRATED, 2500);
+  setReports(bno08x, SH2_ARVR_STABILIZED_RV, 300);
+  // setReports(bno08x, SH2_GYROSCOPE_CALIBRATED, 2500);
 }
 
 

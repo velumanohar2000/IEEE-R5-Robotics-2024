@@ -37,10 +37,10 @@
 // #define INTERRUPTS_CHECK
 
 // Motors
-#define MOTORA_IN_1 7
-#define MOTORA_IN_2 6
-#define MOTORB_IN_3 2
-#define MOTORB_IN_4 3
+#define MOTORA_IN_1 39
+#define MOTORA_IN_2 40
+#define MOTORB_IN_3 6
+#define MOTORB_IN_4 7
 
 //IMU
 #define IMU_INTERRUPT 10
@@ -145,51 +145,34 @@ float getHeading()
   float angle = 0;
   float retVal = -1;
   float z = 0;
+  if (bno08x.getSensorEvent(&sensorValue))
+  {
+    retVal = calculateHeading(sensorValue.un.arvrStabilizedRV.i, sensorValue.un.arvrStabilizedRV.j, sensorValue.un.arvrStabilizedRV.k, sensorValue.un.arvrStabilizedRV.real);
+  
   // if (bno08x.getSensorEvent(&sensorValue))
   // {
   //   switch (sensorValue.sensorId)
   //   {
-  //   case SH2_LINEAR_ACCELERATION:
-  //   {
-  //     retVal = sensorValue.un.linearAcceleration.x;
-  //     retVal = -1.0;
-  //     break;
+  //     case SH2_GYROSCOPE_CALIBRATED:
+  //     {
+  //       z = sensorValue.un.gyroscope.z;
+  //       break;
+  //     }
+  //     default:
+  //       break;
   //   }
-  //   case SH2_ARVR_STABILIZED_RV:
-  //   {
-  //     retVal = calculateHeading(sensorValue.un.arvrStabilizedRV.i, sensorValue.un.arvrStabilizedRV.j, sensorValue.un.arvrStabilizedRV.k, sensorValue.un.arvrStabilizedRV.real);
-  //     break;
-  //   }
-  //   }
-  // }
-  if (bno08x.getSensorEvent(&sensorValue))
-  {
-    switch (sensorValue.sensorId)
-    {
-      case SH2_GYROSCOPE_CALIBRATED:
-      {
-        z = sensorValue.un.gyroscope.z;
-        break;
-      }
-      default:
-        break;
-    }
-  currentTime = micros();
-  dt = (currentTime - lastTime)/1000000.0;
-  lastTime = currentTime;
-  thetaZ += z*dt;
-  angle = thetaZ*(180/M_PI);
+  
 
-  Serial.print(angle);
-  if(angle >= 359)
-    angle -= 359;
-  else if(angle < 0)
-    angle += 359;
-  Serial.printf("\t");
-  Serial.println(angle);
-  // if(angle == 0);
-    // angle = 359;
-  retVal = angle;
+  // Serial.print(angle);
+  // if(angle >= 359)
+  //   angle -= 359;
+  // else if(angle < 0)
+  //   angle += 359;
+  // Serial.printf("\t");
+  // Serial.println(angle);
+  // // if(angle == 0);
+  //   // angle = 359;
+  // retVal = angle;
   }
   return retVal;
 
@@ -243,10 +226,10 @@ void turnToGoalHeading(float goal)
     if(counter > 12)
       counter = 5;
     currentAngle = getHeading();
-    if(currentAngle > 360)
-      currentAngle -= 360;
-    if(currentAngle < 0)
-      currentAngle += 360;
+    // if(currentAngle > 360)
+    //   currentAngle -= 360;
+    // if(currentAngle < 0)
+    //   currentAngle += 360;
     Serial.println(goal);
     absVal = 0;
     angleDiff = goal - currentAngle;
@@ -456,29 +439,29 @@ float currentAngle = -1;
       else if(ultraDistance > 8)
       {
         turn(LEFT, 128);
-        tireDelay.start(TIRE_DELAY);
-        while(!tireDelay.justFinished())
-          currentAngle = getHeading();
-        // delay(100);
+        // tireDelay.start(TIRE_DELAY);
+        // while(!tireDelay.justFinished())
+        //   currentAngle = getHeading();
+        delay(100);
         move(FORWARD, 128);
-        tireDelay.start(TIRE_DELAY);
-        while(!tireDelay.justFinished())
-         currentAngle = getHeading();
-        // delay(100);
+        // tireDelay.start(TIRE_DELAY);
+        // while(!tireDelay.justFinished())
+        //  currentAngle = getHeading();
+        delay(100);
       }
       else if(ultraDistance < 5)
       {
         turn(RIGHT, 128);
-        tireDelay.start(TIRE_DELAY);
-        while(!tireDelay.justFinished())
-          currentAngle = getHeading();
-        // delay(100);
+        // tireDelay.start(TIRE_DELAY);
+        // while(!tireDelay.justFinished())
+        //   currentAngle = getHeading();
+        delay(100);
         
         move(FORWARD, 128);
-        tireDelay.start(TIRE_DELAY);
-        while(!tireDelay.justFinished())
-          currentAngle = getHeading();
-        // delay(25);
+        // tireDelay.start(TIRE_DELAY);
+        // while(!tireDelay.justFinished())
+        //   currentAngle = getHeading();
+        delay(25);
       }
       else
         move(FORWARD, 128);
@@ -522,10 +505,10 @@ float currentAngle = -1;
     // static uint32_t i = 0;
     // for(i = 0; i < 16*1000000; i++)
     //   asm volatile ("nop\n\t");
-    tireDelay.start(TIRE_DELAY);
-    while(!tireDelay.justFinished())
-      currentAngle = getHeading();
-    // delay(100);
+    // tireDelay.start(TIRE_DELAY);
+    // while(!tireDelay.justFinished())
+    //   currentAngle = getHeading();
+    delay(100);
     // timeDifference = 1000 * 1000;
     getWhiskerDistance();
     wallFound = false;
@@ -873,12 +856,6 @@ if(!wallFound)
   turnToGoalHeading(359);
   Serial.print("Current Angle");
   Serial.println(getHeading());
-  // turnToGoalHeading(0);
-  // Serial.print("Current Angle");
-  // Serial.println(getHeading());
-  // turnToGoalHeading(270);
-  // Serial.print("Current Angle");
-  // Serial.println(getHeading());
     stop();
     Serial.print("Stopped");
   while(1)
@@ -887,7 +864,10 @@ if(!wallFound)
 #endif
 
 #ifdef TURNS_4
-  float angle1 = getHeading();
+  // turn(RIGHT, 255);
+  // turn(LEFT, 255);
+  // move(FORWARD, 255);
+  move(BACKWARD, 255);
 
 #endif
 }
