@@ -16,7 +16,7 @@
 // #define MODE_TURN 1
 // #define MODE_RAMP 1
 // #define MODE_HALF 1
-// #define MODE_FULL 1
+#define MODE_FULL 1
 
 bool direction = true;
 
