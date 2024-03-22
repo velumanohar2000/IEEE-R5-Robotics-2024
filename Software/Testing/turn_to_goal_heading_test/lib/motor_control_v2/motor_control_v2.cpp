@@ -1,5 +1,5 @@
 /*
- * Bit Bangers motors Control Library
+ * Bit Bangers Motor Control Library
  * github.com/Bit-Bangers-UTA/Senior-Design
  *
  * Authors:
@@ -7,7 +7,7 @@
  * Rolando Rosales
  * Velu Manohar
  * 
- * Works with any dual-motors driver that has two PWM inputs per motors
+ * Works with any dual-motor driver that has two PWM inputs per motor
  * Tested with MX1508
 */
 
@@ -29,7 +29,7 @@
 
 // Variables & Constants ------------------------------------------------------
 
-extern ESP32MotorControl motors;
+extern ESP32MotorControl motor;
 
 // Functions ------------------------------------------------------------------
 
@@ -37,14 +37,14 @@ void move(bool direction)
 {
   if(direction == FORWARD)
   {
-    motors.motorFullForward(MOTOR_A);
-    motors.motorFullForward(MOTOR_B);
+    motor.motorFullForward(MOTOR_A);
+    motor.motorFullForward(MOTOR_B);
 
   }
   else
   {
-    motors.motorFullReverse(MOTOR_A);
-    motors.motorFullReverse(MOTOR_B);
+    motor.motorFullReverse(MOTOR_A);
+    motor.motorFullReverse(MOTOR_B);
   }
 }
 
@@ -52,25 +52,25 @@ void move(bool direction, uint16_t speed)
 {
   if(direction == FORWARD)
   {
-    motors.motorForward(MOTOR_A, speed);
-    motors.motorForward(MOTOR_B, speed);
+    motor.motorForward(MOTOR_A, speed);
+    motor.motorForward(MOTOR_B, speed);
 
   }
   else
   {
-    motors.motorReverse(MOTOR_A, speed);
-    motors.motorReverse(MOTOR_B, speed);
+    motor.motorReverse(MOTOR_A, speed);
+    motor.motorReverse(MOTOR_B, speed);
   }
 }
 
 void stop()
 {
-  motors.motorsStop();
+  motor.motorsStop();
 }
 
 void stop(uint8_t mot) //motor a or b
 {
-  motors.motorStop(mot);
+  motor.motorStop(mot);
 }
 
 
@@ -78,13 +78,13 @@ void turn(bool direction)
 {
   if(direction == COUNTER_CLOCKWISE)
   {
-    motors.motorFullForward(MOTOR_A);   
-    motors.motorStop(MOTOR_B);
+    motor.motorFullForward(MOTOR_A);   
+    motor.motorStop(MOTOR_B);
   }
   else
   {
-    motors.motorFullForward(MOTOR_B);
-    motors.motorStop(MOTOR_A);
+    motor.motorFullForward(MOTOR_B);
+    motor.motorStop(MOTOR_A);
   }
 }
 
@@ -92,12 +92,12 @@ void turn(bool direction, uint16_t speed)
 {
   if(direction == COUNTER_CLOCKWISE)
   {
-    motors.motorForward(MOTOR_A, speed);   
-    motors.motorStop(MOTOR_B);
+    motor.motorForward(MOTOR_A, speed);   
+    motor.motorStop(MOTOR_B);
   }
   else
   {
-    motors.motorForward(MOTOR_B, speed);
-    motors.motorStop(MOTOR_A);
+    motor.motorForward(MOTOR_B, speed);
+    motor.motorStop(MOTOR_A);
   }
 }
