@@ -1,3 +1,20 @@
+/* 
+ * Bit Bangers Bang Bus Master Code
+ * github.com/Bit-Bangers-UTA/Senior-Design
+ *
+ * Authors:
+ * Velu Manohar
+ * Noor Abdullah
+ * Rolando Rosales
+ * 
+ * Comments:
+ * After starting/resetting the robot you have 2.5 seconds to align it with 0 degress
+ * We need to implement a blocking function that waits unitl button pressed before locking in 0
+ * Also we need to implement a lcd screen to show us our angle without uart
+*/
+
+// Libraries ------------------------------------------------------------------
+
 #include <Arduino.h>
 #include <stdbool.h>
 #include <Adafruit_BNO08x.h>
@@ -9,16 +26,23 @@
 #include "motor_control_v2.h"
 #include "SparkFun_VL53L1X.h"
 
-// #define TURN_TO_HEAD
-#define  MAIN
+// Defines --------------------------------------------------------------------
 
-// After starting/resetting the robot you have 5 seconds to align it with 0 degress
-// We need to implement a blovking function that waits unitl button pressed before locking in 0
-// Also we need to implement a lcd screen to show us our angle without uart
+// Preprocessor Directives
+#define TURN_TO_HEAD
+// #define MAIN
+
+// Variables & Constants ------------------------------------------------------
+
+// Structures & Classes -------------------------------------------------------
+
 /*
+ * None of the things below are organized yet, but we can just do that later
+ * -RR
+*/
 
+/*
   Global Variable for the Motors
-
 */
 ESP32MotorControl motors;
 // LEFT MOTOR
@@ -27,6 +51,7 @@ const uint8_t MOTOR_A_IN_2 = 40;
 // RIGHT MOTOR
 const uint8_t MOTOR_B_IN_3 = 39;
 const uint8_t MOTOR_B_IN_4 = 38;
+
 /*
   Global Variable for IMU
 */
@@ -52,9 +77,7 @@ Ultrasonic ultrasonic(0, 1);
 int ultraDistance = 100;                      // ultrasonic
 float ultraDistanceInch;                      // ultrasonic
 
-/*
-  Functions
-*/
+// Functions ------------------------------------------------------------------
 
 void getWhiskerDistance()
 {
@@ -198,7 +221,6 @@ void setup()
 void loop()
 {
   #ifdef MAIN
-  
   float currentAngle;
   if(!wallFound)
   {
@@ -256,8 +278,9 @@ void loop()
   }
   getWhiskerDistance();
   #endif
+
   #ifdef TURN_TO_HEAD
-  uint16_t zoooooom = 45;
+  uint16_t zoooooom = 200; // We're on 3v3 now, so just put a high value
   turnToGoalHeading(90, zoooooom);
   stop();
   delay(2000);
