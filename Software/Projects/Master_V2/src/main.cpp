@@ -32,8 +32,8 @@ const uint8_t MOTOR_B_IN_4 = 38;
 */
 Adafruit_BNO08x bno08x;
 sh2_SensorValue_t sensorValue;
-
 float offset = 0;
+float goal = 0;
 
 /*
   Globals for Whiskers
@@ -89,6 +89,7 @@ float getHeading()
   {
     retVal = calculateHeading(sensorValue.un.arvrStabilizedRV.i, sensorValue.un.arvrStabilizedRV.j, sensorValue.un.arvrStabilizedRV.k, sensorValue.un.arvrStabilizedRV.real);
 
+    Serial.printf(" Raw angle = %f\n", retVal);
     retVal -= offset;
     if (retVal < 0)
     {
@@ -111,49 +112,64 @@ void turnToGoalHeading(float goal, uint8_t speed)
   angleDiff = goal - currentAngle;
   absVal = abs(angleDiff);
 
-  while (absVal > 8)
+  while (absVal > 4)
   {
     // getWhiskerDistance();
     // Serial.printf("Whiskaaa is %f: \n", whiskDistanceInch);
-    Serial.print("abs: ");
+    Serial.print("Offset ");
+    Serial.print(offset);
+    Serial.print(" Abs: ");
     Serial.print(absVal);
-    Serial.print(" angle: ");
+    Serial.print(" Current Angle: ");
     Serial.print(currentAngle);
 
     if ((angleDiff >= 0) && (absVal <= 180))
     {
-      Serial.print(" case 1: ");
+      // Serial.print(" case 1: ");
       turn(CLOCKWISE, speed);
     }
     else if ((angleDiff < 0) && (absVal <= 180))
     {
-      Serial.print(" case 2: ");
+      // Serial.print(" case 2: ");
       turn(COUNTER_CLOCKWISE, speed);
     }
     else if ((angleDiff >= 0) && (absVal >= 180))
     {
-      Serial.print(" case 3: ");
+      // Serial.print(" case 3: ");
       turn(COUNTER_CLOCKWISE, speed);
     }
     else
     {
-      Serial.print(" case 4: ");
+      // Serial.print(" case 4: ");
       turn(CLOCKWISE, speed);
     }
     currentAngle = -1;
     while (currentAngle == -1)
       currentAngle = getHeading();
 
-    Serial.println(goal);
+    // Serial.println(goal);
     angleDiff = goal - currentAngle;
     absVal = abs(angleDiff);
   }
+}
+
+void calibrate()
+{
+  float currentAngle = -1;
+  while (currentAngle == -1)
+  {
+    currentAngle = offset = getHeading();
+  }
+
+  Serial.println("offset: ");
+  Serial.println(offset);
 }
 
 void setup()
 {
   Serial.begin(115200);
   Wire.begin(9, 8);
+  Wire1.begin(18, 17);
   initVL53L1X();
   setupBNO085(&bno08x);
   motors.attachMotors(MOTOR_A_IN_1, MOTOR_A_IN_2, MOTOR_B_IN_3, MOTOR_B_IN_4);
@@ -187,6 +203,7 @@ void loop()
   if(!wallFound)
   {
     currentAngle = getHeading();
+    Serial.printf("Whisker dist %f: \n", whiskDistance);
     if(whiskDistanceInch > WHISKER_STOP_DIS)
     {
       ultraDistance = ultrasonic.read();
@@ -196,33 +213,45 @@ void loop()
       }
       else if(ultraDistance > 8)
       {
-        turn(COUNTER_CLOCKWISE, 49);
+        turn(COUNTER_CLOCKWISE, 80);
         delay(80);
-        move(FORWARD, 49);
+        move(FORWARD, 80);
         delay(80);
       }
       else if(ultraDistance < 5)
       {
-        turn(CLOCKWISE, 49);
+        turn(CLOCKWISE, 80);
         delay(80);
-        move(FORWARD, 49);
+        move(FORWARD, 80);
         delay(80);
       }
       else
-        move(FORWARD, 55);
+        move(FORWARD, 80);
     }
     else{
       stop();
-      delay(150);
+      Serial.println("Wall Reached");
+      delay(1500);
       wallFound = true;
+      // calibrate();
+      currentAngle = getHeading();
+      // if(currentAngle > 180)
+      // {
+      //   goal = (360-currentAngle) + 85;
+      // }
+      // else
+      // {
+      //   goal = 85-currentAngle;
+      // }
+
 
     }
   }
   else
   {
-    turnToGoalHeading(/*getHeading() + */
-    90, 48);
+    turnToGoalHeading(/*getHeading() + */ 85, 80);
     stop();
+    Serial.printf("Final reading %f\n", getHeading());
     while(1);
   }
   getWhiskerDistance();
