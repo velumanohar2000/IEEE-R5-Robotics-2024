@@ -26,7 +26,7 @@ void setupBNO085(Adafruit_BNO08x *bno08x)
   // Serial.begin(115200);
   // Serial.println("Adafruit BNO08x test!");
   // Wire.begin(9, 8);
-  if (!bno08x->begin_I2C(0x4A, &Wire1, 0))
+  if (!bno08x->begin_I2C())
   {
     // Serial.println("Failed to find BNO08x chip");
     while (1)
