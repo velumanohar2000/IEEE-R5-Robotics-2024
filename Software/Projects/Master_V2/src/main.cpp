@@ -32,12 +32,29 @@
 #define TURN_TO_HEAD
 // #define MAIN
 
+// Motors
+// Left
+const uint8_t motor_a_in1 = 4;
+const uint8_t motor_a_in2 = 5;
+// Right
+const uint8_t motor_b_in3 = 6;
+const uint8_t motor_b_in4 = 7;
+
+// Whisker
+#define WHISKER_STOP_DIS 8
+#define MAX_PRELIM_DIST 60
+
+// Ultrasonic
+#define ULTRAS_TRIG 1
+#define ULTRAS_ECHO 0
+
 // Variables & Constants ------------------------------------------------------
 
 // Structures & Classes -------------------------------------------------------
 
 /*
  * None of the things below are organized yet, but we can just do that later
+ * Note: things like "ESP32MotorControl motors;" are classes, not variables
  * -RR
 */
 
@@ -45,12 +62,6 @@
   Global Variable for the Motors
 */
 ESP32MotorControl motors;
-// LEFT MOTOR
-const uint8_t MOTOR_A_IN_1 = 41;
-const uint8_t MOTOR_A_IN_2 = 40;
-// RIGHT MOTOR
-const uint8_t MOTOR_B_IN_3 = 39;
-const uint8_t MOTOR_B_IN_4 = 38;
 
 /*
   Global Variable for IMU
@@ -67,13 +78,11 @@ SFEVL53L1X distanceSensor;
 int whiskDistance;                            // whisker
 float whiskDistanceInch = 1000;               // whisker
 bool wallFound = false;
-#define WHISKER_STOP_DIS 8
-#define MAX_PRELIM_DIST 60
 
 /*
   Globals for ultrasonic
 */
-Ultrasonic ultrasonic(0, 1);
+Ultrasonic ultrasonic(ULTRAS_TRIG, ULTRAS_ECHO);
 int ultraDistance = 100;                      // ultrasonic
 float ultraDistanceInch;                      // ultrasonic
 
@@ -192,10 +201,9 @@ void setup()
 {
   Serial.begin(115200);
   Wire.begin(9, 8);
-  Wire1.begin(18, 17);
   initVL53L1X();
   setupBNO085(&bno08x);
-  motors.attachMotors(MOTOR_A_IN_1, MOTOR_A_IN_2, MOTOR_B_IN_3, MOTOR_B_IN_4);
+  motors.attachMotors(motor_a_in1, motor_a_in2, motor_b_in3, motor_b_in4);
   uint8_t i = 0;
   Serial.println("*****TEST HEADING******\n\n");
   float currentAngle = -1;
