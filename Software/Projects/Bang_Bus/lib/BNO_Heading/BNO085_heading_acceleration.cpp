@@ -46,7 +46,7 @@ float calculateHeading(float i, float j, float k, float real)
   yaw *= 180.0f / M_PI;
   // Normalize heading angle
   if (yaw < 0) {
-    yaw += 360.0f;
+    yaw += 359.99f;
   }
   return yaw;
 }

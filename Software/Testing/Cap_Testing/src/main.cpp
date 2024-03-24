@@ -1,10 +1,10 @@
 #include <Arduino.h>
 
 #define LIGHT 3
-#define MOTORA_IN_1 3
-#define MOTORA_IN_2 2
-#define MOTORB_IN_3 6
-#define MOTORB_IN_4 7
+#define MOTORA_IN_1 4
+#define MOTORA_IN_2 5
+#define MOTORB_IN_3 7
+#define MOTORB_IN_4 6
 
 #define TIMER_INTERVAL_MS 5000
 #define FORWARD 1

@@ -32,23 +32,23 @@
 // #define TURN_TO_HEAD
 #define MAIN
 
-// Motors
-// Left
-const uint8_t motor_a_in1 = 4;
-const uint8_t motor_a_in2 = 5;
-// Right
-const uint8_t motor_b_in3 = 6;
-const uint8_t motor_b_in4 = 7;
-
 // Whisker
 #define WHISKER_STOP_DIS 8
 #define MAX_PRELIM_DIST 60
 
 // Ultrasonic
-#define ULTRAS_TRIG 1
-#define ULTRAS_ECHO 0
+#define ULTRAS_TRIG 13
+#define ULTRAS_ECHO 12
 
 // Variables & Constants ------------------------------------------------------
+
+// Motors
+// Left
+const uint8_t motor_a_in1 = 7;
+const uint8_t motor_a_in2 = 6;
+// Right
+const uint8_t motor_b_in3 = 4;
+const uint8_t motor_b_in4 = 5;
 
 // Structures & Classes -------------------------------------------------------
 
@@ -125,7 +125,7 @@ float getHeading()
     retVal -= offset;
     if (retVal < 0)
     {
-      retVal += 360;
+      retVal += 359.99;
     }
   }
 
@@ -200,6 +200,7 @@ void calibrate()
 void setup()
 {
   Serial.begin(115200);
+  
   Wire.begin(9, 8);
   initVL53L1X();
   setupBNO085(&bno08x);
