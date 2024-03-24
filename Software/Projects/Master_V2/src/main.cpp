@@ -29,8 +29,8 @@
 // Defines --------------------------------------------------------------------
 
 // Preprocessor Directives
-#define TURN_TO_HEAD
-// #define MAIN
+// #define TURN_TO_HEAD
+#define MAIN
 
 // Motors
 // Left
