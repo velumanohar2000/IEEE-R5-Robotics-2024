@@ -10,10 +10,26 @@
  * - the esp-prog for upload, debug, and monitor
 */
 
+// Libraries ------------------------------------------------------------------
+
 #include <Arduino.h>
 
+// Defines --------------------------------------------------------------------
+
+// LED
+#define BRIGHTNESS 2 // can go from 0 to 255
+
+// Variables & Constants ------------------------------------------------------
+
+// Space counter for soundOfDa
 int count = 0;
 bool flip = false;
+
+// Structures & Classes -------------------------------------------------------
+
+// None
+
+// Functions ------------------------------------------------------------------
 
 void soundOfDa()
 {
@@ -40,9 +56,9 @@ void loop()
 {
   soundOfDa();
 
-  neopixelWrite(RGB_BUILTIN,255,0,0);
+  neopixelWrite(RGB_BUILTIN, BRIGHTNESS, 0, 0);
   delay(100);
 
-  neopixelWrite(RGB_BUILTIN,0,0,255); 
+  neopixelWrite(RGB_BUILTIN, 0, 0, BRIGHTNESS); 
   delay(100);
 }
