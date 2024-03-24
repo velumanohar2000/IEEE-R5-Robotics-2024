@@ -101,3 +101,32 @@ void turn(bool direction, uint16_t speed)
     motors.motorStop(MOTOR_A);
   }
 }
+
+
+void turn2(bool direction)
+{
+  if(direction == COUNTER_CLOCKWISE)
+  {
+    motors.motorFullForward(MOTOR_A);   
+    motors.motorFullReverse(MOTOR_B);
+  }
+  else
+  {
+    motors.motorFullForward(MOTOR_B);
+    motors.motorFullReverse(MOTOR_A);
+  }
+}
+
+void turn2(bool direction, uint16_t speed, uint8_t offset)
+{
+  if(direction == COUNTER_CLOCKWISE)
+  {
+    motors.motorForward(MOTOR_A, speed+offset);   
+    motors.motorForward(MOTOR_B, speed);
+  }
+  else
+  {
+    motors.motorForward(MOTOR_B, speed+offset);
+    motors.motorForward(MOTOR_A, speed);
+  }
+}

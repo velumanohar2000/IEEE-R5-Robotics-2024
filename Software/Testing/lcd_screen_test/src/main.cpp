@@ -1,25 +1,36 @@
-// include the library code:
+/*
+ * Displays text sent over the serial port (e.g. from the Serial Monitor) on
+ * an attached LCD.
+ * YWROBOT
+ *Compatible with the Arduino IDE 1.0
+ *Library version:1.1
+ */
 #include <Arduino.h>
-#include <LiquidCrystal.h>
-#include <Wire.h>
+#include <Wire.h> 
+#include <LiquidCrystal_I2C.h>
 
-// initialize the library by associating any needed LCD interface pin
-// with the arduino pin number it is connected to
-const int rs = 2, en = 7, d4 = 5, d5 = 4, d6 = 3, d7 = 1;
-LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
+LiquidCrystal_I2C lcd(0x27,16,2);  // set the LCD address to 0x27 for a 16 chars and 2 line display
 
-void setup() {
-  // set up the LCD's number of columns and rows:
-  lcd.begin(16, 2);
-  // Print a message to the LCD.
-  lcd.print("hello, world!");
+void setup()
+{
+  Wire.begin(9,8);
+  lcd.init();                      // initialize the lcd 
+  lcd.backlight();
 }
 
-void loop() {
-  // Turn off the cursor:
-  lcd.noCursor();
-  delay(500);
-  // Turn on the cursor:
-  lcd.cursor();
-  delay(500);
+void loop()
+{
+  lcd.clear(); 
+  delay(1000);
+  lcd.setCursor(0, 0);
+  lcd.print("Noor is a");
+  uint8_t i = 0;
+  for (i = 0; i < 5; i++)
+  {
+    delay(350);
+    lcd.print(".");
+  }
+  lcd.setCursor(0,1);
+  lcd.print("******BITCH******");
+  delay(1000);
 }
