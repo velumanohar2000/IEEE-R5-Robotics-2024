@@ -29,7 +29,6 @@ void stop();
 void initMotors(uint8_t gpo_in1, uint8_t gpo_in2, uint8_t gpo_in3, uint8_t gpo_in4);
 void turn(bool direction);
 void turn(bool direction, uint16_t speed);
-void turn2(bool direction);
 void turn2(bool direction, uint16_t speed);
 void turn2(bool direction, uint16_t speed, uint8_t offset);
 void turn(bool direction, uint16_t speed, uint16_t currentAngle, uint16_t requiredAngle);

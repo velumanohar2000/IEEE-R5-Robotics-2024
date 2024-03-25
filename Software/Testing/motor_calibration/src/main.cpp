@@ -11,8 +11,8 @@
 #include "motor_control_v2.h"
 #include "printToLcd.h"
 
-//#define CALIBRATE_STRAIGHT_LINE
-
+// #define CALIBRATE_STRAIGHT_LINE
+//  #define TEST_TURNS
 
 // After starting/resetting the robot you have 5 seconds to align it with 0 degress
 // We need to implement a blovking function that waits unitl button pressed before locking in 0
@@ -35,9 +35,7 @@ int16_t A_LEFT_MOTOR_OFFSET = 0;
 // RIGHT MOTOR
 const uint8_t MOTOR_B_IN_3 = 39;
 const uint8_t MOTOR_B_IN_4 = 38;
-int16_t B_RIGHT_MOTOR_OFFSET = 5;
-
-
+int16_t B_RIGHT_MOTOR_OFFSET = 2;
 
 /*
  * Global Variable for IMU
@@ -65,29 +63,40 @@ float getHeading()
 
   return retVal;
 }
-
-void printCurrentAngle()
+float getCurrentAngle()
 {
   float currentAngle = -1;
   while (currentAngle == -1)
   {
     currentAngle = getHeading();
   }
+  return currentAngle;
+}
+void printCurrentAngle()
+{
+  float currentAngle = getCurrentAngle();
   printToLcd("Current Angle: ", currentAngle);
 }
 
-void turnToGoalHeading(float goal, uint8_t speed)
+void turnToHeading(float goal, uint8_t speed)
 {
-  float currentAngle = -1;
   float absVal;
   float angleDiff;
   uint8_t i = 0;
 
-  while (currentAngle == -1)
-    currentAngle = getHeading();
+  float currentAngle = getCurrentAngle();
+
   printToLcd("Current Angle: ", currentAngle);
   angleDiff = goal - currentAngle;
   absVal = abs(angleDiff);
+  if (absVal > 350)
+  {
+    absVal = 359.99 - absVal;
+    angleDiff = 359.99 - angleDiff;
+  }
+  Serial.println(angleDiff);
+  Serial.println(absVal);
+  Serial.println();
 
   while (absVal > 10)
   {
@@ -99,26 +108,25 @@ void turnToGoalHeading(float goal, uint8_t speed)
     if ((angleDiff >= 0) && (absVal <= 180))
     {
       // Serial.print(" case 1: ");
-      turn(CLOCKWISE, speed);
+      turn(COUNTER_CLOCKWISE, speed);
     }
     else if ((angleDiff < 0) && (absVal <= 180))
     {
       // Serial.print(" case 2: ");
-      turn(COUNTER_CLOCKWISE, speed);
+      turn(CLOCKWISE, speed);
     }
     else if ((angleDiff >= 0) && (absVal >= 180))
     {
       // Serial.print(" case 3: ");
-      turn(COUNTER_CLOCKWISE, speed);
+      turn(CLOCKWISE, speed);
     }
     else
     {
       // Serial.print(" case 4: ");
-      turn(CLOCKWISE, speed);
+      turn(COUNTER_CLOCKWISE, speed);
     }
-    currentAngle = -1;
-    while (currentAngle == -1)
-      currentAngle = getHeading();
+
+    currentAngle = getCurrentAngle();
     i++;
     if (i >= 30)
     {
@@ -126,50 +134,58 @@ void turnToGoalHeading(float goal, uint8_t speed)
       i = 0;
     }
 
-    Serial.println(goal);
+    // Serial.println(goal);
     angleDiff = goal - currentAngle;
     absVal = abs(angleDiff);
+    if (absVal > 350)
+    {
+      absVal = 359.99 - absVal;
+      angleDiff = 359.99 - angleDiff;
+    }
+    Serial.println(angleDiff);
+    Serial.println(absVal);
+    Serial.println();
   }
   stop();
 }
 
 void testTurns()
 {
-  turnToGoalHeading(90, 80);
+  turnToHeading(90, 85);
   printCurrentAngle();
-  delay(500);
+  delay(1000);
 
-  turnToGoalHeading(0, 80);
+  turnToHeading(0, 85);
   printCurrentAngle();
-  delay(500);
+  delay(1000);
 
-  turnToGoalHeading(180, 80);
+  turnToHeading(180, 85);
   printCurrentAngle();
-  delay(500);
+  delay(1000);
 
-  turnToGoalHeading(0, 80);
+  turnToHeading(0, 85);
   printCurrentAngle();
-  delay(500);
+  delay(1000);
 
-  turnToGoalHeading(270, 80);
+  turnToHeading(270, 85);
   printCurrentAngle();
-  delay(500);
+  delay(1000);
 
-  turnToGoalHeading(45, 80);
+  turnToHeading(45, 85);
   printCurrentAngle();
-  delay(500);
+  delay(1000);
 
-  turnToGoalHeading(225, 80);
+  turnToHeading(225, 85);
   printCurrentAngle();
-  delay(500);
+  delay(1000);
 
-  turnToGoalHeading(135, 80);
+  turnToHeading(135, 85);
   printCurrentAngle();
-  delay(500);
+  delay(1000);
 
-  turnToGoalHeading(315, 80);
+  turnToHeading(315, 85);
   printCurrentAngle();
-  delay(500);
+  delay(1000);
 }
 
 void setup()
@@ -182,33 +198,27 @@ void setup()
 
   setupBNO085(&bno08x);
   motors.attachMotors(MOTOR_A_IN_1, MOTOR_A_IN_2, MOTOR_B_IN_3, MOTOR_B_IN_4);
-
+  float currentAngle;
   uint8_t i = 0;
   Serial.println("*****TEST HEADING******\n\n");
 
   printToLcd("HEADING", "TEST");
   delay(1000);
   printToLcd("Position to 0", "degrees");
+
   for (i = 3; i > 0; i--)
   {
     printToLcd("Time left: ", i);
     delay(1000);
   }
 
-  float currentAngle = -1;
-  while (currentAngle == -1)
-  {
-    currentAngle = offset = getHeading();
-  }
+  offset = getCurrentAngle();
 
   Serial.println("offset: ");
   Serial.println(offset);
 
-  currentAngle = -1;
-  while (currentAngle == -1)
-  {
-    currentAngle = getHeading();
-  }
+  currentAngle = getCurrentAngle();
+
   Serial.print("Current Angle: ");
   Serial.println(currentAngle);
 
@@ -216,8 +226,6 @@ void setup()
   delay(1000);
   printCurrentAngle();
   delay(1000);
-
-  // testTurns();
 }
 void driveToHeading(float goalHeading)
 {
@@ -226,15 +234,14 @@ void driveToHeading(float goalHeading)
   float angleDiff;
   unsigned long currentMillis;
   unsigned long previousMillis = 0;
-  uint32_t interval = 4000;
+  uint32_t interval = 1000;
   uint16_t i = 0;
 
   bool goToHeading = true;
   while (goToHeading)
   {
-    currentAngle = -1;
-    while (currentAngle == -1)
-      currentAngle = getHeading();
+    currentAngle = getCurrentAngle();
+
     i++;
     if (i == 30)
     {
@@ -243,38 +250,67 @@ void driveToHeading(float goalHeading)
     }
     angleDiff = goalHeading - currentAngle;
     absVal = abs(angleDiff);
+    // Serial.println(absVal);
+    if (absVal > 345)
+    {
+      absVal = 359.99 - absVal;
+      angleDiff = 359.99 - angleDiff;
+    }
+    Serial.println(angleDiff);
+    Serial.println(absVal);
+    Serial.println();
+
     if (absVal > 15)
     {
-      turnToGoalHeading(goalHeading, 80);
+      turnToHeading(goalHeading, 65);
       previousMillis = currentMillis = millis();
     }
-    else if (absVal <= 15 && absVal >= 5)
+    else if (absVal <= 15 && absVal >= 3)
     {
-      if (angleDiff >= 0)
+      if ((angleDiff >= 0) && (absVal <= 180))
       {
-        turn2(CLOCKWISE, 80, 10);
+        // Serial.print(" case 1: ");
+        turn2(COUNTER_CLOCKWISE, 65, 30);
+      }
+      else if ((angleDiff < 0) && (absVal <= 180))
+      {
+        // Serial.print(" case 2: ");
+        turn2(CLOCKWISE, 65, 30);
+      }
+      else if ((angleDiff >= 0) && (absVal >= 180))
+      {
+        // Serial.print(" case 3: ");
+        turn2(CLOCKWISE, 65, 30);
       }
       else
       {
-        turn2(COUNTER_CLOCKWISE, 80, 50);
+        // Serial.print(" case 4: ");
+        turn2(COUNTER_CLOCKWISE, 65, 30);
       }
       previousMillis = currentMillis = millis();
     }
-    else if (absVal < 5 && absVal > 2)
+    else if (absVal < 5 && absVal >= 2)
     {
-      if (angleDiff >= 0)
+      if ((angleDiff >= 0) && (absVal <= 180))
       {
-        turn2(CLOCKWISE, 80, 5);
+        // Serial.print(" case 1: ");
+        turn2(COUNTER_CLOCKWISE, 65, 10);
+      }
+      else if ((angleDiff < 0) && (absVal <= 180))
+      {
+        // Serial.print(" case 2: ");
+        turn2(CLOCKWISE, 65, 10);
+      }
+      else if ((angleDiff >= 0) && (absVal >= 180))
+      {
+        // Serial.print(" case 3: ");
+        turn2(CLOCKWISE, 65, 10);
       }
       else
       {
-        turn2(COUNTER_CLOCKWISE, 80, 50);
+        // Serial.print(" case 4: ");
+        turn2(COUNTER_CLOCKWISE, 65, 10);
       }
-      previousMillis = currentMillis = millis();
-    }
-    else
-    {
-      move(FORWARD, 100);
       unsigned long currentMillis = millis();
 
       if (currentMillis - previousMillis >= interval)
@@ -283,32 +319,71 @@ void driveToHeading(float goalHeading)
         if (previousMillis != 0)
         {
           goToHeading = false;
+          stop();
+        }
+      }
+    }
+    else
+    {
+      move(FORWARD, 65);
+
+      if (currentMillis - previousMillis >= interval)
+      {
+        previousMillis = currentMillis;
+        if (previousMillis != 0)
+        {
+          goToHeading = false;
+          stop();
         }
       }
     }
   }
 }
+
+void calibrateStraightLine()
+{
+  move(FORWARD, 75);
+  delay(4000);
+  stop();
+  move(BACKWARD, 75);
+  delay(4000);
+  stop();
+}
 void loop()
 {
-  static uint8_t i = 0;
 #ifdef CALIBRATE_STRAIGHT_LINE
-
-  move(FORWARD, 100);
-  delay(4000);
+  calibrateStraightLine(); // change, left and right motor offset untill car goes straight for 4 seconds
+  while (1)
+    ;
+#endif
+#ifdef TEST_TURNS
+  turn(COUNTER_CLOCKWISE);
+  delay(2000);
+  turn(CLOCKWISE);
+  delay(2000);
   stop();
-  move(BACKWARD, 100);
-  delay(4000);
-  stop();
+  delay(2000);
+  testTurns(); // fix turning speed until angle is within desired range of goal heading
 #endif
 
+  driveToHeading(270);
+  delay(1000);
+  driveToHeading(0);
+  delay(1000);
+  driveToHeading(90);
+  delay(1000);
+  driveToHeading(180);
+  delay(1000);
 
   while (1)
   {
+    static uint16_t i = 0;
     i++;
-    if (i >= 30)
+    if (i >= 15)
     {
       printCurrentAngle();
       i = 0;
     }
+    delay(10);
   }
 }
