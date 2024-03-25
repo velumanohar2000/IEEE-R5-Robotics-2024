@@ -33,12 +33,15 @@
 #define MAIN
 
 // Whisker
-#define WHISKER_STOP_DIS 8
-#define MAX_PRELIM_DIST 60
+#define WHISKER_STOP_DIS 7
+
 
 // Ultrasonic
-#define ULTRAS_TRIG 13
-#define ULTRAS_ECHO 12
+#define ULTRAS_TRIG 14
+#define ULTRAS_ECHO 11
+#define MAX_PRELIM_DIST 60
+#define MIN_WALL_DIST_CM 6
+#define MAX_WALL_DIST_CM 8
 
 // Variables & Constants ------------------------------------------------------
 
@@ -49,6 +52,9 @@ const uint8_t motor_a_in2 = 6;
 // Right
 const uint8_t motor_b_in3 = 4;
 const uint8_t motor_b_in4 = 5;
+
+int16_t A_LEFT_MOTOR_OFFSET = 0;
+int16_t B_RIGHT_MOTOR_OFFSET = 0;
 
 // Structures & Classes -------------------------------------------------------
 
@@ -69,7 +75,7 @@ ESP32MotorControl motors;
 Adafruit_BNO08x bno08x;
 sh2_SensorValue_t sensorValue;
 float offset = 0;
-float goal = 0;
+float goal = 85;
 
 /*
   Globals for Whiskers
@@ -77,13 +83,14 @@ float goal = 0;
 SFEVL53L1X distanceSensor;
 int whiskDistance;                            // whisker
 float whiskDistanceInch = 1000;               // whisker
+int whiskOffset = 0;
 bool wallFound = false;
 
 /*
   Globals for ultrasonic
 */
 Ultrasonic ultrasonic(ULTRAS_TRIG, ULTRAS_ECHO);
-int ultraDistance = 100;                      // ultrasonic
+int ultraDistanceCm = 100;                      // ultrasonic
 float ultraDistanceInch;                      // ultrasonic
 
 // Functions ------------------------------------------------------------------
@@ -234,24 +241,25 @@ void loop()
   if(!wallFound)
   {
     currentAngle = getHeading();
-    Serial.printf("Whisker dist %f: \n", whiskDistance);
-    if(whiskDistanceInch > WHISKER_STOP_DIS)
+    if(whiskDistanceInch > (WHISKER_STOP_DIS - whiskOffset))
     {
-      ultraDistance = ultrasonic.read();
-      if(ultraDistance > MAX_PRELIM_DIST)
+      ultraDistanceCm = ultrasonic.read();
+
+      Serial.printf("ult dist %f: \n", ultraDistanceCm);
+      if(ultraDistanceCm > MAX_PRELIM_DIST)
       {
         stop();
       }
-      else if(ultraDistance > 8)
+      else if(ultraDistanceCm > MAX_WALL_DIST_CM)
       {
-        turn(COUNTER_CLOCKWISE, 80);
+        turn(CLOCKWISE, 80);
         delay(80);
         move(FORWARD, 80);
         delay(80);
       }
-      else if(ultraDistance < 5)
+      else if(ultraDistanceCm < MIN_WALL_DIST_CM)
       {
-        turn(CLOCKWISE, 80);
+        turn(COUNTER_CLOCKWISE, 80);
         delay(80);
         move(FORWARD, 80);
         delay(80);
@@ -280,10 +288,28 @@ void loop()
   }
   else
   {
-    turnToGoalHeading(/*getHeading() + */ 85, 80);
+    turnToGoalHeading(/*getHeading() + */ goal, 80);
     stop();
+    if(whiskOffset == 0)
+    {
+      whiskOffset = 2;
+    }
+    else
+    {
+      whiskOffset = 0;
+    }
+    goal += 90;
+    if (goal > 359.999)
+    {
+      goal -= 359.999;
+    }
+    {
+      /* code */
+    }
+    
     Serial.printf("Final reading %f\n", getHeading());
-    while(1);
+    delay(1000);
+    wallFound = false;
   }
   getWhiskerDistance();
   #endif
