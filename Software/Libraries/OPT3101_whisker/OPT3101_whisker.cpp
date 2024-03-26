@@ -4,6 +4,9 @@
  *
  * Authors:
  * Rolando Rosales
+ * 
+ * Comments:
+ * Configured for 60 FoV, getting new values at roughly 29-31 Hz
 */
 
 // Libraries ------------------------------------------------------------------
@@ -52,5 +55,5 @@ void initOPT3101(void)
 int16_t getWhiskerDistanceCm(void)
 {
   Whisker.sample();
-  return Whisker.distanceMillimeters;
+  return Whisker.distanceMillimeters / 10;
 }
