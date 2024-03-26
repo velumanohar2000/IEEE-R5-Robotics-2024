@@ -4,6 +4,10 @@
  *
  * Authors:
  * Rolando Rosales
+ * 
+ * Comments:
+ * Configured for 60 FoV, getting new values at roughly 29-31 Hz
+ * Requires pololu/OPT3101@^1.0.1
 */
 
 #ifndef OPT3101_WHISKER_H_

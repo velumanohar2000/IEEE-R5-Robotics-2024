@@ -1,8 +1,24 @@
-// This example shows basic usage of the OPT3101 library.
+/*
+ * Bit Bangers OPT3101 Whisker Library Test
+ * github.com/Bit-Bangers-UTA/Senior-Design
+ *
+ * Authors:
+ * Rolando Rosales
+*/
+
+// Libraries ------------------------------------------------------------------
 
 #include <Arduino.h>
 #include <Wire.h>
 #include "OPT3101_whisker.h"
+
+// Defines --------------------------------------------------------------------
+
+// Variables & Constants ------------------------------------------------------
+
+// Structures & Classes -------------------------------------------------------
+
+// Functions ------------------------------------------------------------------
 
 void setup()
 {
