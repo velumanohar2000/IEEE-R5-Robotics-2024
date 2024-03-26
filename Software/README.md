@@ -4,4 +4,4 @@
 - Testing -> testing libraries for use in the final projects
 - Projects -> the actual final projects like the robot or kill switch remote
 
-:)
+![:D](./../Images/thumb-up-emoticon-vector-1075395.jpg)
