@@ -22,8 +22,8 @@
 
 // Defines --------------------------------------------------------------------
 
-#define PUSH_BUTTON 1 // Push button connected to pin 3
-#define IR_TX_PIN 2 // IR LED connected to pin 2
+#define PUSH_BUTTON 4 // Push button connected to pin 3
+#define IR_TX_PIN 3 // IR LED connected to pin 2
 
 // Variables & Constants ------------------------------------------------------
 

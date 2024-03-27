@@ -32,7 +32,7 @@ void setup()
   delay(1000);
   Serial.println("SparkFun VL53L5CX Imager Example");
 
-  Wire.begin(3, 2); //This resets to 100kHz I2C
+  Wire.begin(9, 8); //This resets to 100kHz I2C
   Wire.setClock(1000000); //Sensor has max I2C freq of 1MHz 
   
   Serial.println("Initializing sensor board. This can take up to 10s. Please wait.");

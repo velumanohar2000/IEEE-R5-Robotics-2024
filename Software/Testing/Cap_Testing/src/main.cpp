@@ -1,140 +1,22 @@
 #include <Arduino.h>
 
-#define LIGHT 3
-#define MOTORA_IN_1 4
-#define MOTORA_IN_2 5
-#define MOTORB_IN_3 7
-#define MOTORB_IN_4 6
-
-#define TIMER_INTERVAL_MS 5000
-#define FORWARD 1
-#define BACKWARD 0
-#define RIGHT 1
-#define LEFT 0
-#define STOP 0
-
-// #define MODE_TURN 1
-// #define MODE_RAMP 1
-// #define MODE_HALF 1
-#define MODE_FULL 1
-
-bool direction = true;
-
-void move(bool direction)
-{
-  if(direction == FORWARD)
-  {
-    digitalWrite(MOTORA_IN_1, HIGH);
-    digitalWrite(MOTORA_IN_2, LOW);
-    digitalWrite(MOTORB_IN_3, HIGH);
-    digitalWrite(MOTORB_IN_4, LOW);
-
-  }
-  else
-  {
-    digitalWrite(MOTORA_IN_1, LOW);
-    digitalWrite(MOTORA_IN_2, HIGH);
-    digitalWrite(MOTORB_IN_3, LOW);
-    digitalWrite(MOTORB_IN_4, HIGH);
-  }
-}
-
-void move(bool direction, uint16_t speed)
-{
-  if(direction == FORWARD)
-  {
-    analogWrite(MOTORA_IN_1, speed);
-    analogWrite(MOTORA_IN_2, LOW);
-    analogWrite(MOTORB_IN_3, speed);
-    analogWrite(MOTORB_IN_4, LOW);
-
-  }
-  else
-  {
-    analogWrite(MOTORA_IN_1, LOW);
-    analogWrite(MOTORA_IN_2, speed);
-    analogWrite(MOTORB_IN_3, LOW);
-    analogWrite(MOTORB_IN_4, speed);
-  }
-}
-
-void stop()
-{
-  digitalWrite(MOTORA_IN_1, HIGH);
-  digitalWrite(MOTORB_IN_3, HIGH);
-  digitalWrite(MOTORA_IN_2, HIGH);
-  digitalWrite(MOTORB_IN_4, HIGH);
-}
-
-void standby()
-{
-  digitalWrite(MOTORA_IN_1, LOW);
-  digitalWrite(MOTORB_IN_3, LOW);
-  digitalWrite(MOTORA_IN_2, LOW);
-  digitalWrite(MOTORB_IN_4, LOW);
-}
-
+#define MOTORA_IN_1 2
+#define MOTORA_IN_2 3
+#define MOTORB_IN_3 1
+#define MOTORB_IN_4 0
 
 void setup() {
+  Serial.begin(115200);
   pinMode(MOTORA_IN_1, OUTPUT);
   pinMode(MOTORA_IN_2, OUTPUT);
   pinMode(MOTORB_IN_3, OUTPUT);
   pinMode(MOTORB_IN_4, OUTPUT);
 
 }
-
-void turn(bool direction)
-{
-  if(direction == RIGHT)
-  {
-    digitalWrite(MOTORA_IN_1, HIGH);
-    digitalWrite(MOTORA_IN_2, LOW);
-    digitalWrite(MOTORB_IN_3, LOW);
-    digitalWrite(MOTORB_IN_4, HIGH);
-  }
-  else
-  {
-    digitalWrite(MOTORA_IN_1, LOW);
-    digitalWrite(MOTORA_IN_2, HIGH);
-    digitalWrite(MOTORB_IN_3, HIGH);
-    digitalWrite(MOTORB_IN_4, LOW);
-  }
-}
-
 void loop() {
-
-  #ifdef MODE_FULL 
-    move(FORWARD);
-    delay(100);
-  #endif
-
-  #ifdef MODE_RAMP
-    static uint16_t i = 0;
-    for(i = 100; i < 256; i++)
-    {
-      move(FORWARD, i);
-      delay(50);
-    }
-    stop();
-    delay(5000);
-    for(i = 100; i < 256; i++)
-    {
-      move(BACKWARD, i);
-      delay(50);
-    }
-    stop();
-    delay(5000);
-  #endif
-
-  #ifdef MODE_TURN
-    turn(RIGHT);
-    delay(1000);
-    standby();
-    delay(100);
-    turn(LEFT);
-    delay(1000);
-    standby();
-    delay(100);
-
-  #endif
+  uint8_t speed = 255;
+  analogWrite(MOTORA_IN_1, speed);
+  analogWrite(MOTORA_IN_2, 0);
+  analogWrite(MOTORB_IN_3, speed);
+  analogWrite(MOTORB_IN_4, 0);
 }

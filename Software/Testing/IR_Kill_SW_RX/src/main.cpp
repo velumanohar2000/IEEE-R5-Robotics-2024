@@ -19,7 +19,7 @@
 
 // Defines --------------------------------------------------------------------
 
-#define IR_RX_PIN 3
+#define IR_TX_PIN 2
 
 // Variables & Constants ------------------------------------------------------
 
@@ -29,7 +29,7 @@ bool LED_STATE = false;
 
 // Structures & Classes -------------------------------------------------------
 
-IRrecv irrecv(IR_RX_PIN);
+IRrecv irrecv(IR_TX_PIN);
 
 // Functions ------------------------------------------------------------------
 
