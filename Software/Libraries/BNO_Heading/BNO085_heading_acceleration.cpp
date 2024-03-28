@@ -18,9 +18,6 @@ extern Adafruit_BNO08x bno08x;
 extern sh2_SensorValue_t sensorValue;
 extern float offset;
 
- 
-
-
 void setReports(Adafruit_BNO08x *bno08x, sh2_SensorId_t reportType, uint32_t interval)
 {
   // Serial.println("Setting desired reports");
@@ -32,38 +29,30 @@ void setReports(Adafruit_BNO08x *bno08x, sh2_SensorId_t reportType, uint32_t int
 
 void reports(Adafruit_BNO08x *bno08x)
 {
-  // setReports(bno08x, SH2_LINEAR_ACCELERATION, 500);
   setReports(bno08x, SH2_ARVR_STABILIZED_RV, 5000);
-  // setReports(bno08x, SH2_GYROSCOPE_CALIBRATED, 2500);
 }
 
-
-void setupBNO085(Adafruit_BNO08x *bno08x) 
+void setupBNO085(Adafruit_BNO08x *bno08x)
 {
-  // Serial.begin(115200);
-  // Serial.println("Adafruit BNO08x test!");
-  // Wire.begin(9, 8);
   if (!bno08x->begin_I2C())
   {
-    // neopixelWrite(LED_BUILTIN, 0, 0, 0xFF);
-    // Serial.println("Failed to find BNO08x chip");
     while (1)
     {
       delay(10);
     }
   }
-  // Serial.println("BNO08x Found!");
   reports(bno08x);
-  // Serial.println("Reading events");
   delay(1000);
 }
 
+// Function to calculate the heading of the robot from quaternion values
 float calculateHeading(float i, float j, float k, float real)
 {
-  float yaw = atan2(2.0f*(i*j+real*k),real*real+i*i-j*j-k*k);
+  float yaw = atan2(2.0f * (i * j + real * k), real * real + i * i - j * j - k * k);
   yaw *= 180.0f / M_PI;
   // Normalize heading angle
-  if (yaw < 0) {
+  if (yaw < 0)
+  {
     yaw += 359.99f;
   }
   return yaw;
@@ -78,9 +67,9 @@ void checkReset(Adafruit_BNO08x *bno08x)
   }
 }
 
+// Function to get the current heading of the robot
 float getHeading()
 {
-
   float retVal = -1;
 
   if (bno08x.getSensorEvent(&sensorValue))
@@ -93,9 +82,9 @@ float getHeading()
       retVal += 359.99;
     }
   }
-
   return retVal;
 }
+// Helper function to get the current angle of the robot
 float getCurrentAngle()
 {
   float currentAngle = -1;
@@ -105,8 +94,7 @@ float getCurrentAngle()
   }
   return currentAngle;
 }
-
-
+//  This function is used to turn the robot to a desired heading (car is not moving)
 void turnToHeading(float goal, uint8_t speed)
 {
   float absVal;
@@ -171,7 +159,10 @@ void turnToHeading(float goal, uint8_t speed)
   }
   stop();
 }
-
+//  TODO: CLEAN UP THIS FUNCTION
+//  This function is supposed to run in while loop
+//  where you can call the stop() function to stop the robot when it reaches
+//  the desired position or if there is an obstacle in the way.
 void driveToHeading(float goalHeading)
 {
   float currentAngle = -1;
@@ -183,104 +174,129 @@ void driveToHeading(float goalHeading)
   uint16_t i = 0;
 
   bool goToHeading = true;
-  while (goToHeading)
+  // while (goToHeading)
+  // {
+  currentAngle = getCurrentAngle();
+
+  i++;
+  if (i == 30)
   {
-    currentAngle = getCurrentAngle();
+    printToLcd("Current Angle: ", currentAngle);
+    i = 0;
+  }
+  angleDiff = goalHeading - currentAngle;
+  absVal = abs(angleDiff);
+  // Serial.println(absVal);
+  if (absVal > 345)
+  {
+    absVal = 359.99 - absVal;
+    angleDiff = 359.99 - angleDiff;
+  }
+  Serial.println(angleDiff);
+  Serial.println(absVal);
+  Serial.println();
 
-    i++;
-    if (i == 30)
+  if (absVal > 15)
+  {
+    turnToHeading(goalHeading, 65);            // turn to the desired heading because angle is to great to correct while driving
+    previousMillis = currentMillis = millis(); // this timer was used to stop the robot after one seconds when starts driving at the correct angle
+                                               // but this is not used anymore
+  }
+  else if (absVal <= 15 && absVal >= 3)
+  {
+    if ((angleDiff >= 0) && (absVal <= 180))
     {
-      printToLcd("Current Angle: ", currentAngle);
-      i = 0;
+      // Serial.print(" case 1: ");
+      turn2(COUNTER_CLOCKWISE, 65, 30); // Turn2 takes in the direction, speed, and an offset that will increase the turning wheel by the given amount
     }
-    angleDiff = goalHeading - currentAngle;
-    absVal = abs(angleDiff);
-    // Serial.println(absVal);
-    if (absVal > 345)
+    else if ((angleDiff < 0) && (absVal <= 180))
     {
-      absVal = 359.99 - absVal;
-      angleDiff = 359.99 - angleDiff;
+      // Serial.print(" case 2: ");
+      turn2(CLOCKWISE, 65, 30);
     }
-    Serial.println(angleDiff);
-    Serial.println(absVal);
-    Serial.println();
-
-    if (absVal > 15)
+    else if ((angleDiff >= 0) && (absVal >= 180))
     {
-      turnToHeading(goalHeading, 65);
-      previousMillis = currentMillis = millis();
-    }
-    else if (absVal <= 15 && absVal >= 3)
-    {
-      if ((angleDiff >= 0) && (absVal <= 180))
-      {
-        // Serial.print(" case 1: ");
-        turn2(COUNTER_CLOCKWISE, 65, 30);
-      }
-      else if ((angleDiff < 0) && (absVal <= 180))
-      {
-        // Serial.print(" case 2: ");
-        turn2(CLOCKWISE, 65, 30);
-      }
-      else if ((angleDiff >= 0) && (absVal >= 180))
-      {
-        // Serial.print(" case 3: ");
-        turn2(CLOCKWISE, 65, 30);
-      }
-      else
-      {
-        // Serial.print(" case 4: ");
-        turn2(COUNTER_CLOCKWISE, 65, 30);
-      }
-      previousMillis = currentMillis = millis();
-    }
-    else if (absVal < 5 && absVal >= 2)
-    {
-      if ((angleDiff >= 0) && (absVal <= 180))
-      {
-        // Serial.print(" case 1: ");
-        turn2(COUNTER_CLOCKWISE, 65, 10);
-      }
-      else if ((angleDiff < 0) && (absVal <= 180))
-      {
-        // Serial.print(" case 2: ");
-        turn2(CLOCKWISE, 65, 10);
-      }
-      else if ((angleDiff >= 0) && (absVal >= 180))
-      {
-        // Serial.print(" case 3: ");
-        turn2(CLOCKWISE, 65, 10);
-      }
-      else
-      {
-        // Serial.print(" case 4: ");
-        turn2(COUNTER_CLOCKWISE, 65, 10);
-      }
-      unsigned long currentMillis = millis();
-
-      if (currentMillis - previousMillis >= interval)
-      {
-        previousMillis = currentMillis;
-        if (previousMillis != 0)
-        {
-          goToHeading = false;
-          stop();
-        }
-      }
+      // Serial.print(" case 3: ");
+      turn2(CLOCKWISE, 65, 30);
     }
     else
     {
-      move(FORWARD, 65);
-
-      if (currentMillis - previousMillis >= interval)
-      {
-        previousMillis = currentMillis;
-        if (previousMillis != 0)
-        {
-          goToHeading = false;
-          stop();
-        }
-      }
+      // Serial.print(" case 4: ");
+      turn2(COUNTER_CLOCKWISE, 65, 30);
     }
+    previousMillis = currentMillis = millis();
   }
+  else if (absVal < 5 && absVal >= 2) // if the angle is less than 5 degrees, drive the turning wheel slightly faster than the straight wheel
+  {
+    if ((angleDiff >= 0) && (absVal <= 180))
+    {
+      // Serial.print(" case 1: ");
+      turn2(COUNTER_CLOCKWISE, 65, 20);
+    }
+    else if ((angleDiff < 0) && (absVal <= 180))
+    {
+      // Serial.print(" case 2: ");
+      turn2(CLOCKWISE, 65, 20);
+    }
+    else if ((angleDiff >= 0) && (absVal >= 180))
+    {
+      // Serial.print(" case 3: ");
+      turn2(CLOCKWISE, 65, 20);
+    }
+    else
+    {
+      // Serial.print(" case 4: ");
+      turn2(COUNTER_CLOCKWISE, 65, 20);
+    }
+    previousMillis = currentMillis = millis();
+  }
+  else if (absVal < 2 && absVal >= 1) // if the angle is less than 2 degrees, drive the turning wheel barely faster than the straight wheel
+  {
+    if ((angleDiff >= 0) && (absVal <= 180))
+    {
+      // Serial.print(" case 1: ");
+      turn2(COUNTER_CLOCKWISE, 65, 10);
+    }
+    else if ((angleDiff < 0) && (absVal <= 180))
+    {
+      // Serial.print(" case 2: ");
+      turn2(CLOCKWISE, 65, 10);
+    }
+    else if ((angleDiff >= 0) && (absVal >= 180))
+    {
+      // Serial.print(" case 3: ");
+      turn2(CLOCKWISE, 65, 10);
+    }
+    else
+    {
+      // Serial.print(" case 4: ");
+      turn2(COUNTER_CLOCKWISE, 65, 10);
+    }
+    unsigned long currentMillis = millis();
+
+    // if (currentMillis - previousMillis >= interval)
+    // {
+    //   previousMillis = currentMillis;
+    //   if (previousMillis != 0)
+    //   {
+    //     goToHeading = false;
+    //     stop();
+    //   }
+    // }
+  }
+  else
+  {
+    move(FORWARD, 65); // if the angle is less than 1 degree, drive straight
+
+    // if (currentMillis - previousMillis >= interval)
+    // {
+    //   previousMillis = currentMillis;
+    //   if (previousMillis != 0)
+    //   {
+    //     goToHeading = false;
+    //     stop();
+    //   }
+    // }
+  }
+  //}
 }
