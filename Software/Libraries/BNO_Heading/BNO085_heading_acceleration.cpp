@@ -45,6 +45,7 @@ void setupBNO085(Adafruit_BNO08x *bno08x)
   // Wire.begin(9, 8);
   if (!bno08x->begin_I2C())
   {
+    // neopixelWrite(LED_BUILTIN, 0, 0, 0xFF);
     // Serial.println("Failed to find BNO08x chip");
     while (1)
     {

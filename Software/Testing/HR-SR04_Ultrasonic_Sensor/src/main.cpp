@@ -43,7 +43,7 @@
  * or only the signal pin (for sensors 3 pins), like:
  * Ultrasonic ultrasonic(13);
  */
-Ultrasonic ultrasonic(0, 1);
+Ultrasonic ultrasonic(14, 11);
 int distance;
 float distanceIn;
 
