@@ -9,8 +9,3 @@ void reports(Adafruit_BNO08x *bno08x);
 void setupBNO085(Adafruit_BNO08x *bno08x);
 void checkReset(Adafruit_BNO08x *bno08x);
 float calculateHeading(float i, float j, float k, float real);
-float getHeading();
-float getCurrentAngle();
-void printCurrentAngle();
-void turnToHeading(float goal, uint8_t speed);
-void driveToHeading(float goalHeading);

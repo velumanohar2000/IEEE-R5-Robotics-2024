@@ -1,7 +1,24 @@
-#include <Wire.h>
+#include <Arduino.h>
+#include <stdbool.h>
 #include <Adafruit_BNO08x.h>
-#include "math.h"
+#include <Wire.h>
+#include <math.h>
+#include <ESP32MotorControl.h>
+#include <LiquidCrystal_I2C.h>
+#include <string.h>
+
 #include "BNO085_heading_acceleration.h"
+#include "motor_control_v2.h"
+#include "printToLcd.h"
+
+extern ESP32MotorControl motors;
+extern int16_t A_LEFT_MOTOR_OFFSET;
+extern int16_t B_RIGHT_MOTOR_OFFSET;
+extern Adafruit_BNO08x bno08x;
+extern sh2_SensorValue_t sensorValue;
+extern float offset;
+
+ 
 
 
 void setReports(Adafruit_BNO08x *bno08x, sh2_SensorId_t reportType, uint32_t interval)
@@ -57,5 +74,212 @@ void checkReset(Adafruit_BNO08x *bno08x)
   {
     // Serial.print("sensor was reset ");
     reports(bno08x);
+  }
+}
+
+float getHeading()
+{
+
+  float retVal = -1;
+
+  if (bno08x.getSensorEvent(&sensorValue))
+  {
+    retVal = calculateHeading(sensorValue.un.arvrStabilizedRV.i, sensorValue.un.arvrStabilizedRV.j, sensorValue.un.arvrStabilizedRV.k, sensorValue.un.arvrStabilizedRV.real);
+
+    retVal -= offset;
+    if (retVal < 0)
+    {
+      retVal += 359.99;
+    }
+  }
+
+  return retVal;
+}
+float getCurrentAngle()
+{
+  float currentAngle = -1;
+  while (currentAngle == -1)
+  {
+    currentAngle = getHeading();
+  }
+  return currentAngle;
+}
+
+
+void turnToHeading(float goal, uint8_t speed)
+{
+  float absVal;
+  float angleDiff;
+  uint8_t i = 0;
+
+  float currentAngle = getCurrentAngle();
+
+  printToLcd("Current Angle: ", currentAngle);
+  angleDiff = goal - currentAngle;
+  absVal = abs(angleDiff);
+  if (absVal > 350)
+  {
+    absVal = 359.99 - absVal;
+    angleDiff = 359.99 - angleDiff;
+  }
+  Serial.println(angleDiff);
+  Serial.println(absVal);
+  Serial.println();
+
+  while (absVal > 10)
+  {
+    // Serial.print("abs: ");
+    // Serial.print(absVal);
+    // Serial.print(" angle: ");
+    // Serial.print(currentAngle);
+
+    if ((angleDiff >= 0) && (absVal <= 180))
+    {
+      // Serial.print(" case 1: ");
+      turn(COUNTER_CLOCKWISE, speed);
+    }
+    else if ((angleDiff < 0) && (absVal <= 180))
+    {
+      // Serial.print(" case 2: ");
+      turn(CLOCKWISE, speed);
+    }
+    else if ((angleDiff >= 0) && (absVal >= 180))
+    {
+      // Serial.print(" case 3: ");
+      turn(CLOCKWISE, speed);
+    }
+    else
+    {
+      // Serial.print(" case 4: ");
+      turn(COUNTER_CLOCKWISE, speed);
+    }
+
+    currentAngle = getCurrentAngle();
+
+    // Serial.println(goal);
+    angleDiff = goal - currentAngle;
+    absVal = abs(angleDiff);
+    if (absVal > 350)
+    {
+      absVal = 359.99 - absVal;
+      angleDiff = 359.99 - angleDiff;
+    }
+    Serial.println(angleDiff);
+    Serial.println(absVal);
+    Serial.println();
+  }
+  stop();
+}
+
+void driveToHeading(float goalHeading)
+{
+  float currentAngle = -1;
+  float absVal;
+  float angleDiff;
+  unsigned long currentMillis;
+  unsigned long previousMillis = 0;
+  uint32_t interval = 1000;
+  uint16_t i = 0;
+
+  bool goToHeading = true;
+  while (goToHeading)
+  {
+    currentAngle = getCurrentAngle();
+
+    i++;
+    if (i == 30)
+    {
+      printToLcd("Current Angle: ", currentAngle);
+      i = 0;
+    }
+    angleDiff = goalHeading - currentAngle;
+    absVal = abs(angleDiff);
+    // Serial.println(absVal);
+    if (absVal > 345)
+    {
+      absVal = 359.99 - absVal;
+      angleDiff = 359.99 - angleDiff;
+    }
+    Serial.println(angleDiff);
+    Serial.println(absVal);
+    Serial.println();
+
+    if (absVal > 15)
+    {
+      turnToHeading(goalHeading, 65);
+      previousMillis = currentMillis = millis();
+    }
+    else if (absVal <= 15 && absVal >= 3)
+    {
+      if ((angleDiff >= 0) && (absVal <= 180))
+      {
+        // Serial.print(" case 1: ");
+        turn2(COUNTER_CLOCKWISE, 65, 30);
+      }
+      else if ((angleDiff < 0) && (absVal <= 180))
+      {
+        // Serial.print(" case 2: ");
+        turn2(CLOCKWISE, 65, 30);
+      }
+      else if ((angleDiff >= 0) && (absVal >= 180))
+      {
+        // Serial.print(" case 3: ");
+        turn2(CLOCKWISE, 65, 30);
+      }
+      else
+      {
+        // Serial.print(" case 4: ");
+        turn2(COUNTER_CLOCKWISE, 65, 30);
+      }
+      previousMillis = currentMillis = millis();
+    }
+    else if (absVal < 5 && absVal >= 2)
+    {
+      if ((angleDiff >= 0) && (absVal <= 180))
+      {
+        // Serial.print(" case 1: ");
+        turn2(COUNTER_CLOCKWISE, 65, 10);
+      }
+      else if ((angleDiff < 0) && (absVal <= 180))
+      {
+        // Serial.print(" case 2: ");
+        turn2(CLOCKWISE, 65, 10);
+      }
+      else if ((angleDiff >= 0) && (absVal >= 180))
+      {
+        // Serial.print(" case 3: ");
+        turn2(CLOCKWISE, 65, 10);
+      }
+      else
+      {
+        // Serial.print(" case 4: ");
+        turn2(COUNTER_CLOCKWISE, 65, 10);
+      }
+      unsigned long currentMillis = millis();
+
+      if (currentMillis - previousMillis >= interval)
+      {
+        previousMillis = currentMillis;
+        if (previousMillis != 0)
+        {
+          goToHeading = false;
+          stop();
+        }
+      }
+    }
+    else
+    {
+      move(FORWARD, 65);
+
+      if (currentMillis - previousMillis >= interval)
+      {
+        previousMillis = currentMillis;
+        if (previousMillis != 0)
+        {
+          goToHeading = false;
+          stop();
+        }
+      }
+    }
   }
 }

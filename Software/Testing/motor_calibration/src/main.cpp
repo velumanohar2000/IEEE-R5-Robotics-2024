@@ -11,6 +11,9 @@
 #include "motor_control_v2.h"
 #include "printToLcd.h"
 
+
+
+
 // #define CALIBRATE_STRAIGHT_LINE
 //  #define TEST_TURNS
 
@@ -42,112 +45,111 @@ int16_t B_RIGHT_MOTOR_OFFSET = 2;
  */
 Adafruit_BNO08x bno08x;
 sh2_SensorValue_t sensorValue;
-
 float offset = 0;
 
-float getHeading()
-{
+// float getHeading()
+// {
 
-  float retVal = -1;
+//   float retVal = -1;
 
-  if (bno08x.getSensorEvent(&sensorValue))
-  {
-    retVal = calculateHeading(sensorValue.un.arvrStabilizedRV.i, sensorValue.un.arvrStabilizedRV.j, sensorValue.un.arvrStabilizedRV.k, sensorValue.un.arvrStabilizedRV.real);
+//   if (bno08x.getSensorEvent(&sensorValue))
+//   {
+//     retVal = calculateHeading(sensorValue.un.arvrStabilizedRV.i, sensorValue.un.arvrStabilizedRV.j, sensorValue.un.arvrStabilizedRV.k, sensorValue.un.arvrStabilizedRV.real);
 
-    retVal -= offset;
-    if (retVal < 0)
-    {
-      retVal += 359.99;
-    }
-  }
+//     retVal -= offset;
+//     if (retVal < 0)
+//     {
+//       retVal += 359.99;
+//     }
+//   }
 
-  return retVal;
-}
-float getCurrentAngle()
-{
-  float currentAngle = -1;
-  while (currentAngle == -1)
-  {
-    currentAngle = getHeading();
-  }
-  return currentAngle;
-}
-void printCurrentAngle()
-{
-  float currentAngle = getCurrentAngle();
-  printToLcd("Current Angle: ", currentAngle);
-}
+//   return retVal;
+// }
+// float getCurrentAngle()
+// {
+//   float currentAngle = -1;
+//   while (currentAngle == -1)
+//   {
+//     currentAngle = getHeading();
+//   }
+//   return currentAngle;
+// }
+// void printCurrentAngle()
+// {
+//   float currentAngle = getCurrentAngle();
+//   printToLcd("Current Angle: ", currentAngle);
+// }
 
-void turnToHeading(float goal, uint8_t speed)
-{
-  float absVal;
-  float angleDiff;
-  uint8_t i = 0;
+// void turnToHeading(float goal, uint8_t speed)
+// {
+//   float absVal;
+//   float angleDiff;
+//   uint8_t i = 0;
 
-  float currentAngle = getCurrentAngle();
+//   float currentAngle = getCurrentAngle();
 
-  printToLcd("Current Angle: ", currentAngle);
-  angleDiff = goal - currentAngle;
-  absVal = abs(angleDiff);
-  if (absVal > 350)
-  {
-    absVal = 359.99 - absVal;
-    angleDiff = 359.99 - angleDiff;
-  }
-  Serial.println(angleDiff);
-  Serial.println(absVal);
-  Serial.println();
+//   printToLcd("Current Angle: ", currentAngle);
+//   angleDiff = goal - currentAngle;
+//   absVal = abs(angleDiff);
+//   if (absVal > 350)
+//   {
+//     absVal = 359.99 - absVal;
+//     angleDiff = 359.99 - angleDiff;
+//   }
+//   Serial.println(angleDiff);
+//   Serial.println(absVal);
+//   Serial.println();
 
-  while (absVal > 10)
-  {
-    // Serial.print("abs: ");
-    // Serial.print(absVal);
-    // Serial.print(" angle: ");
-    // Serial.print(currentAngle);
+//   while (absVal > 10)
+//   {
+//     // Serial.print("abs: ");
+//     // Serial.print(absVal);
+//     // Serial.print(" angle: ");
+//     // Serial.print(currentAngle);
 
-    if ((angleDiff >= 0) && (absVal <= 180))
-    {
-      // Serial.print(" case 1: ");
-      turn(COUNTER_CLOCKWISE, speed);
-    }
-    else if ((angleDiff < 0) && (absVal <= 180))
-    {
-      // Serial.print(" case 2: ");
-      turn(CLOCKWISE, speed);
-    }
-    else if ((angleDiff >= 0) && (absVal >= 180))
-    {
-      // Serial.print(" case 3: ");
-      turn(CLOCKWISE, speed);
-    }
-    else
-    {
-      // Serial.print(" case 4: ");
-      turn(COUNTER_CLOCKWISE, speed);
-    }
+//     if ((angleDiff >= 0) && (absVal <= 180))
+//     {
+//       // Serial.print(" case 1: ");
+//       turn(COUNTER_CLOCKWISE, speed);
+//     }
+//     else if ((angleDiff < 0) && (absVal <= 180))
+//     {
+//       // Serial.print(" case 2: ");
+//       turn(CLOCKWISE, speed);
+//     }
+//     else if ((angleDiff >= 0) && (absVal >= 180))
+//     {
+//       // Serial.print(" case 3: ");
+//       turn(CLOCKWISE, speed);
+//     }
+//     else
+//     {
+//       // Serial.print(" case 4: ");
+//       turn(COUNTER_CLOCKWISE, speed);
+//     }
 
-    currentAngle = getCurrentAngle();
-    i++;
-    if (i >= 30)
-    {
-      printCurrentAngle();
-      i = 0;
-    }
+//     currentAngle = getCurrentAngle();
+//     i++;
+//     if (i >= 30)
+//     {
+//       printCurrentAngle();
+//       i = 0;
+//     }
 
-    // Serial.println(goal);
-    angleDiff = goal - currentAngle;
-    absVal = abs(angleDiff);
-    if (absVal > 350)
-    {
-      absVal = 359.99 - absVal;
-      angleDiff = 359.99 - angleDiff;
-    }
-    Serial.println(angleDiff);
-    Serial.println(absVal);
-    Serial.println();
-  }
-  stop();
-}
+//     // Serial.println(goal);
+//     angleDiff = goal - currentAngle;
+//     absVal = abs(angleDiff);
+//     if (absVal > 350)
+//     {
+//       absVal = 359.99 - absVal;
+//       angleDiff = 359.99 - angleDiff;
+//     }
+//     Serial.println(angleDiff);
+//     Serial.println(absVal);
+//     Serial.println();
+//   }
+//   stop();
+// }
 
 void testTurns()
 {
@@ -227,118 +229,118 @@ void setup()
   printCurrentAngle();
   delay(1000);
 }
-void driveToHeading(float goalHeading)
-{
-  float currentAngle = -1;
-  float absVal;
-  float angleDiff;
-  unsigned long currentMillis;
-  unsigned long previousMillis = 0;
-  uint32_t interval = 1000;
-  uint16_t i = 0;
+// void driveToHeading(float goalHeading)
+// {
+//   float currentAngle = -1;
+//   float absVal;
+//   float angleDiff;
+//   unsigned long currentMillis;
+//   unsigned long previousMillis = 0;
+//   uint32_t interval = 1000;
+//   uint16_t i = 0;
 
-  bool goToHeading = true;
-  while (goToHeading)
-  {
-    currentAngle = getCurrentAngle();
+//   bool goToHeading = true;
+//   while (goToHeading)
+//   {
+//     currentAngle = getCurrentAngle();
 
-    i++;
-    if (i == 30)
-    {
-      printToLcd("Current Angle: ", currentAngle);
-      i = 0;
-    }
-    angleDiff = goalHeading - currentAngle;
-    absVal = abs(angleDiff);
-    // Serial.println(absVal);
-    if (absVal > 345)
-    {
-      absVal = 359.99 - absVal;
-      angleDiff = 359.99 - angleDiff;
-    }
-    Serial.println(angleDiff);
-    Serial.println(absVal);
-    Serial.println();
+//     i++;
+//     if (i == 30)
+//     {
+//       printToLcd("Current Angle: ", currentAngle);
+//       i = 0;
+//     }
+//     angleDiff = goalHeading - currentAngle;
+//     absVal = abs(angleDiff);
+//     // Serial.println(absVal);
+//     if (absVal > 345)
+//     {
+//       absVal = 359.99 - absVal;
+//       angleDiff = 359.99 - angleDiff;
+//     }
+//     Serial.println(angleDiff);
+//     Serial.println(absVal);
+//     Serial.println();
 
-    if (absVal > 15)
-    {
-      turnToHeading(goalHeading, 65);
-      previousMillis = currentMillis = millis();
-    }
-    else if (absVal <= 15 && absVal >= 3)
-    {
-      if ((angleDiff >= 0) && (absVal <= 180))
-      {
-        // Serial.print(" case 1: ");
-        turn2(COUNTER_CLOCKWISE, 65, 30);
-      }
-      else if ((angleDiff < 0) && (absVal <= 180))
-      {
-        // Serial.print(" case 2: ");
-        turn2(CLOCKWISE, 65, 30);
-      }
-      else if ((angleDiff >= 0) && (absVal >= 180))
-      {
-        // Serial.print(" case 3: ");
-        turn2(CLOCKWISE, 65, 30);
-      }
-      else
-      {
-        // Serial.print(" case 4: ");
-        turn2(COUNTER_CLOCKWISE, 65, 30);
-      }
-      previousMillis = currentMillis = millis();
-    }
-    else if (absVal < 5 && absVal >= 2)
-    {
-      if ((angleDiff >= 0) && (absVal <= 180))
-      {
-        // Serial.print(" case 1: ");
-        turn2(COUNTER_CLOCKWISE, 65, 10);
-      }
-      else if ((angleDiff < 0) && (absVal <= 180))
-      {
-        // Serial.print(" case 2: ");
-        turn2(CLOCKWISE, 65, 10);
-      }
-      else if ((angleDiff >= 0) && (absVal >= 180))
-      {
-        // Serial.print(" case 3: ");
-        turn2(CLOCKWISE, 65, 10);
-      }
-      else
-      {
-        // Serial.print(" case 4: ");
-        turn2(COUNTER_CLOCKWISE, 65, 10);
-      }
-      unsigned long currentMillis = millis();
+//     if (absVal > 15)
+//     {
+//       turnToHeading(goalHeading, 65);
+//       previousMillis = currentMillis = millis();
+//     }
+//     else if (absVal <= 15 && absVal >= 3)
+//     {
+//       if ((angleDiff >= 0) && (absVal <= 180))
+//       {
+//         // Serial.print(" case 1: ");
+//         turn2(COUNTER_CLOCKWISE, 65, 30);
+//       }
+//       else if ((angleDiff < 0) && (absVal <= 180))
+//       {
+//         // Serial.print(" case 2: ");
+//         turn2(CLOCKWISE, 65, 30);
+//       }
+//       else if ((angleDiff >= 0) && (absVal >= 180))
+//       {
+//         // Serial.print(" case 3: ");
+//         turn2(CLOCKWISE, 65, 30);
+//       }
+//       else
+//       {
+//         // Serial.print(" case 4: ");
+//         turn2(COUNTER_CLOCKWISE, 65, 30);
+//       }
+//       previousMillis = currentMillis = millis();
+//     }
+//     else if (absVal < 5 && absVal >= 2)
+//     {
+//       if ((angleDiff >= 0) && (absVal <= 180))
+//       {
+//         // Serial.print(" case 1: ");
+//         turn2(COUNTER_CLOCKWISE, 65, 10);
+//       }
+//       else if ((angleDiff < 0) && (absVal <= 180))
+//       {
+//         // Serial.print(" case 2: ");
+//         turn2(CLOCKWISE, 65, 10);
+//       }
+//       else if ((angleDiff >= 0) && (absVal >= 180))
+//       {
+//         // Serial.print(" case 3: ");
+//         turn2(CLOCKWISE, 65, 10);
+//       }
+//       else
+//       {
+//         // Serial.print(" case 4: ");
+//         turn2(COUNTER_CLOCKWISE, 65, 10);
+//       }
+//       unsigned long currentMillis = millis();
 
-      if (currentMillis - previousMillis >= interval)
-      {
-        previousMillis = currentMillis;
-        if (previousMillis != 0)
-        {
-          goToHeading = false;
-          stop();
-        }
-      }
-    }
-    else
-    {
-      move(FORWARD, 65);
+//       if (currentMillis - previousMillis >= interval)
+//       {
+//         previousMillis = currentMillis;
+//         if (previousMillis != 0)
+//         {
+//           goToHeading = false;
+//           stop();
+//         }
+//       }
+//     }
+//     else
+//     {
+//       move(FORWARD, 65);
 
-      if (currentMillis - previousMillis >= interval)
-      {
-        previousMillis = currentMillis;
-        if (previousMillis != 0)
-        {
-          goToHeading = false;
-          stop();
-        }
-      }
-    }
-  }
-}
+//       if (currentMillis - previousMillis >= interval)
+//       {
+//         previousMillis = currentMillis;
+//         if (previousMillis != 0)
+//         {
+//           goToHeading = false;
+//           stop();
+//         }
+//       }
+//     }
+//   }
+// }
 
 void calibrateStraightLine()
 {
