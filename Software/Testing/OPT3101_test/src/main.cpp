@@ -23,7 +23,7 @@
 void setup()
 {
   Serial.begin(115200);
-  Wire.begin(6, 7);
+  Wire.begin(9, 8);
 
   initOPT3101();
 }

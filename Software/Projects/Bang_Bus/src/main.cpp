@@ -21,20 +21,23 @@
 #include <Wire.h>
 #include <math.h>
 #include <ESP32MotorControl.h>
+// #include <LiquidCrystal_I2C.h>
 #include "Ultrasonic.h"
 #include "BNO085_heading_acceleration.h"
 #include "motor_control_v2.h"
 #include "SparkFun_VL53L1X.h"
+#include "OPT3101_whisker.h"
 
 // Defines --------------------------------------------------------------------
 
 // Preprocessor Directives
 // #define TURN_TO_HEAD
 // #define MAIN
-#define PRELIM
+// #define PRELIM
+#define PRELIM_OPT
 
 // Whisker
-#define WHISKER_STOP_DIS 280
+#define WHISKER_STOP_DIS 200
 
 
 // Ultrasonic
@@ -79,7 +82,7 @@ float offset = 0;
 float goal = 85;
 
 /*
-  Globals for Whiskers
+  Globals for (VL53L1X) Whisker
 */
 SFEVL53L1X distanceSensor;
 int whiskDistance = 1000;                            // whisker
@@ -122,8 +125,7 @@ void initVL53L1X(void)
   }
 }
 
-
-
+/*
 float getHeading()
 {
 
@@ -143,6 +145,7 @@ float getHeading()
 
   return retVal;
 }
+*/
 
 void turnToGoalHeading(float goal, uint8_t speed)
 {
@@ -163,11 +166,11 @@ void turnToGoalHeading(float goal, uint8_t speed)
     // getWhiskerDistance();
     // Serial.printf("Whiskaaa is %f: \n", whiskDistanceInch);
     Serial.print("Offset ");
-    Serial.print(offset);
+    Serial.println(offset);
     Serial.print(" Abs: ");
-    Serial.print(absVal);
+    Serial.println(absVal);
     Serial.print(" Current Angle: ");
-    Serial.print(currentAngle);
+    Serial.println(currentAngle);
 
     if ((angleDiff >= 0) && (absVal <= 180))
     {
@@ -199,118 +202,120 @@ void turnToGoalHeading(float goal, uint8_t speed)
   }
 }
 
-// void driveToHeading(float goalHeading)
-// {
-//   float currentAngle = -1;
-//   float absVal;
-//   float angleDiff;
-//   unsigned long currentMillis;
-//   unsigned long previousMillis = 0;
-//   uint32_t interval = 1000;
-//   uint16_t i = 0;
+/*
+void driveToHeading(float goalHeading)
+{
+  float currentAngle = -1;
+  float absVal;
+  float angleDiff;
+  unsigned long currentMillis;
+  unsigned long previousMillis = 0;
+  uint32_t interval = 1000;
+  uint16_t i = 0;
 
-//   bool goToHeading = true;
-//   while (goToHeading)
-//   {
-//     // currentAngle = getCurrentAngle();
+  bool goToHeading = true;
+  while (goToHeading)
+  {
+    // currentAngle = getCurrentAngle();
 
-//     // i++;
-//     // if (i == 30)
-//     // {
-//     //   printToLcd("Current Angle: ", currentAngle);
-//     //   i = 0;
-//     // }
-//     angleDiff = goalHeading - currentAngle;
-//     absVal = abs(angleDiff);
-//     // Serial.println(absVal);
-//     if (absVal > 345)
-//     {
-//       absVal = 359.99 - absVal;
-//       angleDiff = 359.99 - angleDiff;
-//     }
-//     Serial.println(angleDiff);
-//     Serial.println(absVal);
-//     Serial.println();
+    // i++;
+    // if (i == 30)
+    // {
+    //   printToLcd("Current Angle: ", currentAngle);
+    //   i = 0;
+    // }
+    angleDiff = goalHeading - currentAngle;
+    absVal = abs(angleDiff);
+    // Serial.println(absVal);
+    if (absVal > 345)
+    {
+      absVal = 359.99 - absVal;
+      angleDiff = 359.99 - angleDiff;
+    }
+    Serial.println(angleDiff);
+    Serial.println(absVal);
+    Serial.println();
 
-//     if (absVal > 15)
-//     {
-//       turnToGoalHeading(goalHeading, 65);
-//       previousMillis = currentMillis = millis();
-//     }
-//     else if (absVal <= 15 && absVal >= 3)
-//     {
-//       if ((angleDiff >= 0) && (absVal <= 180))
-//       {
-//         // Serial.print(" case 1: ");
-//         turn2(COUNTER_CLOCKWISE, 65, 30);
-//       }
-//       else if ((angleDiff < 0) && (absVal <= 180))
-//       {
-//         // Serial.print(" case 2: ");
-//         turn2(CLOCKWISE, 65, 30);
-//       }
-//       else if ((angleDiff >= 0) && (absVal >= 180))
-//       {
-//         // Serial.print(" case 3: ");
-//         turn2(CLOCKWISE, 65, 30);
-//       }
-//       else
-//       {
-//         // Serial.print(" case 4: ");
-//         turn2(COUNTER_CLOCKWISE, 65, 30);
-//       }
-//       previousMillis = currentMillis = millis();
-//     }
-//     else if (absVal < 5 && absVal >= 2)
-//     {
-//       if ((angleDiff >= 0) && (absVal <= 180))
-//       {
-//         // Serial.print(" case 1: ");
-//         turn2(COUNTER_CLOCKWISE, 65, 10);
-//       }
-//       else if ((angleDiff < 0) && (absVal <= 180))
-//       {
-//         // Serial.print(" case 2: ");
-//         turn2(CLOCKWISE, 65, 10);
-//       }
-//       else if ((angleDiff >= 0) && (absVal >= 180))
-//       {
-//         // Serial.print(" case 3: ");
-//         turn2(CLOCKWISE, 65, 10);
-//       }
-//       else
-//       {
-//         // Serial.print(" case 4: ");
-//         turn2(COUNTER_CLOCKWISE, 65, 10);
-//       }
-//       unsigned long currentMillis = millis();
+    if (absVal > 15)
+    {
+      turnToGoalHeading(goalHeading, 65);
+      previousMillis = currentMillis = millis();
+    }
+    else if (absVal <= 15 && absVal >= 3)
+    {
+      if ((angleDiff >= 0) && (absVal <= 180))
+      {
+        // Serial.print(" case 1: ");
+        turn2(COUNTER_CLOCKWISE, 65, 30);
+      }
+      else if ((angleDiff < 0) && (absVal <= 180))
+      {
+        // Serial.print(" case 2: ");
+        turn2(CLOCKWISE, 65, 30);
+      }
+      else if ((angleDiff >= 0) && (absVal >= 180))
+      {
+        // Serial.print(" case 3: ");
+        turn2(CLOCKWISE, 65, 30);
+      }
+      else
+      {
+        // Serial.print(" case 4: ");
+        turn2(COUNTER_CLOCKWISE, 65, 30);
+      }
+      previousMillis = currentMillis = millis();
+    }
+    else if (absVal < 5 && absVal >= 2)
+    {
+      if ((angleDiff >= 0) && (absVal <= 180))
+      {
+        // Serial.print(" case 1: ");
+        turn2(COUNTER_CLOCKWISE, 65, 10);
+      }
+      else if ((angleDiff < 0) && (absVal <= 180))
+      {
+        // Serial.print(" case 2: ");
+        turn2(CLOCKWISE, 65, 10);
+      }
+      else if ((angleDiff >= 0) && (absVal >= 180))
+      {
+        // Serial.print(" case 3: ");
+        turn2(CLOCKWISE, 65, 10);
+      }
+      else
+      {
+        // Serial.print(" case 4: ");
+        turn2(COUNTER_CLOCKWISE, 65, 10);
+      }
+      unsigned long currentMillis = millis();
 
-//       if (currentMillis - previousMillis >= interval)
-//       {
-//         previousMillis = currentMillis;
-//         if (previousMillis != 0)
-//         {
-//           goToHeading = false;
-//           stop();
-//         }
-//       }
-//     }
-//     else
-//     {
-//       move(FORWARD, 65);
+      if (currentMillis - previousMillis >= interval)
+      {
+        previousMillis = currentMillis;
+        if (previousMillis != 0)
+        {
+          goToHeading = false;
+          stop();
+        }
+      }
+    }
+    else
+    {
+      move(FORWARD, 65);
 
-//       if (currentMillis - previousMillis >= interval)
-//       {
-//         previousMillis = currentMillis;
-//         if (previousMillis != 0)
-//         {
-//           goToHeading = false;
-//           stop();
-//         }
-//       }
-//     }
-//   }
-// }
+      if (currentMillis - previousMillis >= interval)
+      {
+        previousMillis = currentMillis;
+        if (previousMillis != 0)
+        {
+          goToHeading = false;
+          stop();
+        }
+      }
+    }
+  }
+}
+*/
 
 void calibrate()
 {
@@ -329,7 +334,8 @@ void setup()
   Serial.begin(115200);
   
   Wire.begin(9, 8);
-  initVL53L1X();
+  // initVL53L1X();
+  initOPT3101();
   setupBNO085(&bno08x);
   motors.attachMotors(motor_a_in1, motor_a_in2, motor_b_in3, motor_b_in4);
   uint8_t i = 0;
@@ -370,11 +376,12 @@ bool firstWall = true;
 #define TURN_180_DEG 9
 #define STOP 0xFFFF
 
-
 void loop()
 {
   uint16_t speed = 255;
   float currentAngle;
+  // int16_t whiskDistance = 0;
+
   #ifdef PRELIM
   switch(states)
   {
@@ -577,7 +584,7 @@ void loop()
         states = RIDE_RIGHT_WALL;
         firstWall = false;
       }
-      else
+      elseWhisker.distanceMillimeters
       {
         states = STOP;
       }
@@ -595,6 +602,225 @@ void loop()
 
   #endif
 
+  #ifdef PRELIM_OPT
+  switch(states)
+  {
+    Serial.println(getWhiskerDistanceCm());
+    case RIDE_RIGHT_WALL:
+    {
+      whiskDistance = getWhiskerDistanceCm();
+      // getWhiskerDistance();
+      currentAngle = getHeading();
+      if(whiskDistance> (WHISKER_STOP_DIS / 10))
+      {
+        if(whiskDistance > 1200)
+          speed = 255;
+        else if( whiskDistance > 300)
+          speed = 80;
+        else
+          speed = 50;
+        ultraDistanceCm = ultrasonic.read();
+
+        Serial.printf("ult dist %d: \n", ultraDistanceCm);
+        if(ultraDistanceCm > MAX_PRELIM_DIST)
+        {
+          stop();
+        }
+        else if(ultraDistanceCm > MAX_WALL_DIST_CM)
+        {
+          turn(COUNTER_CLOCKWISE, speed);
+          delay(80);
+          move(FORWARD, speed);
+          delay(80);
+        }
+        else if(ultraDistanceCm < MIN_WALL_DIST_CM)
+        {
+          turn(CLOCKWISE, speed);
+          delay(80);
+          move(FORWARD, speed);
+          delay(80);
+        }
+        else
+          move(FORWARD, speed);
+      }
+      else
+      {
+        stop();
+        states = TURN_90_DEG;
+        currentAngle = getHeading();
+      }
+      break;
+    }
+    case TURN_90_DEG:
+    {
+      goal = 85;
+      if(!firstWall)
+        goal += 180;
+      turnToGoalHeading(/*getHeading() + */ goal, 80);
+      stop();
+      states = TRAVEL_12_INCHES;
+      break;
+    }
+    case TRAVEL_12_INCHES:
+    {
+      whiskDistance = getWhiskerDistanceCm();
+      currentAngle = getHeading();
+      if(whiskDistance> (250))
+      {
+        if(whiskDistance > 1200)
+          speed = 255;
+        else if( whiskDistance > 300)
+          speed = 80;
+        else
+          speed = 65;
+        ultraDistanceCm = ultrasonic.read();
+
+        Serial.printf("ult dist %d: \n", ultraDistanceCm);
+        if(ultraDistanceCm > MAX_PRELIM_DIST)
+        {
+          stop();
+        }
+        else if(ultraDistanceCm > 15)
+        {
+          turn(COUNTER_CLOCKWISE, speed);
+          delay(80);
+          move(FORWARD, speed);
+          delay(80);
+        }
+        else if(ultraDistanceCm < 10)
+        {
+          turn(CLOCKWISE, speed);
+          delay(80);
+          move(FORWARD, speed);
+          delay(80);
+        }
+        else
+          move(FORWARD, speed);
+      }
+      else
+      {
+        stop();
+        states = TURN_RIGHT_TOWARDS_BUTTON;
+        currentAngle = getHeading();
+      }
+      break;
+    }
+    case TURN_RIGHT_TOWARDS_BUTTON:
+    {
+      goal = 4;
+      if(!firstWall)
+        goal += 180;
+      turnToGoalHeading(/*getHeading() + */ goal, 80);
+      stop();
+      // states = HIT_BUTTON;
+      states = STOP;
+      break;
+    }
+    case HIT_BUTTON:
+    {
+      move(FORWARD, 255);
+      delay(750);
+      stop();
+      states = MOVE_BACKWARDS;
+      break;
+    }
+    case MOVE_BACKWARDS:
+    {
+      move(BACKWARD, 80);
+      delay(750);
+      stop();
+      states = TURN_LEFT_TOWARDS_WALL;
+      break;
+    }
+    case TURN_LEFT_TOWARDS_WALL:
+    {
+      goal = 85;
+      if(!firstWall)
+        goal += 180;
+      turnToGoalHeading(/*getHeading() + */ goal, 80);
+      stop();
+      states = MOVE_BACKWARDS_2;
+      break;
+    }
+    case MOVE_BACKWARDS_2:
+    { 
+      move(BACKWARD, 80);
+      delay(750);
+      stop();
+      states = GO_TO_WALL_END;
+      break;
+    }
+    case GO_TO_WALL_END:
+    {
+      whiskDistance = getWhiskerDistanceCm();
+      currentAngle = getHeading();
+       if(whiskDistance> (250))
+      {
+        if(whiskDistance > 1200)
+          speed = 255;
+        else if( whiskDistance > 300)
+          speed = 80;
+        else
+          speed = 65;
+        ultraDistanceCm = ultrasonic.read();
+
+        Serial.printf("ult dist %d: \n", ultraDistanceCm);
+        if(ultraDistanceCm > MAX_PRELIM_DIST)
+        {
+          stop();
+        }
+        else if(ultraDistanceCm > MAX_WALL_DIST_CM)
+        {
+          turn(COUNTER_CLOCKWISE, speed);
+          delay(80);
+          move(FORWARD, speed);
+          delay(80);
+        }
+        else if(ultraDistanceCm < MIN_WALL_DIST_CM)
+        {
+          turn(CLOCKWISE, speed);
+          delay(80);
+          move(FORWARD, speed);
+          delay(80);
+        }
+        else
+          move(FORWARD, speed);
+      }
+      else
+      {
+        stop();
+        states = TURN_180_DEG;
+        currentAngle = getHeading();
+      }
+      break;
+    }
+    case TURN_180_DEG:
+    {
+      goal = 180;
+      if(!firstWall)
+        goal += 180;
+      turnToGoalHeading(/*getHeading() + */ goal, 80);
+      stop();
+      if(firstWall)
+      {
+        states = RIDE_RIGHT_WALL;
+        firstWall = false;
+      }
+      else
+      {
+        states = STOP;
+      }
+
+      break;
+    }
+    case STOP:
+    {
+      stop();
+      while(1);
+    }
+
+  }
+  #endif
 
   #ifdef MAIN
   float currentAngle;
