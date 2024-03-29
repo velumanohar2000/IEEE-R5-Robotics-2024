@@ -33,8 +33,8 @@
 // Preprocessor Directives
 // #define TURN_TO_HEAD
 // #define MAIN
-// #define PRELIM
-#define PRELIM_OPT
+#define PRELIM
+// #define PRELIM_OPT
 
 // Whisker
 #define WHISKER_STOP_DIS 200
@@ -334,8 +334,8 @@ void setup()
   Serial.begin(115200);
   
   Wire.begin(9, 8);
-  // initVL53L1X();
-  initOPT3101();
+  initVL53L1X();
+  // initOPT3101();
   setupBNO085(&bno08x);
   motors.attachMotors(motor_a_in1, motor_a_in2, motor_b_in3, motor_b_in4);
   uint8_t i = 0;
@@ -359,7 +359,7 @@ void setup()
 
   // neopixelWrite(LED_BUILTIN, 0, 0, 0xFF);
 
-  delay(2500);
+  delay(1000);
 }
 
 uint16_t states = 0;
@@ -491,7 +491,8 @@ void loop()
         goal += 180;
       turnToGoalHeading(/*getHeading() + */ goal, 80);
       stop();
-      states = HIT_BUTTON;
+      // states = HIT_BUTTON;
+       states = STOP;
       break;
     }
     case HIT_BUTTON:
@@ -584,7 +585,7 @@ void loop()
         states = RIDE_RIGHT_WALL;
         firstWall = false;
       }
-      elseWhisker.distanceMillimeters
+      else
       {
         states = STOP;
       }
