@@ -7,7 +7,7 @@
 #include <LiquidCrystal_I2C.h>
 #include <string.h>
 
-#include "BNO085_heading_acceleration.h"
+#include "BNO085_heading.h"
 #include "motor_control_v2.h"
 // #include "printToLcd.h"
 
@@ -34,7 +34,8 @@ void reports(Adafruit_BNO08x *bno08x)
 
 void setupBNO085(Adafruit_BNO08x *bno08x)
 {
-  if (!bno08x->begin_I2C())
+  Wire1.begin(20, 21);
+  if (!bno08x->begin_I2C(0x4A, &Wire1, 1))
   {
     while (1)
     {
@@ -177,7 +178,6 @@ float getCurrentAngle()
 //   // while (goToHeading)
 //   // {
 //   currentAngle = getCurrentAngle();
-  
 
 //   i++;
 //   if (i == 30)

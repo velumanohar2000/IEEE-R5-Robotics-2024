@@ -9,7 +9,7 @@
 #include <Servo.h>
 
 #include "motor_control_v2.h"
-#include "BNO085_heading_acceleration.h"
+#include "BNO085_heading_.h"
 #include "lrf.h"
 
 #define LRF_ADDRESS_1 0x10
@@ -35,7 +35,6 @@
 
 /*
  * Global Variables for X and Y position
- 
  */
 float X_POS;
 float Y_POS;
