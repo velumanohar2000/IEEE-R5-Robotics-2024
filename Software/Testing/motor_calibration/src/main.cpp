@@ -9,10 +9,7 @@
 
 #include "BNO085_heading_acceleration.h"
 #include "motor_control_v2.h"
-#include "printToLcd.h"
-
-
-
+//#include "printToLcd.h"
 
 // #define CALIBRATE_STRAIGHT_LINE
 //  #define TEST_TURNS
@@ -31,13 +28,13 @@ char lcdStr[16];
  */
 ESP32MotorControl motors;
 // LEFT MOTOR
-const uint8_t MOTOR_A_IN_1 = 41;
-const uint8_t MOTOR_A_IN_2 = 40;
+const uint8_t MOTOR_A_IN_1 = 5;
+const uint8_t MOTOR_A_IN_2 = 4;
 int16_t A_LEFT_MOTOR_OFFSET = 0;
 
 // RIGHT MOTOR
-const uint8_t MOTOR_B_IN_3 = 39;
-const uint8_t MOTOR_B_IN_4 = 38;
+const uint8_t MOTOR_B_IN_3 = 7;
+const uint8_t MOTOR_B_IN_4 = 6;
 int16_t B_RIGHT_MOTOR_OFFSET = 2;
 
 /*
@@ -154,39 +151,39 @@ float offset = 0;
 void testTurns()
 {
   turnToHeading(90, 85);
-  printCurrentAngle();
+  /// printCurrentAngle();
   delay(1000);
 
   turnToHeading(0, 85);
-  printCurrentAngle();
+  // printCurrentAngle();
   delay(1000);
 
   turnToHeading(180, 85);
-  printCurrentAngle();
+  // printCurrentAngle();
   delay(1000);
 
   turnToHeading(0, 85);
-  printCurrentAngle();
+  // printCurrentAngle();
   delay(1000);
 
   turnToHeading(270, 85);
-  printCurrentAngle();
+  // printCurrentAngle();
   delay(1000);
 
   turnToHeading(45, 85);
-  printCurrentAngle();
+  // printCurrentAngle();
   delay(1000);
 
   turnToHeading(225, 85);
-  printCurrentAngle();
+  // printCurrentAngle();
   delay(1000);
 
   turnToHeading(135, 85);
-  printCurrentAngle();
+  // printCurrentAngle();
   delay(1000);
 
   turnToHeading(315, 85);
-  printCurrentAngle();
+  // printCurrentAngle();
   delay(1000);
 }
 
@@ -204,13 +201,13 @@ void setup()
   uint8_t i = 0;
   Serial.println("*****TEST HEADING******\n\n");
 
-  printToLcd("HEADING", "TEST");
+  // printToLcd("HEADING", "TEST");
   delay(1000);
-  printToLcd("Position to 0", "degrees");
+  // printToLcd("Position to 0", "degrees");
 
   for (i = 3; i > 0; i--)
   {
-    printToLcd("Time left: ", i);
+    //   printToLcd("Time left: ", i);
     delay(1000);
   }
 
@@ -224,9 +221,9 @@ void setup()
   Serial.print("Current Angle: ");
   Serial.println(currentAngle);
 
-  printToLcd("OFFSET:", offset);
+ // printToLcd("OFFSET:", offset);
   delay(1000);
-  printCurrentAngle();
+  // printCurrentAngle();
   delay(1000);
 }
 // void driveToHeading(float goalHeading)
@@ -351,6 +348,10 @@ void calibrateStraightLine()
   delay(4000);
   stop();
 }
+
+unsigned long currentMillis = 0;
+unsigned long previousMillis = 0; // will store last time LED was updated
+
 void loop()
 {
 #ifdef CALIBRATE_STRAIGHT_LINE
@@ -367,25 +368,39 @@ void loop()
   delay(2000);
   testTurns(); // fix turning speed until angle is within desired range of goal heading
 #endif
-
-  driveToHeading(270);
-  delay(1000);
-  driveToHeading(0);
-  delay(1000);
-  driveToHeading(90);
-  delay(1000);
-  driveToHeading(180);
-  delay(1000);
-
-  while (1)
+  previousMillis = currentMillis = millis();
+  while (currentMillis - previousMillis < 1000)
   {
-    static uint16_t i = 0;
-    i++;
-    if (i >= 15)
-    {
-      printCurrentAngle();
-      i = 0;
-    }
-    delay(10);
+    driveToHeading(270);
+    currentMillis = millis();
   }
+  stop();
+  delay(1000);
+  previousMillis = currentMillis = millis();
+
+  while (currentMillis - previousMillis < 1000)
+  {
+    driveToHeading(0);
+    currentMillis = millis();
+  }
+  stop();
+  delay(1000);
+  previousMillis = currentMillis = millis();
+
+  while (currentMillis - previousMillis < 1000)
+  {
+    driveToHeading(90);
+    currentMillis = millis();
+  }
+  stop();
+  delay(1000);
+  previousMillis = currentMillis = millis();
+
+  while (currentMillis - previousMillis < 1000)
+  {
+    driveToHeading(180);
+    currentMillis = millis();
+  }
+  stop();
+  delay(1000);
 }

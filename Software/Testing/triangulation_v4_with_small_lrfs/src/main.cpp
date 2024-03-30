@@ -7,12 +7,17 @@
 #include <LiquidCrystal_I2C.h>
 #include <string.h>
 #include <Servo.h>
+#include "SparkFun_VL53L1X.h"
+
 
 #include "BNO085_heading_acceleration.h"
+#include "VL53L1X_MULTIPLE.h"
 #include "lrf.h"
 
-#define LRF_ADDRESS_1 0x10
-#define LRF_ADDRESS_2 0x20
+
+
+SFEVL53L1X lrf1;
+SFEVL53L1X lrf2;
 
 
 /*
@@ -50,7 +55,8 @@ void setup()
 {
   Serial.begin(115200);
   Wire.begin(9, 8);
-
+ // Wire1.begin(20, 21); //20 sda, 21 scl
+  init_2_VL53L1X();
   setupBNO085(&bno08x); // Initialize the IMU
   Serial.println("*****TEST HEADING******\n\n");
   delay(3000);
@@ -126,9 +132,9 @@ void setServoPosition()
 
   servoPosition += 90;                    // Add 90 because 90 degress is the middle position for the servo (therefore it is the current heading of the car)
   myservo.write(servoPin, servoPosition); // tell servo to go to position in variable 'pos'
-  lrf1 = getLrfDistance(LRF_ADDRESS_1);
+  lrf1 = getLrfDistanceCm(1);
   // printf("LRF 1 (0x10): %d@%d\n", lrf1, servoPosition);
-  lrf2 = getLrfDistance(LRF_ADDRESS_2) + 3; // Subtract 3cm to account for the distance between the two LRFs
+  lrf2 = getLrfDistanceCm(2); // Subtract 3cm to account for the distance between the two LRFs
   // printf("LRF 2 (0x20): %d@%d\n", lrf2, servoPosition);
 
   findPosition(cardinalHeading, lrf1, lrf2); // Find the position of the car
@@ -162,12 +168,12 @@ void loop()
 {
   static uint16_t i = 0;
   i++;
-  setServoPosition();
+ setServoPosition();
 
   if (i >= 15)
   {
     printCurrentAngle();
-    printCurrentPos();
+   printCurrentPos();
     i = 0;
   }
   delay(10);

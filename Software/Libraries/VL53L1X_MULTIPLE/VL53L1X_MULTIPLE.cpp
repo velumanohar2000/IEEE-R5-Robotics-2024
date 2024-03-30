@@ -22,24 +22,25 @@
 #define LRF1_SHUTDOWN_PIN 13
 #define LRF2_SHUTDOWN_PIN 14
 
+extern SFEVL53L1X lrf1;
+extern SFEVL53L1X lrf2;
+
 // Uncomment the following line to use the optional shutdown and interrupt pins.
+// SFEVL53L1X distanceSensor(Wire, SHUTDOWN_PIN, INTERRUPT_PIN);
 
-SFEVL53L1X lrf1;
-SFEVL53L1X lrf2;
-
-void setup(void)
+void init_2_VL53L1X(void)
 {
   Wire.begin(9, 8);
   Serial.begin(115200);
   Serial.println("VL53L1X Qwiic Test");
 
-  pinMode(LRF1_SHUTDOWN_PIN, OUTPUT);
-  digitalWrite(LRF1_SHUTDOWN_PIN, LOW);
+  pinMode(LRF1_SHUTDOWN_PIN, OUTPUT); // Set the pin to output
+  pinMode(LRF2_SHUTDOWN_PIN, OUTPUT); // Set the pin to output
 
-  pinMode(LRF2_SHUTDOWN_PIN, OUTPUT);
-  digitalWrite(LRF2_SHUTDOWN_PIN, LOW);
+  digitalWrite(LRF1_SHUTDOWN_PIN, LOW); // Pull pin low to power off the sensor
+  digitalWrite(LRF2_SHUTDOWN_PIN, LOW); // Pull pin low to power off the sensor
 
-  pinMode(LRF2_SHUTDOWN_PIN, INPUT);
+  pinMode(LRF2_SHUTDOWN_PIN, INPUT); // Set pin back to input
   delay(10);
   if (lrf2.begin() != 0) // Begin returns 0 on a good init
   {
@@ -57,10 +58,10 @@ void setup(void)
       ;
   }
 
-  lrf2.setIntermeasurementPeriod(50);
-  Serial.println(lrf2.getIntermeasurementPeriod());
+  lrf2.setIntermeasurementPeriod(50); // Set the intermeasurement period to 50 ms
+  Serial.println(lrf2.getIntermeasurementPeriod()); // Print the intermeasurement period
 
-  pinMode(LRF1_SHUTDOWN_PIN, INPUT);
+  pinMode(LRF1_SHUTDOWN_PIN, INPUT); // Set pin back to input
   delay(10);
   if (lrf1.begin() != 0) // Begin returns 0 on a good init
   {
@@ -69,62 +70,35 @@ void setup(void)
       ;
   }
 
-  lrf1.setIntermeasurementPeriod(50);
-  Serial.println(lrf1.getIntermeasurementPeriod());
+  lrf1.setIntermeasurementPeriod(50); // Set the intermeasurement period to 50 ms
+  Serial.println(lrf1.getIntermeasurementPeriod()); // Print the intermeasurement period
 
   lrf1.startRanging(); // Start only once (and do never call stop)
   lrf2.startRanging(); // Start only once (and do never call stop)
 }
 
-float getLrfDistance(uint8_t lrfNum)
+float getLrfDistanceCm(uint8_t lrfNum)
 {
-  if (lrfNum == 1)
+  if (lrfNum == 1) // Check if the sensor number is 1
   {
-    while (!lrf1.checkForDataReady())
+    while (!lrf1.checkForDataReady()) // Check if the data is ready
     {
-      delay(1);
+      delay(1); 
     }
-    lrf1.clearInterrupt();
 
-    return lrf1.getDistance() / 10.0; // Get the result of the measurement from the sensor
+    float lrf1Cm = lrf1.getDistance() / 10.0; // Get the result of the measurement from the sensor in cm
+    lrf1.clearInterrupt(); // Clear the interrupt
+    return lrf1Cm;
   }
-  else if (lrfNum == 2)
+  else if (lrfNum == 2) // Check if the sensor number is 2
   {
     while (!lrf2.checkForDataReady())
     {
       delay(1);
     }
-    lrf2.clearInterrupt();
 
-    return lrf2.getDistance() / 10.0; // Get the result of the measurement from the sensor
+    float lrf2Cm = lrf2.getDistance() / 10.0; // Get the result of the measurement from the sensor in cm
+    lrf2.clearInterrupt(); // Clear the interrupt
+    return lrf2Cm;
   }
-}
-
-void loop(void)
-{
-  // lrf1.startRanging();                      // Write configuration bytes to initiate measurement
-  while (!lrf1.checkForDataReady())
-  {
-    delay(1);
-  }
-  float lrf1Cm = lrf1.getDistance() / 10.0; // Get the result of the measurement from the sensor
-  lrf1.clearInterrupt();
-  // lrf1.stopRanging();
-
-  Serial.print("LRF1 (ft): ");
-  Serial.print(lrf1Cm / 30.48, 2);
-
-  // lrf2.startRanging();                      // Write configuration bytes to initiate measurement
-  while (!lrf2.checkForDataReady())
-  {
-    delay(1);
-  }
-  float lrf2Cm = lrf2.getDistance() / 10.0; // Get the result of the measurement from the sensor
-  lrf2.clearInterrupt();
-  // lrf2.stopRanging();
-
-  Serial.print("\tlrf2 (ft): ");
-  Serial.print(lrf2Cm / 30.48, 2);
-
-  Serial.println();
 }
