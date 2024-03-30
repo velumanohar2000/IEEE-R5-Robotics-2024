@@ -63,7 +63,12 @@ void init_2_VL53L1X(void)
 
   pinMode(LRF1_SHUTDOWN_PIN, INPUT); // Set pin back to input
   delay(10);
-  if (lrf1.begin() != 0) // Begin returns 0 on a good init
+  if (lrf1.begin() != 0) // Begin returns 0 on a good init, address is the default 0x29
+  {
+    Serial.println("lrf1 failed to begin. Please check wiring. Freezing...");
+    while (1)
+      ;
+  }
   {
     Serial.println("lrf1 failed to begin. Please check wiring. Freezing...");
     while (1)
@@ -73,8 +78,8 @@ void init_2_VL53L1X(void)
   lrf1.setIntermeasurementPeriod(50); // Set the intermeasurement period to 50 ms
   Serial.println(lrf1.getIntermeasurementPeriod()); // Print the intermeasurement period
 
-  lrf1.startRanging(); // Start only once (and do never call stop)
-  lrf2.startRanging(); // Start only once (and do never call stop)
+  lrf1.startRanging(); // Start only once (and never call stop)
+  lrf2.startRanging(); // Start only once (and never call stop)
 }
 
 float getLrfDistanceCm(uint8_t lrfNum)
@@ -100,5 +105,9 @@ float getLrfDistanceCm(uint8_t lrfNum)
     float lrf2Cm = lrf2.getDistance() / 10.0; // Get the result of the measurement from the sensor in cm
     lrf2.clearInterrupt(); // Clear the interrupt
     return lrf2Cm;
+  }
+  else
+  {
+    return -1;
   }
 }
