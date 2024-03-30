@@ -12,5 +12,5 @@ float calculateHeading(float i, float j, float k, float real);
 float getHeading();
 float getCurrentAngle();
 void printCurrentAngle();
-void turnToHeading(float goal, uint8_t speed);
-void driveToHeading(float goalHeading);
+// void turnToHeading(float goal, uint8_t speed);
+// void driveToHeading(float goalHeading);
