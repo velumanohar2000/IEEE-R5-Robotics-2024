@@ -28,7 +28,7 @@
 // Variables & Constants ------------------------------------------------------
 
 // IR control
-const uint32_t kill_code = 0xF; // Code to unalive the robot
+const uint8_t kill_code = 0xF; // Code to unalive the robot
 
 // Debounce
 bool lastButtonState = LOW; // Previous state of the button
