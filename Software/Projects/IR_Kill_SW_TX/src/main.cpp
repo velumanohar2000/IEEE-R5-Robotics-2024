@@ -6,10 +6,10 @@
  * Rolando Rosales
  *
  * Hardware setup:
- * IR LED between Vcc and NPN transistor C
- * 470 Ohm resistor between GPIO 2 and NPN transistor B
- * GND connected to NPN transistor E
- * Push button between Vcc and GPIO 1
+ * NPN (2N2222) Transistor
+ * Collector: Vcc, 20 Ohm Resistor, IR LED
+ * Base: GPIO 3
+ * Emitter: GND
  * 
  * Requires crankyoldgit/IRremoteESP8266@^2.8.6 library
  */
@@ -23,12 +23,12 @@
 // Defines --------------------------------------------------------------------
 
 #define PUSH_BUTTON 4 // Push button connected to pin 3
-#define IR_TX_PIN 3 // IR LED connected to pin 2
+#define IR_TX_PIN 2 // IR LED connected to pin 2
 
 // Variables & Constants ------------------------------------------------------
 
 // IR control
-const uint32_t kill_code = 0xAF83F03B; // Code to unalive the robot
+const uint32_t kill_code = 0xF; // Code to unalive the robot
 
 // Debounce
 bool lastButtonState = LOW; // Previous state of the button
