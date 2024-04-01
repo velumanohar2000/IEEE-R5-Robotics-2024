@@ -1,5 +1,5 @@
 /*
- * Bit Bangers IR "Kill Switch" Receiver Test
+ * Bit Bangers IR "Kill Switch" Receiver Library
  * github.com/Bit-Bangers-UTA/Senior-Design
  *
  * Authors: 
@@ -20,48 +20,36 @@
 // Defines --------------------------------------------------------------------
 
 #define IR_RX_PIN 3
-// #define IR_ISR_PIN 9
 
 // Variables & Constants ------------------------------------------------------
 
-const uint8_t unalive_code = 0xF;
+decode_results results;
+const uint32_t unalive_code = 0x57E34BB4;
+const uint32_t lit_code = 0x57E3B34C;
 bool LED_STATE = false;
-bool wakeup_ir = false;
 
 // Structures & Classes -------------------------------------------------------
 
 IRrecv irrecv(IR_RX_PIN);
-decode_results results;
 
 // Functions ------------------------------------------------------------------
 
-void print_wakeup_reason(){
-  esp_sleep_wakeup_cause_t wakeup_reason;
-
-  wakeup_reason = esp_sleep_get_wakeup_cause();
-
-  switch(wakeup_reason)
-  {
-    case ESP_SLEEP_WAKEUP_EXT0 : Serial.println("Wakeup caused by external signal using RTC_IO"); break;
-    case ESP_SLEEP_WAKEUP_EXT1 : Serial.println("Wakeup caused by external signal using RTC_CNTL"); break;
-    case ESP_SLEEP_WAKEUP_TIMER : Serial.println("Wakeup caused by timer"); break;
-    case ESP_SLEEP_WAKEUP_TOUCHPAD : Serial.println("Wakeup caused by touchpad"); break;
-    case ESP_SLEEP_WAKEUP_ULP : Serial.println("Wakeup caused by ULP program"); break;
-    default : Serial.printf("Wakeup was not caused by deep sleep: %d\n",wakeup_reason); break;
-  }
-}
-
 void setup() {
   Serial.begin(115200);
+  
   irrecv.enableIRIn(); // Start the receiver
-
-  esp_sleep_enable_ext0_wakeup(IR_RX_PIN, 1); //1 = High, 0 = Low
-
-  Serial.println("Zzz...");
-  delay(1000);
-  esp_deep_sleep_start();
-
 }
 
 void loop() {
+  if (irrecv.decode(&results)) {
+    Serial.print("Received IR code: ");
+    Serial.println(results.value, HEX); // Print received code in hex
+
+    if (results.value == unalive_code || results.value == 0xF || results.value == lit_code) { // Toggles LED if code is unalive code
+      LED_STATE = !LED_STATE;
+      digitalWrite(LED_BUILTIN, LED_STATE ? HIGH : LOW);
+    }
+
+    irrecv.resume(); // Receive the next value
+  }
 }
