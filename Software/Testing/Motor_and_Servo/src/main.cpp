@@ -8,12 +8,10 @@
 
 const uint8_t MOTOR_A_IN_1 = 5;
 const uint8_t MOTOR_A_IN_2 = 4;
-int16_t A_LEFT_MOTOR_OFFSET = 0;
 
 // RIGHT MOTOR
 const uint8_t MOTOR_B_IN_3 = 7;
 const uint8_t MOTOR_B_IN_4 = 6;
-int16_t B_RIGHT_MOTOR_OFFSET = 2;
 
 ESP32MotorControl motors;
 Servo myservo = Servo();
