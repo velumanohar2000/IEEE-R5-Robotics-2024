@@ -10,7 +10,7 @@
 #include "SparkFun_VL53L1X.h"
 
 
-#include "BNO085_heading_acceleration.h"
+#include "BNO085_heading.h"
 #include "VL53L1X_MULTIPLE.h"
 #include "lrf.h"
 
@@ -162,6 +162,64 @@ void printCurrentPos()
   Serial.print(X_POS / 30.48); // Convert X_POS from cm to feet
   Serial.print("\tY: ");
   Serial.println(Y_POS / 30.48); // Convert Y_POS from cm to feet
+}
+
+float getNextAngle(float currentX, float currentY, float goalX, float goalY)
+{
+  // Serial.print("goal x ");
+  // Serial.println(goalX);
+  // Serial.print("gaol y ");
+  // Serial.println(goalY);
+  float diff_X = goalX - currentX;
+  float diff_Y = goalY - currentY;
+  // diff_X = -41.52;
+  // diff_Y = 212.84;
+  float angle = atan(diff_Y/diff_X);
+  // atan2()
+  // Serial.printf("Angle rads: %f\n", angle);
+  // angle *= 180.0f / M_PI;
+  // Serial.print("Diff x ");
+  // Serial.println(diff_X);
+  // Serial.print("Diff y ");
+  // Serial.println(diff_Y);
+  if(diff_X == 0 && diff_Y > 0)
+  {
+    angle = 0;
+  }
+  else if(diff_X == 0 && diff_Y < 0)
+  {
+    angle = 180;
+  }
+  else if(diff_Y == 0 && diff_X > 0)
+  {
+    angle = 270;
+  }
+  else if(diff_Y == 0 && diff_X < 0)
+  {
+    angle = 90;
+  }
+  else if(diff_X > 0 && diff_Y > 0)             // x+ y+
+  {
+    angle += 270;
+  }
+  else if(diff_X < 0 && diff_Y > 0)             // x- y+
+  {
+    angle += 90;
+  }
+  else if(diff_X < 0 && diff_Y < 0)             // x- y-
+  {
+    angle+=90;;
+  }
+  else                                          // x+ y-
+  {
+    angle+=270;;
+  }
+  if (angle > 359.99)
+    angle -= 359.99;
+  else if( angle < 0)
+    angle += 359.99;
+  Serial.printf("next angle = %f\n\n", angle);
+  return angle;
 }
 
 void loop()
