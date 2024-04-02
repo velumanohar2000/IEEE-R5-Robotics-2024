@@ -10,8 +10,8 @@ const uint8_t MOTOR_A_IN_1 = 5;
 const uint8_t MOTOR_A_IN_2 = 4;
 
 // RIGHT MOTOR
-const uint8_t MOTOR_B_IN_3 = 7;
-const uint8_t MOTOR_B_IN_4 = 6;
+const uint8_t MOTOR_B_IN_3 = 6;
+const uint8_t MOTOR_B_IN_4 = 7;
 
 ESP32MotorControl motors;
 Servo myservo = Servo();
