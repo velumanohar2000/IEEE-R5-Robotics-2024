@@ -17,6 +17,9 @@ sh2_SensorValue_t sensorValue;
 
 void setup()
 {
+  Serial.begin(115200);
+  Serial.println("Adafruit BNO08x test!");
+  Wire.begin(20, 21);
   setupBNO085(&bno08x);
 }
 
