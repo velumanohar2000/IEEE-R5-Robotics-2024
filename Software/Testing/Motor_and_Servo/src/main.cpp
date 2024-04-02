@@ -22,11 +22,13 @@ void setup() {
   // put your setup code here, to run once:
   motors.attachMotors(MOTOR_A_IN_1, MOTOR_A_IN_2, MOTOR_B_IN_3, MOTOR_B_IN_4);
 }
+bool direction = true;
 
 void loop() {
   // put your main code here, to run repeatedly:
   #ifdef MOTORS
-  move(FORWARD);
+  move(direction);
+  direction ^= 1;
   #endif
 
   #ifdef SERVO
