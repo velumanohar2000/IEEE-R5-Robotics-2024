@@ -30,8 +30,8 @@
 
 extern ESP32MotorControl motors;
 
-int16_t A_LEFT_MOTOR_OFFSET = 0;
-int16_t B_RIGHT_MOTOR_OFFSET = 0;
+extern int16_t A_LEFT_MOTOR_OFFSET;
+extern int16_t B_RIGHT_MOTOR_OFFSET;
 
 // Functions ------------------------------------------------------------------
 
