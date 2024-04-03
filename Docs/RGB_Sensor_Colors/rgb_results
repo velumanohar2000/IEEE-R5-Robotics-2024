@@ -1,0 +1,21 @@
+- expected -
+color	r	g	b
+red		255 0	0
+orange	255 192	0
+yellow	255 255	0
+blue   	0	112	192
+purple	112	48	160
+black	0	0	0
+gray	127	127	127
+green	146	208	80
+
+ - calibrated -
+color	r	g   b
+red		100	0	0	- done
+orange	100 50	0	
+yellow	90	80	0
+blue	0	30	70
+purple	10	0	55
+black	0	0	0
+gray	5	5	5
+green	15	35	0
