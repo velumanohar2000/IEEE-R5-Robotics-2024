@@ -92,12 +92,14 @@ void turn(bool direction, uint16_t speed)
   if (direction == CLOCKWISE)
   {
     motors.motorForward(MOTOR_A, speed + A_LEFT_MOTOR_OFFSET);
-    motors.motorStop(MOTOR_B);
+    // motors.motorStop(MOTOR_B);
+    motors.motorForward(MOTOR_B, 0);
   }
   else
   {
     motors.motorForward(MOTOR_B, speed + B_RIGHT_MOTOR_OFFSET);
-    motors.motorStop(MOTOR_A);
+    motors.motorForward(MOTOR_A, 0);
+    // motors.motorStop(MOTOR_A);
   }
 }
 
