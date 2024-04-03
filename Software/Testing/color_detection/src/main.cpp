@@ -19,8 +19,8 @@
 // Defines --------------------------------------------------------------------
 
 // I2C Pins
-#define SDA 4
-#define SCL 5
+#define SDA 14
+#define SCL 15
 
 // Color states
 #define RED 1
@@ -35,9 +35,9 @@
 // Variables & Constants ------------------------------------------------------
 
 // Ambient color values
-const uint16_t r_amb = 45;
-const uint16_t g_amb = 60;
-const uint16_t b_amb = 40;
+const uint16_t r_amb = 10;
+const uint16_t g_amb = 15;
+const uint16_t b_amb = 15;
 
 // Structures & Classes -------------------------------------------------------
 
@@ -97,17 +97,13 @@ void loop(void) {
   Serial.print("G: "); Serial.print(g, DEC); Serial.print(" ");
   Serial.print("B: "); Serial.println(b, DEC);
 
-  if (g > 30)
-  {
-    start_color = GREEN;
-  }
-  else if (r > 60)
+  if (r > 60)
   {
     if (g < 30)
     {
       start_color = RED;
     }
-    else if ((r - g) < 15)
+    else if ((r - g) < 30)
     {
       start_color = YELLOW;
     }
@@ -126,6 +122,10 @@ void loop(void) {
     {
       start_color = PURPLE;
     }
+  }
+  else if (g > 30)
+  {
+    start_color = GREEN;
   }
   else if (r < 5 && g < 5 && b < 5)
   {
@@ -169,6 +169,6 @@ void loop(void) {
       break;
   }
 
-  neopixelWrite(RGB_BUILTIN, r, g, b);
+  // neopixelWrite(RGB_BUILTIN, r, g, b);
   Serial.println();
 }
