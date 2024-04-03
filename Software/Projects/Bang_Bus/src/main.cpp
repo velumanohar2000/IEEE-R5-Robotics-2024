@@ -16,17 +16,19 @@
 // Libraries ------------------------------------------------------------------
 
 #include <Arduino.h>
+#include <Servo.h>
 #include <stdbool.h>
 #include <Adafruit_BNO08x.h>
 #include <Wire.h>
 #include <math.h>
 #include <ESP32MotorControl.h>
+#include <VL53L1X_MULTIPLE.h>
 // #include <LiquidCrystal_I2C.h>
-#include "Ultrasonic.h"
-#include "BNO085_heading_acceleration.h"
+// #include "Ultrasonic.h"
+#include "BNO085_heading.h"
 #include "motor_control_v2.h"
 #include "SparkFun_VL53L1X.h"
-#include "OPT3101_whisker.h"
+// #include "OPT3101_whisker.h"
 
 // Defines --------------------------------------------------------------------
 
@@ -35,29 +37,31 @@
 // #define MAIN
 #define PRELIM
 // #define PRELIM_OPT
+// #define TEST_TURNING
 
 // Whisker
-#define WHISKER_STOP_DIS 200
+#define WHISKER_STOP_DIS 30
 
 
 // Ultrasonic
-#define ULTRAS_TRIG 14
-#define ULTRAS_ECHO 11
+// #define ULTRAS_TRIG 14
+// #define ULTRAS_ECHO 11
 #define MAX_PRELIM_DIST 60
-#define MIN_WALL_DIST_CM 4
-#define MAX_WALL_DIST_CM 6
+#define MIN_WALL_DIST_CM 7
+#define MAX_WALL_DIST_CM 9
 
 // Variables & Constants ------------------------------------------------------
 
 // Motors
 // Left
-const uint8_t motor_a_in1 = 7;
-const uint8_t motor_a_in2 = 6;
-// Right
-const uint8_t motor_b_in3 = 4;
-const uint8_t motor_b_in4 = 5;
+const uint8_t MOTOR_A_IN_1 = 6;
+const uint8_t MOTOR_A_IN_2 = 7;
 
-int16_t A_LEFT_MOTOR_OFFSET = 0;
+// RIGHT MOTOR
+const uint8_t MOTOR_B_IN_3 = 5;
+const uint8_t MOTOR_B_IN_4 = 4;
+
+int16_t A_LEFT_MOTOR_OFFSET = 18;
 int16_t B_RIGHT_MOTOR_OFFSET = 0;
 
 // Structures & Classes -------------------------------------------------------
@@ -84,123 +88,25 @@ float goal = 85;
 /*
   Globals for (VL53L1X) Whisker
 */
-SFEVL53L1X distanceSensor;
-int whiskDistance = 1000;                            // whisker
-float whiskDistanceInch = 1000;               // whisker
+SFEVL53L1X lrf1_init;
+SFEVL53L1X lrf2_init;
+
+float frontVLcm = 1000;
+float sideVLcm;
+// int frontVLcm = 1000;                            // whisker
+float frontVLcmInch = 1000;               // whisker
 int whiskOffset = 0;
 bool wallFound = false;
 
 /*
-  Globals for ultrasonic
+  globals for servo
 */
-Ultrasonic ultrasonic(ULTRAS_TRIG, ULTRAS_ECHO);
-int ultraDistanceCm = 100;                      // ultrasonic
-float ultraDistanceInch;                      // ultrasonic
+Servo myservo = Servo();
+uint8_t servoPin = 2;
+uint16_t servoPosition = 90;
+
 
 // Functions ------------------------------------------------------------------
-
-void getWhiskerDistance()
-{
-  distanceSensor.startRanging(); //Write configuration bytes to initiate measurement
-  while (!distanceSensor.checkForDataReady())
-  {
-    delay(1);
-  }
-  whiskDistance = distanceSensor.getDistance(); //Get the result of the measurement from the sensor
-  distanceSensor.clearInterrupt();
-  distanceSensor.stopRanging();
-  whiskDistanceInch = whiskDistance * 0.0393701;
-}
-
-void initVL53L1X(void)
-{
-  Wire.begin(9, 8);
-
-  if (distanceSensor.begin() != 0) //Begin returns 0 on a good init
-  {
-    while (1)
-    {
-      // neopixelWrite(LED_BUILTIN, 0xFF, 0, 0);
-    }
-  }
-}
-
-/*
-float getHeading()
-{
-
-  float retVal = -1;
-
-  if (bno08x.getSensorEvent(&sensorValue))
-  {
-    retVal = calculateHeading(sensorValue.un.arvrStabilizedRV.i, sensorValue.un.arvrStabilizedRV.j, sensorValue.un.arvrStabilizedRV.k, sensorValue.un.arvrStabilizedRV.real);
-
-    Serial.printf(" Raw angle = %f\n", retVal);
-    retVal -= offset;
-    if (retVal < 0)
-    {
-      retVal += 359.99;
-    }
-  }
-
-  return retVal;
-}
-*/
-
-void turnToGoalHeading(float goal, uint8_t speed)
-{
-  float currentAngle = -1;
-  float absVal;
-  float angleDiff;
-  if(goal >= 360)
-    goal -= 359.99;
-
-  while (currentAngle == -1)
-    currentAngle = getHeading();
-
-  angleDiff = goal - currentAngle;
-  absVal = abs(angleDiff);
-
-  while (absVal > 4)
-  {
-    // getWhiskerDistance();
-    // Serial.printf("Whiskaaa is %f: \n", whiskDistanceInch);
-    Serial.print("Offset ");
-    Serial.println(offset);
-    Serial.print(" Abs: ");
-    Serial.println(absVal);
-    Serial.print(" Current Angle: ");
-    Serial.println(currentAngle);
-
-    if ((angleDiff >= 0) && (absVal <= 180))
-    {
-      // Serial.print(" case 1: ");
-      turn(CLOCKWISE, speed);
-    }
-    else if ((angleDiff < 0) && (absVal <= 180))
-    {
-      // Serial.print(" case 2: ");
-      turn(COUNTER_CLOCKWISE, speed);
-    }
-    else if ((angleDiff >= 0) && (absVal >= 180))
-    {
-      // Serial.print(" case 3: ");
-      turn(COUNTER_CLOCKWISE, speed);
-    }
-    else
-    {
-      // Serial.print(" case 4: ");
-      turn(CLOCKWISE, speed);
-    }
-    currentAngle = -1;
-    while (currentAngle == -1)
-      currentAngle = getHeading();
-
-    // Serial.println(goal);
-    angleDiff = goal - currentAngle;
-    absVal = abs(angleDiff);
-  }
-}
 
 /*
 void driveToHeading(float goalHeading)
@@ -216,14 +122,14 @@ void driveToHeading(float goalHeading)
   bool goToHeading = true;
   while (goToHeading)
   {
-    // currentAngle = getCurrentAngle();
+    currentAngle = getCurrentAngle();
 
-    // i++;
-    // if (i == 30)
-    // {
-    //   printToLcd("Current Angle: ", currentAngle);
-    //   i = 0;
-    // }
+    i++;
+    if (i == 30)
+    {
+      printToLcd("Current Angle: ", currentAngle);
+      i = 0;
+    }
     angleDiff = goalHeading - currentAngle;
     absVal = abs(angleDiff);
     // Serial.println(absVal);
@@ -238,7 +144,7 @@ void driveToHeading(float goalHeading)
 
     if (absVal > 15)
     {
-      turnToGoalHeading(goalHeading, 65);
+      turnToHeading(goalHeading, 65);
       previousMillis = currentMillis = millis();
     }
     else if (absVal <= 15 && absVal >= 3)
@@ -317,6 +223,109 @@ void driveToHeading(float goalHeading)
 }
 */
 
+int16_t findCardinalheading()
+{
+  float currentAngle = getCurrentAngle();
+  if (currentAngle >= 0 && currentAngle < 45 || currentAngle >= 315)
+  {
+    return 0; // North
+  }
+  else if (currentAngle >= 45 && currentAngle < 135)
+  {
+    return 90; // East
+  }
+  else if (currentAngle >= 135 && currentAngle < 225)
+  {
+    return 180; // South
+  }
+  else if (currentAngle >= 225 && currentAngle < 315)
+  {
+    return 270; // West
+  }
+  else
+  {
+    return -1; // Error
+  }
+}
+void jiggle()
+{
+  float lrf1;
+  float lrf2;
+  float currentHeading = getCurrentAngle();
+  uint16_t cardinalHeading = findCardinalheading();
+  float servoPosition = cardinalHeading - currentHeading; // Calculate the difference between the cardinal heading and the current heading
+  if (abs(servoPosition) > 90)
+  {
+    servoPosition = 359.99 - abs(servoPosition); // 359.99 is the max value for the servo
+  }
+
+  servoPosition += 90;                    // Add 90 because 90 degress is the middle position for the servo (therefore it is the current heading of the car)
+  myservo.write(servoPin, servoPosition); // tell servo to go to position in variable 'pos'
+  delay(15);                              // waits 15ms for the servo to reach the position
+  lrf1 = getLrfDistanceCm(1);
+  lrf2 = getLrfDistanceCm(2); 
+  // Serial.print("LRF1: ");
+  // Serial.print(lrf1);
+  // Serial.print("\tLRF2: ");
+  // Serial.println(lrf2);
+  // findPosition(cardinalHeading, lrf1, lrf2); // Find the position of the car
+}
+
+void turnToGoalHeading(float goal, uint8_t speed)
+{
+  float currentAngle = -1;
+  float absVal;
+  float angleDiff;
+  if(goal >= 360)
+    goal -= 359.99;
+
+  while (currentAngle == -1)
+    currentAngle = getHeading();
+
+  angleDiff = goal - currentAngle;
+  absVal = abs(angleDiff);
+
+  while (absVal > 4)
+  {
+    // frontVLcm = getLrfDistanceCm(1)
+    // Serial.printf("Whiskaaa is %f: \n", frontVLcmInch);
+    Serial.print("Offset ");
+    Serial.println(offset);
+    Serial.print(" Abs: ");
+    Serial.println(absVal);
+    Serial.print(" Current Angle: ");
+    Serial.println(currentAngle);
+
+    if ((angleDiff >= 0) && (absVal <= 180))
+    {
+      // Serial.print(" case 1: ");
+      turn(COUNTER_CLOCKWISE, speed);
+    }
+    else if ((angleDiff < 0) && (absVal <= 180))
+    {
+      // Serial.print(" case 2: ");
+      turn(CLOCKWISE, speed);
+    }
+    else if ((angleDiff >= 0) && (absVal >= 180))
+    {
+      // Serial.print(" case 3: ");
+      turn(CLOCKWISE, speed);
+    }
+    else
+    {
+      // Serial.print(" case 4: ");
+      turn(COUNTER_CLOCKWISE, speed);
+    }
+    currentAngle = -1;
+    while (currentAngle == -1)
+      currentAngle = getHeading();
+
+    // Serial.println(goal);
+    angleDiff = goal - currentAngle;
+    absVal = abs(angleDiff);
+  }
+}
+
 void calibrate()
 {
   float currentAngle = -1;
@@ -334,10 +343,10 @@ void setup()
   Serial.begin(115200);
   
   Wire.begin(9, 8);
-  initVL53L1X();
+  init_2_VL53L1X();
   // initOPT3101();
   setupBNO085(&bno08x);
-  motors.attachMotors(motor_a_in1, motor_a_in2, motor_b_in3, motor_b_in4);
+  motors.attachMotors(MOTOR_B_IN_3, MOTOR_B_IN_4, MOTOR_A_IN_1, MOTOR_A_IN_2);
   uint8_t i = 0;
   Serial.println("*****TEST HEADING******\n\n");
   float currentAngle = -1;
@@ -378,43 +387,43 @@ bool firstWall = true;
 
 void loop()
 {
-  uint16_t speed = 255;
+  uint16_t speed = 80;
   float currentAngle;
-  // int16_t whiskDistance = 0;
+  // int16_t frontVLcm = 0;
 
   #ifdef PRELIM
   switch(states)
   {
     case RIDE_RIGHT_WALL:
     {
-      
-      getWhiskerDistance();
+      jiggle();
+      frontVLcm = getLrfDistanceCm(1);
       currentAngle = getHeading();
-      if(whiskDistance> (WHISKER_STOP_DIS))
+      if(frontVLcm> (WHISKER_STOP_DIS))
       {
-        if(whiskDistance > 1200)
-          speed = 255;
-        else if( whiskDistance > 300)
-          speed = 80;
-        else
-          speed = 50;
-        ultraDistanceCm = ultrasonic.read();
+        // if(frontVLcm > 120)
+        //   speed = 230;
+        // else if( frontVLcm > 30)
+        //   speed = 80;
+        // else
+        //   speed = 50;
+        sideVLcm = getLrfDistanceCm(2);
 
-        Serial.printf("ult dist %d: \n", ultraDistanceCm);
-        if(ultraDistanceCm > MAX_PRELIM_DIST)
+        Serial.printf("ult dist %f: \n", sideVLcm);
+        if(sideVLcm > MAX_PRELIM_DIST)
         {
-          stop();
+          stopMotors();
         }
-        else if(ultraDistanceCm > MAX_WALL_DIST_CM)
+        else if(sideVLcm > MAX_WALL_DIST_CM)
         {
-          turn(COUNTER_CLOCKWISE, speed);
+          turn(CLOCKWISE, speed);
           delay(80);
           move(FORWARD, speed);
           delay(80);
         }
-        else if(ultraDistanceCm < MIN_WALL_DIST_CM)
+        else if(sideVLcm < MIN_WALL_DIST_CM)
         {
-          turn(CLOCKWISE, speed);
+          turn(COUNTER_CLOCKWISE, speed);
           delay(80);
           move(FORWARD, speed);
           delay(80);
@@ -424,7 +433,7 @@ void loop()
       }
       else
       {
-        stop();
+        stopMotors();
         states = TURN_90_DEG;
         currentAngle = getHeading();
       }
@@ -436,39 +445,39 @@ void loop()
       if(!firstWall)
         goal += 180;
       turnToGoalHeading(/*getHeading() + */ goal, 80);
-      stop();
+      stopMotors();
       states = TRAVEL_12_INCHES;
       break;
     }
     case TRAVEL_12_INCHES:
     {
-      getWhiskerDistance();
+      frontVLcm = getLrfDistanceCm(1);
       currentAngle = getHeading();
-      if(whiskDistance> (250))
+      if(frontVLcm> (250))
       {
-        if(whiskDistance > 1200)
+        if(frontVLcm > 1200)
           speed = 255;
-        else if( whiskDistance > 300)
+        else if( frontVLcm > 300)
           speed = 80;
         else
           speed = 65;
-        ultraDistanceCm = ultrasonic.read();
+        sideVLcm = getLrfDistanceCm(2);
 
-        Serial.printf("ult dist %d: \n", ultraDistanceCm);
-        if(ultraDistanceCm > MAX_PRELIM_DIST)
+        Serial.printf("ult dist %f: \n", sideVLcm);
+        if(sideVLcm > MAX_PRELIM_DIST)
         {
-          stop();
+          stopMotors();
         }
-        else if(ultraDistanceCm > 15)
+        else if(sideVLcm > 15)
         {
-          turn(COUNTER_CLOCKWISE, speed);
+          turn(CLOCKWISE, speed);
           delay(80);
           move(FORWARD, speed);
           delay(80);
         }
-        else if(ultraDistanceCm < 10)
+        else if(sideVLcm < 10)
         {
-          turn(CLOCKWISE, speed);
+          turn(COUNTER_CLOCKWISE, speed);
           delay(80);
           move(FORWARD, speed);
           delay(80);
@@ -478,7 +487,7 @@ void loop()
       }
       else
       {
-        stop();
+        stopMotors();
         states = TURN_RIGHT_TOWARDS_BUTTON;
         currentAngle = getHeading();
       }
@@ -490,7 +499,7 @@ void loop()
       if(!firstWall)
         goal += 180;
       turnToGoalHeading(/*getHeading() + */ goal, 80);
-      stop();
+      stopMotors();
       // states = HIT_BUTTON;
        states = STOP;
       break;
@@ -499,7 +508,7 @@ void loop()
     {
       move(FORWARD, 255);
       delay(750);
-      stop();
+      stopMotors();
       states = MOVE_BACKWARDS;
       break;
     }
@@ -507,7 +516,7 @@ void loop()
     {
       move(BACKWARD, 80);
       delay(750);
-      stop();
+      stopMotors();
       states = TURN_LEFT_TOWARDS_WALL;
       break;
     }
@@ -517,7 +526,7 @@ void loop()
       if(!firstWall)
         goal += 180;
       turnToGoalHeading(/*getHeading() + */ goal, 80);
-      stop();
+      stopMotors();
       states = MOVE_BACKWARDS_2;
       break;
     }
@@ -525,39 +534,39 @@ void loop()
     { 
       move(BACKWARD, 80);
       delay(750);
-      stop();
+      stopMotors();
       states = GO_TO_WALL_END;
       break;
     }
     case GO_TO_WALL_END:
     {
-      getWhiskerDistance();
+      frontVLcm = getLrfDistanceCm(1);
       currentAngle = getHeading();
-       if(whiskDistance> (250))
+       if(frontVLcm> (250))
       {
-        if(whiskDistance > 1200)
+        if(frontVLcm > 1200)
           speed = 255;
-        else if( whiskDistance > 300)
+        else if( frontVLcm > 300)
           speed = 80;
         else
           speed = 65;
-        ultraDistanceCm = ultrasonic.read();
+        sideVLcm = getLrfDistanceCm(2);
 
-        Serial.printf("ult dist %d: \n", ultraDistanceCm);
-        if(ultraDistanceCm > MAX_PRELIM_DIST)
+        Serial.printf("ult dist %f: \n", sideVLcm);
+        if(sideVLcm > MAX_PRELIM_DIST)
         {
-          stop();
+          stopMotors();
         }
-        else if(ultraDistanceCm > MAX_WALL_DIST_CM)
+        else if(sideVLcm > MAX_WALL_DIST_CM)
         {
-          turn(COUNTER_CLOCKWISE, speed);
+          turn(CLOCKWISE, speed);
           delay(80);
           move(FORWARD, speed);
           delay(80);
         }
-        else if(ultraDistanceCm < MIN_WALL_DIST_CM)
+        else if(sideVLcm < MIN_WALL_DIST_CM)
         {
-          turn(CLOCKWISE, speed);
+          turn(COUNTER_CLOCKWISE, speed);
           delay(80);
           move(FORWARD, speed);
           delay(80);
@@ -567,7 +576,7 @@ void loop()
       }
       else
       {
-        stop();
+        stopMotors();
         states = TURN_180_DEG;
         currentAngle = getHeading();
       }
@@ -579,7 +588,7 @@ void loop()
       if(!firstWall)
         goal += 180;
       turnToGoalHeading(/*getHeading() + */ goal, 80);
-      stop();
+      stopMotors();
       if(firstWall)
       {
         states = RIDE_RIGHT_WALL;
@@ -594,7 +603,7 @@ void loop()
     }
     case STOP:
     {
-      stop();
+      stopMotors();
       while(1);
     }
 
@@ -609,34 +618,34 @@ void loop()
     Serial.println(getWhiskerDistanceCm());
     case RIDE_RIGHT_WALL:
     {
-      whiskDistance = getWhiskerDistanceCm();
-      // getWhiskerDistance();
+      frontVLcm = getWhiskerDistanceCm();
+      // frontVLcm = getLrfDistanceCm(1)
       currentAngle = getHeading();
-      if(whiskDistance> (WHISKER_STOP_DIS / 10))
+      if(frontVLcm> (WHISKER_STOP_DIS / 10))
       {
-        if(whiskDistance > 1200)
+        if(frontVLcm > 1200)
           speed = 255;
-        else if( whiskDistance > 300)
+        else if( frontVLcm > 300)
           speed = 80;
         else
           speed = 50;
-        ultraDistanceCm = ultrasonic.read();
+        sideVLcm = getLrfDistanceCm(2);
 
-        Serial.printf("ult dist %d: \n", ultraDistanceCm);
-        if(ultraDistanceCm > MAX_PRELIM_DIST)
+        Serial.printf("ult dist %d: \n", sideVLcm);
+        if(sideVLcm > MAX_PRELIM_DIST)
         {
           stop();
         }
-        else if(ultraDistanceCm > MAX_WALL_DIST_CM)
+        else if(sideVLcm > MAX_WALL_DIST_CM)
         {
-          turn(COUNTER_CLOCKWISE, speed);
+          turn(CLOCKWISE, speed);
           delay(80);
           move(FORWARD, speed);
           delay(80);
         }
-        else if(ultraDistanceCm < MIN_WALL_DIST_CM)
+        else if(sideVLcm < MIN_WALL_DIST_CM)
         {
-          turn(CLOCKWISE, speed);
+          turn(COUNTER_CLOCKWISE, speed);
           delay(80);
           move(FORWARD, speed);
           delay(80);
@@ -664,33 +673,33 @@ void loop()
     }
     case TRAVEL_12_INCHES:
     {
-      whiskDistance = getWhiskerDistanceCm();
+      frontVLcm = getWhiskerDistanceCm();
       currentAngle = getHeading();
-      if(whiskDistance> (250))
+      if(frontVLcm> (250))
       {
-        if(whiskDistance > 1200)
+        if(frontVLcm > 1200)
           speed = 255;
-        else if( whiskDistance > 300)
+        else if( frontVLcm > 300)
           speed = 80;
         else
           speed = 65;
-        ultraDistanceCm = ultrasonic.read();
+        sideVLcm = getLrfDistanceCm(2);
 
-        Serial.printf("ult dist %d: \n", ultraDistanceCm);
-        if(ultraDistanceCm > MAX_PRELIM_DIST)
+        Serial.printf("ult dist %d: \n", sideVLcm);
+        if(sideVLcm > MAX_PRELIM_DIST)
         {
           stop();
         }
-        else if(ultraDistanceCm > 15)
+        else if(sideVLcm > 15)
         {
-          turn(COUNTER_CLOCKWISE, speed);
+          turn(CLOCKWISE, speed);
           delay(80);
           move(FORWARD, speed);
           delay(80);
         }
-        else if(ultraDistanceCm < 10)
+        else if(sideVLcm < 10)
         {
-          turn(CLOCKWISE, speed);
+          turn(COUNTER_CLOCKWISE, speed);
           delay(80);
           move(FORWARD, speed);
           delay(80);
@@ -753,33 +762,33 @@ void loop()
     }
     case GO_TO_WALL_END:
     {
-      whiskDistance = getWhiskerDistanceCm();
+      frontVLcm = getWhiskerDistanceCm();
       currentAngle = getHeading();
-       if(whiskDistance> (250))
+       if(frontVLcm> (250))
       {
-        if(whiskDistance > 1200)
+        if(frontVLcm > 1200)
           speed = 255;
-        else if( whiskDistance > 300)
+        else if( frontVLcm > 300)
           speed = 80;
         else
           speed = 65;
-        ultraDistanceCm = ultrasonic.read();
+        sideVLcm = getLrfDistanceCm(2);
 
-        Serial.printf("ult dist %d: \n", ultraDistanceCm);
-        if(ultraDistanceCm > MAX_PRELIM_DIST)
+        Serial.printf("ult dist %d: \n", sideVLcm);
+        if(sideVLcm > MAX_PRELIM_DIST)
         {
           stop();
         }
-        else if(ultraDistanceCm > MAX_WALL_DIST_CM)
+        else if(sideVLcm > MAX_WALL_DIST_CM)
         {
-          turn(COUNTER_CLOCKWISE, speed);
+          turn(CLOCKWISE, speed);
           delay(80);
           move(FORWARD, speed);
           delay(80);
         }
-        else if(ultraDistanceCm < MIN_WALL_DIST_CM)
+        else if(sideVLcm < MIN_WALL_DIST_CM)
         {
-          turn(CLOCKWISE, speed);
+          turn(COUNTER_CLOCKWISE, speed);
           delay(80);
           move(FORWARD, speed);
           delay(80);
@@ -828,25 +837,25 @@ void loop()
   if(!wallFound)
   {
     currentAngle = getHeading();
-    if(whiskDistance> (WHISKER_STOP_DIS - whiskOffset))
+    if(frontVLcm> (WHISKER_STOP_DIS - whiskOffset))
     {
-      ultraDistanceCm = ultrasonic.read();
+      sideVLcm = getLrfDistanceCm(2);
 
-      Serial.printf("ult dist %d: \n", ultraDistanceCm);
-      if(ultraDistanceCm > MAX_PRELIM_DIST)
+      Serial.printf("ult dist %d: \n", sideVLcm);
+      if(sideVLcm > MAX_PRELIM_DIST)
       {
         stop();
       }
-      else if(ultraDistanceCm > MAX_WALL_DIST_CM)
+      else if(sideVLcm > MAX_WALL_DIST_CM)
       {
-        turn(COUNTER_CLOCKWISE, 255);
+        turn(CLOCKWISE, 255);
         delay(80);
         move(FORWARD, 255);
         delay(80);
       }
-      else if(ultraDistanceCm < MIN_WALL_DIST_CM)
+      else if(sideVLcm < MIN_WALL_DIST_CM)
       {
-        turn(CLOCKWISE, 255);
+        turn(COUNTER_CLOCKWISE, 255);
         delay(80);
         move(FORWARD, 255);
         delay(80);
@@ -899,10 +908,8 @@ void loop()
     delay(1000);
     wallFound = false;
   }
-  getWhiskerDistance();
+  frontVLcm = getLrfDistanceCm(1)
   #endif
-
-
 
   #ifdef TURN_TO_HEAD
   uint16_t zoooooom = 200; // We're on 3v3 now, so just put a high value
@@ -936,4 +943,20 @@ void loop()
   while (1)
     ;
   #endif
+
+  #ifdef TEST_TURNING
+  move(FORWARD, 80);
+    // jiggle();
+    // frontVLcm = getLrfDistanceCm(1);
+    // if(frontVLcm > WHISKER_STOP_DIS)
+    // {
+    //   move(FORWARD, 255);
+    // }
+    // else
+    // {
+    //   stopMotors();
+    // }
+  #endif
+  
+
 }
