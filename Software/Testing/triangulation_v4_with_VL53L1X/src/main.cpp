@@ -4,15 +4,19 @@
 #include <Wire.h>
 #include <math.h>
 #include <ESP32MotorControl.h>
+#include "motor_control_v2.h"
 #include <LiquidCrystal_I2C.h>
 #include <string.h>
 #include <Servo.h>
 #include "SparkFun_VL53L1X.h"
-
-
 #include "BNO085_heading.h"
 #include "VL53L1X_MULTIPLE.h"
 #include "lrf.h"
+#include "OPT3101_whisker.h"
+// #define TEST_ALL_COMPONENTS
+//#define TEST
+#define ELIM
+// #define MOTORS
 
 
 
@@ -28,6 +32,18 @@ SFEVL53L1X lrf2;
 * The car also has an IMU that is used to find the heading of the car
 * You must position the car at 0 degrees (So that the IMU heading will be calibrated to the gamefield heading)
 */
+
+/*
+ * Global Variables for Motors
+ */
+const uint8_t MOTOR_A_IN_1 = 6;
+const uint8_t MOTOR_A_IN_2 = 7;
+
+// RIGHT MOTOR
+const uint8_t MOTOR_B_IN_3 = 5;
+const uint8_t MOTOR_B_IN_4 = 4;
+ESP32MotorControl motors;
+bool direction = true;
 
 
 /*
@@ -55,8 +71,11 @@ void setup()
 {
   Serial.begin(115200);
   Wire.begin(9, 8);
+  initOPT3101();
+  motors.attachMotors(MOTOR_B_IN_3, MOTOR_B_IN_4, MOTOR_A_IN_1, MOTOR_A_IN_2);
  // Wire1.begin(20, 21); //20 sda, 21 scl
   init_2_VL53L1X();
+  // bno08x.hardwareReset();
   setupBNO085(&bno08x); // Initialize the IMU
   Serial.println("*****TEST HEADING******\n\n");
   delay(3000);
@@ -133,10 +152,11 @@ void setServoPosition()
   servoPosition += 90;                    // Add 90 because 90 degress is the middle position for the servo (therefore it is the current heading of the car)
   myservo.write(servoPin, servoPosition); // tell servo to go to position in variable 'pos'
   lrf1 = getLrfDistanceCm(1);
-  // printf("LRF 1 (0x10): %d@%d\n", lrf1, servoPosition);
   lrf2 = getLrfDistanceCm(2); // Subtract 3cm to account for the distance between the two LRFs
-  // printf("LRF 2 (0x20): %d@%d\n", lrf2, servoPosition);
-
+  // Serial.print("LRF1: ");
+  // Serial.println(lrf1);
+  // Serial.print("LRF2: ");
+  // Serial.println(lrf2);
   findPosition(cardinalHeading, lrf1, lrf2); // Find the position of the car
 }
 
@@ -166,22 +186,22 @@ void printCurrentPos()
 
 float getNextAngle(float currentX, float currentY, float goalX, float goalY)
 {
-  // Serial.print("goal x ");
-  // Serial.println(goalX);
-  // Serial.print("gaol y ");
-  // Serial.println(goalY);
+  Serial.print("goal x ");
+  Serial.println(goalX);
+  Serial.print("gaol y ");
+  Serial.println(goalY);
   float diff_X = goalX - currentX;
   float diff_Y = goalY - currentY;
   // diff_X = -41.52;
   // diff_Y = 212.84;
   float angle = atan(diff_Y/diff_X);
   // atan2()
-  // Serial.printf("Angle rads: %f\n", angle);
-  // angle *= 180.0f / M_PI;
-  // Serial.print("Diff x ");
-  // Serial.println(diff_X);
-  // Serial.print("Diff y ");
-  // Serial.println(diff_Y);
+  Serial.printf("Angle rads: %f\n", angle);
+  angle *= 180.0f / M_PI;
+  Serial.print("Diff x ");
+  Serial.println(diff_X);
+  Serial.print("Diff y ");
+  Serial.println(diff_Y);
   if(diff_X == 0 && diff_Y > 0)
   {
     angle = 0;
@@ -222,11 +242,296 @@ float getNextAngle(float currentX, float currentY, float goalX, float goalY)
   return angle;
 }
 
+void turnToHeading(float goal, uint8_t speed)
+{
+  float absVal;
+  float angleDiff;
+  uint8_t i = 0;
+
+  float currentAngle = getCurrentAngle();
+
+  // printToLcd("Current Angle: ", currentAngle);
+  angleDiff = goal - currentAngle;
+  absVal = abs(angleDiff);
+  if (absVal > 350)
+  {
+    absVal = 359.99 - absVal;
+    angleDiff = 359.99 - angleDiff;
+  }
+  // Serial.println(angleDiff);
+  // Serial.println(absVal);
+  // Serial.println();
+
+  while (absVal > 10)
+  {
+    setServoPosition();
+    // Serial.print("abs: ");
+    // Serial.print(absVal);
+    // Serial.print(" angle: ");
+    // Serial.println(currentAngle);
+
+    if ((angleDiff >= 0) && (absVal <= 180))
+    {
+      // Serial.print(" case 1: ");
+      turn(COUNTER_CLOCKWISE, speed);
+    }
+    else if ((angleDiff < 0) && (absVal <= 180))
+    {
+      // Serial.print(" case 2: ");
+      turn(CLOCKWISE, speed);
+    }
+    else if ((angleDiff >= 0) && (absVal >= 180))
+    {
+      // Serial.print(" case 3: ");
+      turn(CLOCKWISE, speed);
+    }
+    else
+    {
+      // Serial.print(" case 4: ");
+      turn(COUNTER_CLOCKWISE, speed);
+    }
+
+    currentAngle = getCurrentAngle();
+
+    // Serial.println(goal);
+    angleDiff = goal - currentAngle;
+    absVal = abs(angleDiff);
+    if (absVal > 350)
+    {
+      absVal = 359.99 - absVal;
+      angleDiff = 359.99 - angleDiff;
+    }
+    // Serial.println(angleDiff);
+    // Serial.println(absVal);
+    // Serial.println();
+  }
+  stop();
+}
+
+
+
+void driveToHeading(float goalHeading, float goalX, float goalY)
+{
+  float diffX = abs(X_POS-goalX);
+  float diffY = abs(Y_POS-goalY);
+  float currentAngle = -1;
+  float absVal;
+  float angleDiff;
+  unsigned long currentMillis;
+  unsigned long previousMillis = 0;
+  uint32_t interval = 1000;
+  uint16_t i = 0;
+
+  bool goToHeading = true;
+  setServoPosition();
+  if((diffX <= 5 && diffY <= 5))
+  {
+    stop();
+    return;
+  }
+  while (goToHeading)
+  {
+    diffX = abs(X_POS-goalX);
+    diffY = abs(Y_POS-goalY);
+    Serial.printf("X = %f and Y = %f\n",diffX, diffY);
+    currentAngle = getCurrentAngle();
+    
+
+    i++;
+    if (i == 30)
+    {
+      // printToLcd("Current Angle: ", currentAngle);
+      i = 0;
+    }
+    angleDiff = goalHeading - currentAngle;
+    absVal = abs(angleDiff);
+    // Serial.println(absVal);
+    if (absVal > 345)
+    {
+      absVal = 359.99 - absVal;
+      angleDiff = 359.99 - angleDiff;
+    }
+    // Serial.println(angleDiff);
+    // Serial.println(absVal);
+    // Serial.println();
+
+    if (absVal > 15)
+    {
+      turnToHeading(goalHeading, 58);            // turn to the desired heading because angle is to great to correct while driving
+      previousMillis = currentMillis = millis(); // this timer was used to stop the robot after one seconds when starts driving at the correct angle
+                                                // but this is not used anymore
+    }
+    else if (absVal <= 15 && absVal >= 3)
+    {
+      if ((angleDiff >= 0) && (absVal <= 180))
+      {
+        // Serial.print(" case 1: ");
+        turn2(COUNTER_CLOCKWISE, 58, 30);
+      }
+      else if ((angleDiff < 0) && (absVal <= 180))
+      {
+        // Serial.print(" case 2: ");
+        turn2(CLOCKWISE, 58, 30);
+      }
+      else if ((angleDiff >= 0) && (absVal >= 180))
+      {
+        // Serial.print(" case 3: ");
+        turn2(CLOCKWISE, 58, 30);
+      }
+      else
+      {
+        // Serial.print(" case 4: ");
+        turn2(COUNTER_CLOCKWISE, 58, 30);
+      }
+      previousMillis = currentMillis = millis();
+    }
+    else if (absVal < 5 && absVal >= 2)
+    {
+      if ((angleDiff >= 0) && (absVal <= 180))
+      {
+        // Serial.print(" case 1: ");
+        turn2(COUNTER_CLOCKWISE, 58, 10);
+      }
+      else if ((angleDiff < 0) && (absVal <= 180))
+      {
+        // Serial.print(" case 2: ");
+        turn2(CLOCKWISE, 58, 10);
+      }
+      else if ((angleDiff >= 0) && (absVal >= 180))
+      {
+        // Serial.print(" case 3: ");
+        turn2(CLOCKWISE, 58, 10);
+      }
+      else
+      {
+        // Serial.print(" case 4: ");
+        turn2(COUNTER_CLOCKWISE, 58, 10);
+      }
+      unsigned long currentMillis = millis();
+
+      if (currentMillis - previousMillis >= interval)
+      {
+        previousMillis = currentMillis;
+        if (previousMillis != 0)
+        {
+          goToHeading = false;
+          stop();
+        }
+      }
+    }
+    else
+    {
+      move(FORWARD, 58);
+
+      // if (currentMillis - previousMillis >= interval)
+      // {
+      //   previousMillis = currentMillis;
+      //   if (previousMillis != 0)
+      //   {
+      //     goToHeading = false;
+      //     stop();
+      //   }
+      // }
+    }
+    setServoPosition();
+     if((diffX <= 5 && diffY <= 5))
+    {
+      stop();
+      return;
+    }
+  }
+}
+
+void testHeading(float x, float y)
+{
+  uint16_t i = 0;
+  /*
+  float nextX = 6;
+  float nextY = 6;
+  
+  */
+  float currentAngle = 0.0;
+  float nextAngle = 0.0;
+  for(i = 0; i < 30; i++)
+  setServoPosition();
+
+  printf("raw 1: %f\n", getLrfDistanceCm(1)/30.48);
+  printf("raw 2: %f\n", getLrfDistanceCm(2)/30.48);
+  setServoPosition();
+  printCurrentPos();
+  currentAngle = getCurrentAngle();
+  Serial.println("Current Angle: ");
+  Serial.println(currentAngle);
+  // x = 121.92 y = 91.44
+  
+
+  Serial.println("**************");
+  Serial.println("Next Angle: ");
+  nextAngle = getNextAngle(X_POS, Y_POS, x*30.48, y*30.48);
+  Serial.println(nextAngle);
+  Serial.println(getHeading());
+//   delay(25);
+  // turnToHeading(nextAngle, 50);
+  driveToHeading(nextAngle, x*30.48, y*30.48);
+  Serial.print("Angle reached: ");
+  Serial.println(getCurrentAngle());
+}
+
+
 void loop()
 {
+  #ifdef ELIM
+  testHeading(6, 2);
+  stop();
+  delay(1000);
+
+  while(1);
+  #endif
+
+  /*
+    Test Motors
+  */
+  #ifdef MOTORS
+  turn(CLOCKWISE, 80);
+  delay(1000);
+  turn(COUNTER_CLOCKWISE, 80);
+  delay(1000);
+  #endif
+
+
+/*
+  * Test all components at the same time.  
+*/
+  #ifdef TEST_ALL_COMPONENTS
+  turn(direction, 80);
+  direction ^= 1;
+  for (int pos = 0; pos <= 180; pos++) {  // go from 0-180 degrees
+    myservo.write(servoPin, pos);        // set the servo position (degrees)
+  }
+  for (int pos = 180; pos >= 0; pos--) {  // go from 180-0 degrees
+    myservo.write(servoPin, pos);        // set the servo position (degrees)
+    delay(15);
+  }
+  Serial.println("Peri check: ");
+  Serial.println(getLrfDistanceCm(1));
+  Serial.println(getLrfDistanceCm(2));
+
+  Serial.print("IMU check: ");
+  Serial.println(getCurrentAngle());
+
+  Serial.print("Whisker check: ");
+  Serial.println(getWhiskerDistanceCm());
+  delay(1000);
+  #endif
+
+
+/*
+  * Test the position of the car based on the distance from the walls
+*/
+  #ifdef TEST
   static uint16_t i = 0;
   i++;
- setServoPosition();
+  setServoPosition();
 
   if (i >= 15)
   {
@@ -235,4 +540,5 @@ void loop()
     i = 0;
   }
   delay(10);
+  #endif
 }
