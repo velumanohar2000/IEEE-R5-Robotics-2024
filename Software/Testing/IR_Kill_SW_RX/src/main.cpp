@@ -24,8 +24,8 @@
 // Variables & Constants ------------------------------------------------------
 
 decode_results results;
-const uint32_t unalive_code = 0x57E34BB4;
-const uint32_t lit_code = 0x57E3B34C;
+const uint32_t unalive_code = 0x5743D32C;
+const uint32_t lit_code = 0x574309F6;
 bool LED_STATE = false;
 
 // Structures & Classes -------------------------------------------------------
