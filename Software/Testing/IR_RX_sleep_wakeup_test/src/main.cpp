@@ -19,7 +19,7 @@
  * Deep sleep state machine:
  * B) Deep sleep
  * A) Wake up (EXT0 or normal startup)
- * B) Check wake code
+ * B) Check for correct code
  *   1) If wake code is EXT0, check IR code
  *     a) If IR code is lit, make sleep flag false
  *     b) Else, enter deep sleep
@@ -36,14 +36,14 @@
 
 // Defines --------------------------------------------------------------------
 
-#define IR_RX_PIN GPIO_NUM_17
+#define IR_RX_PIN GPIO_NUM_14
 
 // Constants & Variables ------------------------------------------------------
 
 // IR
-const uint32_t unalive_code = 0x403c98d0;
-const uint32_t lit_code = 0x5956E5D1;
-const uint8_t custom_code = 0xF;
+const uint32_t unalive_code = 0x5743D32C; // Netflix button
+const uint32_t lit_code = 0x4732DD25; // Amazon button
+const uint8_t custom_code = 0xF; // For custom remote, will likely not use
 
 // Deep Sleep
 bool go_sleep = true;
@@ -55,6 +55,7 @@ bool led_state = false;
 
 // Structures & Classes -------------------------------------------------------
 
+// IR
 decode_results results;
 IRrecv irrecv(IR_RX_PIN);
 
@@ -94,9 +95,9 @@ void checkIRWake()
       Serial.print("Wrong code: "); // Print incorrect code
       Serial.println(results.value, HEX);
     }
-    irrecv.resume();
+    irrecv.resume(); // Will start looking for next value
   }
-  else // Will run if there was no IR code
+  else // Will run if there was no IR code to decode
   {
     Serial.println("No IR signal detected");
   }
@@ -110,9 +111,9 @@ void checkIRSleep()
     if (results.value == unalive_code)  // Checks if IR code is wake code
     {
       Serial.println("Time to sleep");
+      Serial.flush(); // Waits until all serial data is finished
+
       esp_sleep_enable_ext0_wakeup(IR_RX_PIN, 0); // Wake when IR is low (pressed)
-      delay(100);
-      Serial.flush();
       esp_deep_sleep_start();
     }
     else
@@ -120,7 +121,7 @@ void checkIRSleep()
       Serial.print("Wrong code: "); // Print incorrect code
       Serial.println(results.value, HEX);
     }
-    irrecv.resume();
+    irrecv.resume(); // Will start looking for next value
   }
 }
 
@@ -132,8 +133,8 @@ void setup()
 
   digitalWrite(LED_BUILTIN, LOW);
 
-  delay(50);
-
+  delay(40);
+digitalWrite(LED_BUILTIN, LOW);
   pinMode(IR_RX_PIN, INPUT); // Sets GPIO 17 as input
 
   wake_code = getWakeCode();
@@ -144,28 +145,17 @@ void setup()
   }
   if (go_sleep) // Runs if sleep is needed (bad IR code or normal wake)
   {
-    esp_sleep_enable_ext0_wakeup(IR_RX_PIN, 0); // Wake when IR is low (pressed)
     Serial.println("Zzz...");
-    delay(50);
     Serial.flush(); 
+
+    esp_sleep_enable_ext0_wakeup(IR_RX_PIN, 0); // Wake when IR is low (pressed)
     esp_deep_sleep_start();
   }
 }
 
 void loop()
 {
-    if (irrecv.decode(&results)) {
-    Serial.print("Received IR code: ");
-    Serial.println(results.value, HEX); // Print received code in hex
-
-    if (results.value == unalive_code || results.value == 0xF || results.value == lit_code) { // Toggles LED if code is unalive code
-      // LED_STATE = !LED_STATE;
-      // digitalWrite(LED_BUILTIN, LED_STATE ? HIGH : LOW);
-    }
-
-    irrecv.resume(); // Receive the next value
-  }
-  // checkIRSleep();
-  led_state = !led_state;
-  digitalWrite(LED_BUILTIN, led_state ? HIGH : LOW);
+  checkIRSleep();
+  delay(40); // There needs to be some time between IR samples
+  neopixelWrite(LED_BUILTIN, 4, 4, 4);
 }
