@@ -40,15 +40,15 @@
 // #define TEST_TURNING
 
 // Whisker
-#define WHISKER_STOP_DIS 30
+#define WHISKER_STOP_DIS 15
 
 
 // Ultrasonic
 // #define ULTRAS_TRIG 14
 // #define ULTRAS_ECHO 11
 #define MAX_PRELIM_DIST 60
-#define MIN_WALL_DIST_CM 7
-#define MAX_WALL_DIST_CM 9
+#define MIN_WALL_DIST_CM 10
+#define MAX_WALL_DIST_CM 12
 
 // Variables & Constants ------------------------------------------------------
 
@@ -289,12 +289,12 @@ void turnToGoalHeading(float goal, uint8_t speed)
   {
     // frontVLcm = getLrfDistanceCm(1)
     // Serial.printf("Whiskaaa is %f: \n", frontVLcmInch);
-    Serial.print("Offset ");
-    Serial.println(offset);
-    Serial.print(" Abs: ");
-    Serial.println(absVal);
-    Serial.print(" Current Angle: ");
-    Serial.println(currentAngle);
+    // Serial.print("Offset ");
+    // Serial.println(offset);
+    // Serial.print(" Abs: ");
+    // Serial.println(absVal);
+    // Serial.print(" Current Angle: ");
+    // Serial.println(currentAngle);
 
     if ((angleDiff >= 0) && (absVal <= 180))
     {
@@ -344,6 +344,7 @@ void setup()
   
   Wire.begin(9, 8);
   init_2_VL53L1X();
+  // delay(2000);
   // initOPT3101();
   setupBNO085(&bno08x);
   motors.attachMotors(MOTOR_B_IN_3, MOTOR_B_IN_4, MOTOR_A_IN_1, MOTOR_A_IN_2);
@@ -385,11 +386,15 @@ bool firstWall = true;
 #define TURN_180_DEG 9
 #define STOP 0xFFFF
 
+uint16_t i = 0;
+bool disregard = true;
+
 void loop()
 {
-  uint16_t speed = 80;
+  uint16_t speed = 60;
   float currentAngle;
   // int16_t frontVLcm = 0;
+  // myservo.write(servoPin, servoPosition);
 
   #ifdef PRELIM
   switch(states)
@@ -397,17 +402,25 @@ void loop()
     case RIDE_RIGHT_WALL:
     {
       jiggle();
+
       frontVLcm = getLrfDistanceCm(1);
       currentAngle = getHeading();
       if(frontVLcm> (WHISKER_STOP_DIS))
       {
-        // if(frontVLcm > 120)
-        //   speed = 230;
-        // else if( frontVLcm > 30)
-        //   speed = 80;
-        // else
-        //   speed = 50;
-        sideVLcm = getLrfDistanceCm(2);
+        if(frontVLcm > 120)
+          speed = 200;
+        else if( frontVLcm > 30)
+          speed = 80;
+        else
+          speed = 65;
+        if(disregard)
+        {
+          for(i = 0; i < 60; i++)
+          sideVLcm = getLrfDistanceCm(2);
+          disregard = false;
+        }
+        
+          sideVLcm = getLrfDistanceCm(2);  
 
         Serial.printf("ult dist %f: \n", sideVLcm);
         if(sideVLcm > MAX_PRELIM_DIST)
@@ -471,16 +484,16 @@ void loop()
         else if(sideVLcm > 15)
         {
           turn(CLOCKWISE, speed);
-          delay(80);
+          delay(40);
           move(FORWARD, speed);
-          delay(80);
+          delay(40);
         }
         else if(sideVLcm < 10)
         {
           turn(COUNTER_CLOCKWISE, speed);
-          delay(80);
+          delay(40);
           move(FORWARD, speed);
-          delay(80);
+          delay(40);
         }
         else
           move(FORWARD, speed);
