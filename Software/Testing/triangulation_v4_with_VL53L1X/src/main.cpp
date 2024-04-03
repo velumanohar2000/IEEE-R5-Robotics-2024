@@ -14,25 +14,24 @@
 #include "lrf.h"
 #include "OPT3101_whisker.h"
 // #define TEST_ALL_COMPONENTS
-//#define TEST
+// #define TEST
 #define ELIM
 // #define TEST_ELIM
 // #define MOTORS
 
-
+// #define TEST_TURN_TO_HEADING
 
 SFEVL53L1X lrf1;
 SFEVL53L1X lrf2;
 
-
 /*
-* README:
-* This code is used to find the position of the car based on the distance from the walls
-* The car has two LRFs that are used to find the distance from the walls
-* The car has a servo that is used to rotate the LRFs
-* The car also has an IMU that is used to find the heading of the car
-* You must position the car at 0 degrees (So that the IMU heading will be calibrated to the gamefield heading)
-*/
+ * README:
+ * This code is used to find the position of the car based on the distance from the walls
+ * The car has two LRFs that are used to find the distance from the walls
+ * The car has a servo that is used to rotate the LRFs
+ * The car also has an IMU that is used to find the heading of the car
+ * You must position the car at 0 degrees (So that the IMU heading will be calibrated to the gamefield heading)
+ */
 
 /*
  * Global Variables for Motors
@@ -46,10 +45,9 @@ const uint8_t MOTOR_B_IN_4 = 4;
 ESP32MotorControl motors;
 bool direction = true;
 
-
 /*
  * Global Variables for X and Y position
- 
+
  */
 float X_POS;
 float Y_POS;
@@ -74,7 +72,7 @@ void setup()
   Wire.begin(9, 8);
   initOPT3101();
   motors.attachMotors(MOTOR_B_IN_3, MOTOR_B_IN_4, MOTOR_A_IN_1, MOTOR_A_IN_2);
- // Wire1.begin(20, 21); //20 sda, 21 scl
+  // Wire1.begin(20, 21); //20 sda, 21 scl
   init_2_VL53L1X();
   // bno08x.hardwareReset();
   setupBNO085(&bno08x); // Initialize the IMU
@@ -86,6 +84,30 @@ void setup()
   float currentAngle = getCurrentAngle();
   Serial.print("Current Angle: ");
   Serial.println(currentAngle);
+}
+
+void printCurrentAngle()
+{
+  float currentAngle = getCurrentAngle();
+  Serial.print("CurrentAngle: ");
+  Serial.println(currentAngle);
+  // Serial.print("Cardinal heading: ");
+  // Serial.println(findCardinalheading());
+}
+
+void printCurrentPos()
+{
+  Serial.println("Position in CM:");
+  Serial.print("X: ");
+  Serial.print(X_POS);
+  Serial.print("\tY: ");
+  Serial.println(Y_POS);
+
+  Serial.println("Position in feet:");
+  Serial.print("X: ");
+  Serial.print(X_POS / 30.48); // Convert X_POS from cm to feet
+  Serial.print("\tY: ");
+  Serial.println(Y_POS / 30.48); // Convert Y_POS from cm to feet
 }
 // Function to find the cardinal heading based on the current angle
 int16_t findCardinalheading()
@@ -136,6 +158,7 @@ void findPosition(uint16_t cardinalheading, float lrf1, float lrf2)
     Serial.println("Error");
     break;
   }
+  printCurrentPos();
 }
 
 void jiggle()
@@ -152,38 +175,17 @@ void jiggle()
 
   servoPosition += 90;                    // Add 90 because 90 degress is the middle position for the servo (therefore it is the current heading of the car)
   myservo.write(servoPin, servoPosition); // tell servo to go to position in variable 'pos'
+  delay(15);                              // waits 15ms for the servo to reach the position
   lrf1 = getLrfDistanceCm(1);
-  lrf2 = getLrfDistanceCm(2); // Subtract 3cm to account for the distance between the two LRFs
+  lrf2 = getLrfDistanceCm(2); 
   // Serial.print("LRF1: ");
-  // Serial.println(lrf1);
-  // Serial.print("LRF2: ");
+  // Serial.print(lrf1);
+  // Serial.print("\tLRF2: ");
   // Serial.println(lrf2);
   findPosition(cardinalHeading, lrf1, lrf2); // Find the position of the car
 }
 
-void printCurrentAngle()
-{
-  float currentAngle = getCurrentAngle();
-  Serial.print("CurrentAngle: ");
-  Serial.println(currentAngle);
-  // Serial.print("Cardinal heading: ");
-  // Serial.println(findCardinalheading());
-}
 
-void printCurrentPos()
-{
-  Serial.println("Position in CM:");
-  Serial.print("X: ");
-  Serial.print(X_POS);
-  Serial.print("\tY: ");
-  Serial.println(Y_POS);
-
-  Serial.println("Position in feet:");
-  Serial.print("X: ");
-  Serial.print(X_POS / 30.48); // Convert X_POS from cm to feet
-  Serial.print("\tY: ");
-  Serial.println(Y_POS / 30.48); // Convert Y_POS from cm to feet
-}
 
 float getNextAngle(float currentX, float currentY, float goalX, float goalY)
 {
@@ -191,60 +193,79 @@ float getNextAngle(float currentX, float currentY, float goalX, float goalY)
   // Serial.println(goalX);
   // Serial.print("gaol y ");
   // Serial.println(goalY);
+  Serial.print("Current x ");
+  Serial.print(currentX);
+  Serial.print("\tCurrent Y ");
+  Serial.println(currentY);
   float diff_X = goalX - currentX;
   float diff_Y = goalY - currentY;
-  // diff_X = -41.52;
-  // diff_Y = 212.84;
-  float angle = atan(diff_Y/diff_X);
-  // atan2()
-  // Serial.printf("Angle rads: %f\n", angle);
-  angle *= 180.0f / M_PI;
-  // Serial.print("Diff x ");
-  // Serial.println(diff_X);
-  // Serial.print("Diff y ");
-  // Serial.println(diff_Y);
-  if(diff_X == 0 && diff_Y > 0)
+  Serial.print("Diff x ");
+  Serial.print(diff_X);
+  Serial.print("\tDiff y ");
+  Serial.println(diff_Y);
+
+  float angle;
+  if (diff_X == 0 && diff_Y > 0)
   {
     angle = 0;
   }
-  else if(diff_X == 0 && diff_Y < 0)
+  else if (diff_X == 0 && diff_Y < 0)
   {
     angle = 180;
   }
-  else if(diff_Y == 0 && diff_X > 0)
+  else if (diff_Y == 0 && diff_X > 0)
   {
     angle = 270;
   }
-  else if(diff_Y == 0 && diff_X < 0)
+  else if (diff_Y == 0 && diff_X < 0)
   {
     angle = 90;
   }
-  else if(diff_X > 0 && diff_Y > 0)             // x+ y+
+  else
   {
-    angle += 270;
+    angle = atan(diff_Y / diff_X);
+    // atan2()
+    angle *= 180.0f / M_PI;
+    Serial.printf("Raw Angle degrees: %f\n", angle);
+
+    if (diff_X > 0 && diff_Y > 0) // x+ y+
+    {
+      angle += 270;
+    }
+    else if (diff_X < 0 && diff_Y > 0) // x- y+
+    {
+      angle += 90;
+    }
+    else if (diff_X < 0 && diff_Y < 0) // x- y-
+    {
+      angle += 90;
+    }
+    else // x+ y-
+    {
+      angle += 270;
+    }
   }
-  else if(diff_X < 0 && diff_Y > 0)             // x- y+
-  {
-    angle += 90;
-  }
-  else if(diff_X < 0 && diff_Y < 0)             // x- y-
-  {
-    angle+=90;;
-  }
-  else                                          // x+ y-
-  {
-    angle+=270;;
-  }
+  // diff_X = -41.52;
+  // diff_Y = 212.84;
+
   if (angle > 359.99)
     angle -= 359.99;
-  else if( angle < 0)
+  else if (angle < 0)
     angle += 359.99;
   Serial.printf("next angle = %f\n\n", angle);
+
+
+  Serial.printf("Degrees away from Current Angle = %f\n\n", angle - getCurrentAngle());
+
   return angle;
 }
 
 void turnToHeading(float goal, uint8_t speed)
 {
+  stopMotors();
+  // speed = 60;
+  printf("Goal: %f\n", goal);
+  //delay(3000);
   float absVal;
   float angleDiff;
   uint8_t i = 0;
@@ -254,7 +275,9 @@ void turnToHeading(float goal, uint8_t speed)
   // printToLcd("Current Angle: ", currentAngle);
   angleDiff = goal - currentAngle;
   absVal = abs(angleDiff);
-  if (absVal > 350)
+  uint32_t turnDiff = 10;
+  // Serial.println(absVal);
+  if (absVal > 360 - turnDiff)
   {
     absVal = 359.99 - absVal;
     angleDiff = 359.99 - angleDiff;
@@ -263,13 +286,13 @@ void turnToHeading(float goal, uint8_t speed)
   // Serial.println(absVal);
   // Serial.println();
 
-  while (absVal > 10)
+  while (absVal > turnDiff)
   {
-    jiggle();
-    // Serial.print("abs: ");
-    // Serial.print(absVal);
-    // Serial.print(" angle: ");
-    // Serial.println(currentAngle);
+    //jiggle();
+    //  Serial.print("abs: ");
+    //  Serial.print(absVal);
+    //  Serial.print(" angle: ");
+    //  Serial.println(currentAngle);
 
     if ((angleDiff >= 0) && (absVal <= 180))
     {
@@ -297,7 +320,7 @@ void turnToHeading(float goal, uint8_t speed)
     // Serial.println(goal);
     angleDiff = goal - currentAngle;
     absVal = abs(angleDiff);
-    if (absVal > 350)
+    if (absVal > 360 - turnDiff)
     {
       absVal = 359.99 - absVal;
       angleDiff = 359.99 - angleDiff;
@@ -308,8 +331,6 @@ void turnToHeading(float goal, uint8_t speed)
   }
   stopMotors();
 }
-
-
 
 void driveToHeading(float goalHeading)
 {
@@ -324,218 +345,168 @@ void driveToHeading(float goalHeading)
   // bool goToHeading = true;
   // while (goToHeading)
   // {
-    currentAngle = getCurrentAngle();
+  currentAngle = getCurrentAngle();
 
-    // i++;
-    // if (i == 30)
-    // {
-    //   jiggle("Current Angle: ", currentAngle);
-    //   i = 0;
-    // }
-    angleDiff = goalHeading - currentAngle;
-    absVal = abs(angleDiff);
-    uint32_t turnDiff = 15;
-    // Serial.println(absVal);
-    if (absVal > 360-turnDiff)
-    {
-      absVal = 359.99 - absVal;
-      angleDiff = 359.99 - angleDiff;
-    }
-    // Serial.println(angleDiff);
-    // Serial.println(absVal);
-    // Serial.println();
+  angleDiff = goalHeading - currentAngle;
+  absVal = abs(angleDiff);
+  uint32_t turnDiff = 15;
+  // Serial.println(absVal);
+  if (absVal > 360 - turnDiff)
+  {
+    absVal = 359.99 - absVal;
+    angleDiff = 359.99 - angleDiff;
+  }
+  Serial.println(angleDiff);
+  Serial.println(absVal);
+  Serial.println();
 
-    if (absVal > turnDiff)
+  if (absVal > turnDiff)
+  {
+    // stopMotors();
+    // delay(20);
+    turnToHeading(goalHeading, 60);
+  }
+  else if (absVal <= 15 && absVal >= 5)
+  {
+    if ((angleDiff >= 0) && (absVal <= 180))
     {
-      stopMotors();
-      delay(20);
-      turnToHeading(goalHeading, 60);
-      // previousMillis = currentMillis = millis();
+      turn2(COUNTER_CLOCKWISE, 65, 30);
     }
-    else if (absVal <= 15 && absVal >= 3)
+    else if ((angleDiff < 0) && (absVal <= 180))
     {
-      if ((angleDiff >= 0) && (absVal <= 180))
-      {
-        // Serial.print(" case 1: ");
-        turn2(COUNTER_CLOCKWISE, 65, 30);
-      }
-      else if ((angleDiff < 0) && (absVal <= 180))
-      {
-        // Serial.print(" case 2: ");
-        turn2(CLOCKWISE, 65, 30);
-      }
-      else if ((angleDiff >= 0) && (absVal >= 180))
-      {
-        // Serial.print(" case 3: ");
-        turn2(CLOCKWISE, 65, 30);
-      }
-      else
-      {
-        // Serial.print(" case 4: ");
-        turn2(COUNTER_CLOCKWISE, 65, 30);
-      }
-      previousMillis = currentMillis = millis();
+      turn2(CLOCKWISE, 65, 30);
     }
-    else if (absVal < 5 && absVal >= 2)
+    else if ((angleDiff >= 0) && (absVal >= 180))
     {
-      if ((angleDiff >= 0) && (absVal <= 180))
-      {
-        // Serial.print(" case 1: ");
-        turn2(COUNTER_CLOCKWISE, 65, 10);
-      }
-      else if ((angleDiff < 0) && (absVal <= 180))
-      {
-        // Serial.print(" case 2: ");
-        turn2(CLOCKWISE, 65, 10);
-      }
-      else if ((angleDiff >= 0) && (absVal >= 180))
-      {
-        // Serial.print(" case 3: ");
-        turn2(CLOCKWISE, 65, 10);
-      }
-      else
-      {
-        // Serial.print(" case 4: ");
-        turn2(COUNTER_CLOCKWISE, 65, 10);
-      }
-      // unsigned long currentMillis = millis();
-
-      // if (currentMillis - previousMillis >= interval)
-      // {
-      //   // previousMillis = currentMillis;
-      //   if (previousMillis != 0)
-      //   {
-      //     // goToHeading = false;
-      //     stop();
-      //   }
-      // }
+      turn2(CLOCKWISE, 65, 30);
     }
     else
     {
-      move(FORWARD, 65);
-
-      // if (currentMillis - previousMillis >= interval)
-      // {
-      //   previousMillis = currentMillis;
-      //   if (previousMillis != 0)
-      //   {
-      //     goToHeading = false;
-      //     stop();
-      //   }
-      // }
+      turn2(COUNTER_CLOCKWISE, 65, 30);
     }
+    previousMillis = currentMillis = millis();
+  }
+  else if (absVal < 5 && absVal >= 2)
+  {
+    if ((angleDiff >= 0) && (absVal <= 180))
+    {
+      turn2(COUNTER_CLOCKWISE, 65, 10);
+    }
+    else if ((angleDiff < 0) && (absVal <= 180))
+    {
+      turn2(CLOCKWISE, 65, 10);
+    }
+    else if ((angleDiff >= 0) && (absVal >= 180))
+    {
+      turn2(CLOCKWISE, 65, 10);
+    }
+    else
+    {
+      turn2(COUNTER_CLOCKWISE, 65, 10);
+    }
+  }
+  else
+  {
+    move(FORWARD, 65);
+  }
   // }
-}
-
-void testHeading(float x, float y)
-{
-  uint16_t i = 0;
-  /*
-  float nextX = 6;
-  float nextY = 6;
-  */
-  float currentAngle = 0.0;
-  float nextAngle = 0.0;
-  for(i = 0; i < 30; i++)
-  jiggle();
-
-  printf("raw 1: %f\n", getLrfDistanceCm(1)/30.48);
-  printf("raw 2: %f\n", getLrfDistanceCm(2)/30.48);
-  jiggle();
-  printCurrentPos();
-  currentAngle = getCurrentAngle();
-  Serial.println("Current Angle: ");
-  Serial.println(currentAngle);
-  // x = 121.92 y = 91.44
-  
-
-  Serial.println("**************");
-  Serial.println("Next Angle: ");
-  nextAngle = getNextAngle(X_POS, Y_POS, x*30.48, y*30.48);
-  Serial.println(nextAngle);
-  Serial.println(getHeading());
-//   delay(25);
-  // turnToHeading(nextAngle, 50);
-  // driveToHeading(nextAngle, x*30.48, y*30.48);
-  Serial.print("Angle reached: ");
-  Serial.println(getCurrentAngle());
 }
 
 void goToCoordinates(float nextX, float nextY)
 {
+  nextX *= 30.48;
+  nextY *= 30.48;
   float diffX = abs(nextX - X_POS);
   float diffY = abs(nextY - Y_POS);
-  while(true)
+  bool goToCoordinates = true;
+  while (goToCoordinates)
   {
     jiggle();
     // get angle for next coordinates
-    float nextAngle = getNextAngle(X_POS, Y_POS, 4 * 30.48, 4 * 30.48);
+    float nextAngle = getNextAngle(X_POS, Y_POS, nextX, nextY);
     driveToHeading(nextAngle);
-    Serial.print("Current X: ");
-    Serial.println(diffX);
-    Serial.print("Current Y: ");
-    Serial.println(diffY);
+    diffX = abs(nextX - X_POS);
+    diffY = abs(nextY - Y_POS);
+    // Serial.print("Diff X: ");
+    // Serial.println(diffX);
+    // Serial.print("Diff Y: ");
+    // Serial.println(diffY);
+    // Serial.print("Current X: ");
+    // Serial.println(X_POS);
+    // Serial.print("Current Y: ");
+    // Serial.println(Y_POS);
 
-    if(diffX <= 10 && diffY <= 10)
+    if (diffX <= 10 && diffY <= 10)
     {
       stopMotors();
-      break;
+      goToCoordinates = false;
     }
   }
 }
 
 bool firstRun = true;
 
-
 void loop()
 {
-  if(firstRun)
+#ifdef ELIM
+
+  if (firstRun)
   {
     uint16_t i = 0;
-    for(i = 0; i < 30; i++)
+    for (i = 0; i < 30; i++)
       jiggle();
     firstRun = false;
   }
   // set current coordinates
   goToCoordinates(4, 4);
-  while(1);
-  
-  #ifdef ELIM
+  while (1)
+    ;
 
+#endif
 
-
-  #endif
-
-  #ifdef TEST_ELIM
+#ifdef TEST_TURN_TO_HEADING
+  driveToHeading(90);
+  delay(5000);
+  driveToHeading(180);
+  delay(5000);
+  driveToHeading(270);
+  delay(5000);
+  driveToHeading(45);
+  while (1)
+    ;
+#endif
+#ifdef TEST_ELIM
   testHeading(6, 2);
   stop();
   delay(1000);
 
-  while(1);
-  #endif
+  while (1)
+    ;
+#endif
 
-  /*
-    Test Motors
-  */
-  #ifdef MOTORS
+/*
+  Test Motors
+*/
+#ifdef MOTORS
   turn(CLOCKWISE, 80);
   delay(1000);
   turn(COUNTER_CLOCKWISE, 80);
   delay(1000);
-  #endif
+#endif
 
-
-/*
-  * Test all components at the same time.  
-*/
-  #ifdef TEST_ALL_COMPONENTS
+  /*
+   * Test all components at the same time.
+   */
+#ifdef TEST_ALL_COMPONENTS
   turn(direction, 80);
   direction ^= 1;
-  for (int pos = 0; pos <= 180; pos++) {  // go from 0-180 degrees
-    myservo.write(servoPin, pos);        // set the servo position (degrees)
+  for (int pos = 0; pos <= 180; pos++)
+  {                               // go from 0-180 degrees
+    myservo.write(servoPin, pos); // set the servo position (degrees)
   }
-  for (int pos = 180; pos >= 0; pos--) {  // go from 180-0 degrees
-    myservo.write(servoPin, pos);        // set the servo position (degrees)
+  for (int pos = 180; pos >= 0; pos--)
+  {                               // go from 180-0 degrees
+    myservo.write(servoPin, pos); // set the servo position (degrees)
     delay(15);
   }
   Serial.println("Peri check: ");
@@ -548,13 +519,12 @@ void loop()
   Serial.print("Whisker check: ");
   Serial.println(getWhiskerDistanceCm());
   delay(1000);
-  #endif
+#endif
 
-
-/*
-  * Test the position of the car based on the distance from the walls
-*/
-  #ifdef TEST
+  /*
+   * Test the position of the car based on the distance from the walls
+   */
+#ifdef TEST
   static uint16_t i = 0;
   i++;
   jiggle();
@@ -562,9 +532,40 @@ void loop()
   if (i >= 15)
   {
     printCurrentAngle();
-   printCurrentPos();
+    printCurrentPos();
     i = 0;
   }
   delay(10);
-  #endif
+
+  void testHeading(float x, float y)
+  {
+    uint16_t i = 0;
+
+    float currentAngle = 0.0;
+    float nextAngle = 0.0;
+    for (i = 0; i < 30; i++)
+      jiggle();
+
+    printf("raw 1: %f\n", getLrfDistanceCm(1) / 30.48);
+    printf("raw 2: %f\n", getLrfDistanceCm(2) / 30.48);
+    jiggle();
+    printCurrentPos();
+    currentAngle = getCurrentAngle();
+    Serial.println("Current Angle: ");
+    Serial.println(currentAngle);
+    // x = 121.92 y = 91.44
+
+    Serial.println("**************");
+    Serial.println("Next Angle: ");
+    nextAngle = getNextAngle(X_POS, Y_POS, x * 30.48, y * 30.48);
+    Serial.println(nextAngle);
+    Serial.println(getHeading());
+    //   delay(25);
+    // turnToHeading(nextAngle, 50);
+    // driveToHeading(nextAngle, x*30.48, y*30.48);
+    Serial.print("Angle reached: ");
+    Serial.println(getCurrentAngle());
+  }
+
+#endif
 }
