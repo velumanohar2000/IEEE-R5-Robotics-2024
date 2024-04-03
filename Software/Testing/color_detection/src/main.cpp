@@ -35,9 +35,9 @@
 // Variables & Constants ------------------------------------------------------
 
 // Ambient color values
-const uint16_t r_amb = 10;
-const uint16_t g_amb = 15;
-const uint16_t b_amb = 15;
+const uint16_t r_amb = 14;
+const uint16_t g_amb = 21;
+const uint16_t b_amb = 19;
 
 // Structures & Classes -------------------------------------------------------
 
@@ -64,17 +64,19 @@ void loop(void) {
   uint16_t r_raw, g_raw, b_raw, c;
   uint8_t start_color = 0;
 
-  tcs.getRawData(&r_raw, &g_raw, &b_raw, &c);
+  tcs.getRawData(&r_raw, &g_raw, &b_raw, &c); // gets raw color values
 
   Serial.println("Raw:");
   Serial.print("R: "); Serial.print(r_raw, DEC); Serial.print(" ");
   Serial.print("G: "); Serial.print(g_raw, DEC); Serial.print(" ");
   Serial.print("B: "); Serial.println(b_raw, DEC);
 
+  // adjusts color values depending on ambient light
   int16_t r = r_raw - r_amb;
   int16_t g = g_raw - g_amb;
   int16_t b = b_raw - b_amb;
 
+  // if any number is negative, it will float to 0
   if (r < 0) r = 0;
   if (g < 0) g = 0;
   if (b < 0) b = 0;
@@ -84,9 +86,8 @@ void loop(void) {
   Serial.print("G: "); Serial.print(g, DEC); Serial.print(" ");
   Serial.print("B: "); Serial.println(b, DEC);
 
-  uint16_t lowest;
-
-  lowest = min(min(r, g), b);
+  // will filter out the lowest value from the RGB values
+  uint16_t lowest = min(min(r, g), b);
 
   r -= lowest;
   g -= lowest;
@@ -97,43 +98,43 @@ void loop(void) {
   Serial.print("G: "); Serial.print(g, DEC); Serial.print(" ");
   Serial.print("B: "); Serial.println(b, DEC);
 
-  if (r > 60)
+  if (r > 60) // checks warm colors
   {
-    if (g < 30)
+    if (g < 20) // if the green value is too low, its red
     {
       start_color = RED;
     }
-    else if ((r - g) < 30)
+    else if ((r - g) < 70) // y is bright. if r and g are close its yellow
     {
       start_color = YELLOW;
     }
-    else if (g > 20)
+    else
     {
-      start_color = ORANGE;
+      start_color = ORANGE; // if g is kinda high, but not close to r its orange
     }
   }
-  else if (b > 30)
+  else if (b > 30) // checks blue colors
   {
-    if (r < 5)
+    if (r < 5) // if there's barely any red, its blue
     {
       start_color = BLUE;
     }
     else
     {
-      start_color = PURPLE;
+      start_color = PURPLE; // if there's noticably some red, its purple
     }
   }
-  else if (g > 30)
+  else if (g > 25) // looks for green
   {
     start_color = GREEN;
   }
-  else if (r < 5 && g < 5 && b < 5)
+  else if (r < 13 && g < 13 && b < 13)
   {
-    start_color = BLACK;
+    start_color = BLACK; // if too dark, its black
   }
   else
   {
-    start_color = GRAY;
+    start_color = GRAY; // anything else is just gray
   }
   
 
