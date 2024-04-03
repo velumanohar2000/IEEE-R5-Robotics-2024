@@ -95,6 +95,10 @@ float getLrfDistanceCm(uint8_t lrfNum)
 
     float lrf1Cm = lrf1.getDistance() / 10.0; // Get the result of the measurement from the sensor in cm
     lrf1.clearInterrupt(); // Clear the interrupt
+    if(lrf1Cm > 340)
+    {
+      lrf1Cm = 340;
+    }
     return lrf1Cm;
   }
   else if (lrfNum == 2) // Check if the sensor number is 2
@@ -106,6 +110,11 @@ float getLrfDistanceCm(uint8_t lrfNum)
 
     float lrf2Cm = lrf2.getDistance() / 10.0; // Get the result of the measurement from the sensor in cm
     lrf2.clearInterrupt(); // Clear the interrupt
+
+    if(lrf2Cm > 340)
+    {
+      lrf2Cm = 340;
+    }
     return lrf2Cm;
   }
   else
