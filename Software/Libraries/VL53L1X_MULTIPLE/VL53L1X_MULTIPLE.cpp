@@ -22,8 +22,8 @@
 #define LRF1_SHUTDOWN_PIN 14
 #define LRF2_SHUTDOWN_PIN 13
 
-extern SFEVL53L1X lrf1;
-extern SFEVL53L1X lrf2;
+extern SFEVL53L1X lrf1_init;
+extern SFEVL53L1X lrf2_init;
 
 // Uncomment the following line to use the optional shutdown and interrupt pins.
 // SFEVL53L1X distanceSensor(Wire, SHUTDOWN_PIN, INTERRUPT_PIN);
@@ -42,80 +42,80 @@ void init_2_VL53L1X(void)
 
   pinMode(LRF2_SHUTDOWN_PIN, INPUT); // Set pin back to input
   delay(10);
-  if (lrf2.begin() != 0) // Begin returns 0 on a good init
+  if (lrf2_init.begin() != 0) // Begin returns 0 on a good init
   {
-    Serial.println("lrf2 failed to begin. Please check wiring. Freezing...");
+    Serial.println("lrf2_init failed to begin. Please check wiring. Freezing...");
     while (1)
       ;
   }
 
-  lrf2.setI2CAddress(0x40); // Change address of sensor 2 to 0x40
-  if (lrf2.begin() != 0)    // Begin returns 0 on a good init
+  lrf2_init.setI2CAddress(0x40); // Change address of sensor 2 to 0x40
+  if (lrf2_init.begin() != 0)    // Begin returns 0 on a good init
   {
-    Serial.println("lrf2 failed to begin. Please check wiring. Freezing...");
+    Serial.println("lrf2_init failed to begin. Please check wiring. Freezing...");
     while (1)
       ;
   }
   Serial.println("Sensor online LRF2!");
 
-  lrf2.setIntermeasurementPeriod(50); // Set the intermeasurement period to 50 ms
-  Serial.println(lrf2.getIntermeasurementPeriod()); // Print the intermeasurement period
+  lrf2_init.setIntermeasurementPeriod(50); // Set the intermeasurement period to 50 ms
+  Serial.println(lrf2_init.getIntermeasurementPeriod()); // Print the intermeasurement period
 
   pinMode(LRF1_SHUTDOWN_PIN, INPUT); // Set pin back to input
   delay(10);
-  if (lrf1.begin() != 0) // Begin returns 0 on a good init
+  if (lrf1_init.begin() != 0) // Begin returns 0 on a good init
   {
-    Serial.println("lrf1 failed to begin. Please check wiring. Freezing...");
+    Serial.println("lrf1_init failed to begin. Please check wiring. Freezing...");
     while (1)
       ;
   }
 
   Serial.println("Sensor online LRF1!");
   // {
-  //   Serial.println("lrf1 failed to begin. Please check wiring. Freezing...");
+  //   Serial.println("lrf1_init failed to begin. Please check wiring. Freezing...");
   //   while (1)
   //     ;
   // }
 
-  lrf1.setIntermeasurementPeriod(50); // Set the intermeasurement period to 50 ms
-  Serial.println(lrf1.getIntermeasurementPeriod()); // Print the intermeasurement period
+  lrf1_init.setIntermeasurementPeriod(50); // Set the intermeasurement period to 50 ms
+  Serial.println(lrf1_init.getIntermeasurementPeriod()); // Print the intermeasurement period
 
-  lrf1.startRanging(); // Start only once (and never call stop)
-  lrf2.startRanging(); // Start only once (and never call stop)
+  lrf1_init.startRanging(); // Start only once (and never call stop)
+  lrf2_init.startRanging(); // Start only once (and never call stop)
 }
 
 float getLrfDistanceCm(uint8_t lrfNum)
 {
   if (lrfNum == 1) // Check if the sensor number is 1
   {
-    while (!lrf1.checkForDataReady()) // Check if the data is ready
+    while (!lrf1_init.checkForDataReady()) // Check if the data is ready
     {
       delay(1); 
     }
 
-    float lrf1Cm = lrf1.getDistance() / 10.0; // Get the result of the measurement from the sensor in cm
-    lrf1.clearInterrupt(); // Clear the interrupt
-    if(lrf1Cm > 340)
+    float lrf1_initCm = lrf1_init.getDistance() / 10.0; // Get the result of the measurement from the sensor in cm
+    lrf1_init.clearInterrupt(); // Clear the interrupt
+    if(lrf1_initCm > 340)
     {
-      lrf1Cm = 340;
+      lrf1_initCm = 340;
     }
-    return lrf1Cm;
+    return lrf1_initCm;
   }
   else if (lrfNum == 2) // Check if the sensor number is 2
   {
-    while (!lrf2.checkForDataReady())
+    while (!lrf2_init.checkForDataReady())
     {
       delay(1);
     }
 
-    float lrf2Cm = lrf2.getDistance() / 10.0; // Get the result of the measurement from the sensor in cm
-    lrf2.clearInterrupt(); // Clear the interrupt
+    float lrf2_initCm = lrf2_init.getDistance() / 10.0; // Get the result of the measurement from the sensor in cm
+    lrf2_init.clearInterrupt(); // Clear the interrupt
 
-    if(lrf2Cm > 340)
+    if(lrf2_initCm > 340)
     {
-      lrf2Cm = 340;
+      lrf2_initCm = 340;
     }
-    return lrf2Cm;
+    return lrf2_initCm;
   }
   else
   {
