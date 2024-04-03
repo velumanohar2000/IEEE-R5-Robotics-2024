@@ -63,7 +63,7 @@ void move(bool direction, uint16_t speed)
   }
 }
 
-void stop()
+void stopMotors()
 {
   motors.motorsStop();
 }
