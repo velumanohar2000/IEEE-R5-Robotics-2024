@@ -19,8 +19,8 @@
 #include "VL53L1X.h"
 
 // Optional interrupt and shutdown pins.
-#define LRF1_SHUTDOWN_PIN 13
-#define LRF2_SHUTDOWN_PIN 14
+#define LRF1_SHUTDOWN_PIN 14
+#define LRF2_SHUTDOWN_PIN 13
 
 extern SFEVL53L1X lrf1;
 extern SFEVL53L1X lrf2;
@@ -48,7 +48,6 @@ void init_2_VL53L1X(void)
     while (1)
       ;
   }
-  Serial.println("Sensor online!");
 
   lrf2.setI2CAddress(0x40); // Change address of sensor 2 to 0x40
   if (lrf2.begin() != 0)    // Begin returns 0 on a good init
@@ -57,23 +56,26 @@ void init_2_VL53L1X(void)
     while (1)
       ;
   }
+  Serial.println("Sensor online LRF2!");
 
   lrf2.setIntermeasurementPeriod(50); // Set the intermeasurement period to 50 ms
   Serial.println(lrf2.getIntermeasurementPeriod()); // Print the intermeasurement period
 
   pinMode(LRF1_SHUTDOWN_PIN, INPUT); // Set pin back to input
   delay(10);
-  if (lrf1.begin() != 0) // Begin returns 0 on a good init, address is the default 0x29
+  if (lrf1.begin() != 0) // Begin returns 0 on a good init
   {
     Serial.println("lrf1 failed to begin. Please check wiring. Freezing...");
     while (1)
       ;
   }
-  {
-    Serial.println("lrf1 failed to begin. Please check wiring. Freezing...");
-    while (1)
-      ;
-  }
+
+  Serial.println("Sensor online LRF1!");
+  // {
+  //   Serial.println("lrf1 failed to begin. Please check wiring. Freezing...");
+  //   while (1)
+  //     ;
+  // }
 
   lrf1.setIntermeasurementPeriod(50); // Set the intermeasurement period to 50 ms
   Serial.println(lrf1.getIntermeasurementPeriod()); // Print the intermeasurement period
