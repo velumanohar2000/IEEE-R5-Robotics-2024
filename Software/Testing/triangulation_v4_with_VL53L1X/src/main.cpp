@@ -21,6 +21,19 @@
 
 // #define TEST_TURN_TO_HEADING
 
+#define TURN_TO_ANGLE_DIFF 30
+#define DRIVE_TO_ANGLE_DIFF 30
+#define STATION_A 2,1
+#define STATION_B 6,1
+#define STATION_C 7,2
+#define STATION_D 7,6
+#define STATION_E 6,7
+#define STATION_F 2,7
+#define STATION_G 1,6
+#define STATION_H 1,2
+
+
+
 SFEVL53L1X lrf1;
 SFEVL53L1X lrf2;
 
@@ -275,7 +288,7 @@ void turnToHeading(float goal, uint8_t speed)
   // printToLcd("Current Angle: ", currentAngle);
   angleDiff = goal - currentAngle;
   absVal = abs(angleDiff);
-  uint32_t turnDiff = 10;
+  uint32_t turnDiff = TURN_TO_ANGLE_DIFF;
   // Serial.println(absVal);
   if (absVal > 360 - turnDiff)
   {
@@ -320,7 +333,7 @@ void turnToHeading(float goal, uint8_t speed)
     // Serial.println(goal);
     angleDiff = goal - currentAngle;
     absVal = abs(angleDiff);
-    if (absVal > 360 - turnDiff)
+    if (absVal > (360 - turnDiff))
     {
       absVal = 359.99 - absVal;
       angleDiff = 359.99 - angleDiff;
@@ -329,7 +342,7 @@ void turnToHeading(float goal, uint8_t speed)
     // Serial.println(absVal);
     // Serial.println();
   }
-  stopMotors();
+  // stopMotors();
 }
 
 void driveToHeading(float goalHeading)
@@ -349,9 +362,9 @@ void driveToHeading(float goalHeading)
 
   angleDiff = goalHeading - currentAngle;
   absVal = abs(angleDiff);
-  uint32_t turnDiff = 15;
+  uint32_t turnDiff = DRIVE_TO_ANGLE_DIFF;
   // Serial.println(absVal);
-  if (absVal > 360 - turnDiff)
+  if (absVal > (360 - turnDiff))
   {
     absVal = 359.99 - absVal;
     angleDiff = 359.99 - angleDiff;
@@ -364,7 +377,7 @@ void driveToHeading(float goalHeading)
   {
     // stopMotors();
     // delay(20);
-    turnToHeading(goalHeading, 60);
+    turnToHeading(goalHeading-10, 60);
   }
   else if (absVal <= 15 && absVal >= 5)
   {
@@ -458,7 +471,22 @@ void loop()
     firstRun = false;
   }
   // set current coordinates
-  goToCoordinates(4, 4);
+  goToCoordinates(STATION_D);
+  delay(1500);
+  goToCoordinates(STATION_H);
+  delay(1500);
+  goToCoordinates(STATION_F);
+  delay(1500);
+  goToCoordinates(STATION_B);
+  delay(1500);
+  goToCoordinates(STATION_G);
+  delay(1500);
+  goToCoordinates(STATION_E);
+  delay(1500);
+  goToCoordinates(STATION_C);
+  delay(1500);
+  goToCoordinates(STATION_A);
+  delay(1500);
   while (1)
     ;
 
