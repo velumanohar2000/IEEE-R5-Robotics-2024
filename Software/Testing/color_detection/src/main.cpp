@@ -81,7 +81,7 @@ void loop(void) {
   if (g < 0) g = 0;
   if (b < 0) b = 0;
 
-  Serial.println("Raw - amb:");
+  Serial.println("Raw - Ambient:");
   Serial.print("R: "); Serial.print(r, DEC); Serial.print(" ");
   Serial.print("G: "); Serial.print(g, DEC); Serial.print(" ");
   Serial.print("B: "); Serial.println(b, DEC);
@@ -170,6 +170,6 @@ void loop(void) {
       break;
   }
 
-  // neopixelWrite(RGB_BUILTIN, r, g, b);
+  // neopixelWrite(RGB_BUILTIN, r, g, b); // commented out because of stm32
   Serial.println();
 }
