@@ -6,6 +6,10 @@
  * Rolando Rosales
  * 
  * Comments:
+ * Use these to debug:
+ * #define TCS_PRINT_DEBUG
+ * #define TCS_ENABLE_LED
+ * Libraries:
  * Requires adafruit/Adafruit TCS34725@^1.4.4 library
 */
 
@@ -19,7 +23,8 @@
 // Defines --------------------------------------------------------------------
 
 // Preprocessor Directives
-// #define TCS_PRINT_DEBUG
+#define TCS_PRINT_DEBUG
+#define TCS_ENABLE_LED
 
 // Color states
 #define RED 1
@@ -107,7 +112,7 @@ uint8_t getColorCode(void) {
     {
       color = RED;
     }
-    else if ((r - g) < 70) // y is bright. if r and g are close its yellow
+    else if ((r - g) < 50) // y is bright. if r and g are close its yellow
     {
       color = YELLOW;
     }
@@ -118,6 +123,11 @@ uint8_t getColorCode(void) {
   }
   else if (b > 30) // checks blue colors
   {
+    if (g - r)
+      color = PURPLE;
+    else
+      color = BLUE;
+    /**
     if (r < 5) // if there's barely any red, its blue
     {
       color = BLUE;
@@ -126,6 +136,7 @@ uint8_t getColorCode(void) {
     {
       color = PURPLE; // if there's noticably some red, its purple
     }
+    */
   }
   else if (g > 25) // looks for green
   {
@@ -172,9 +183,12 @@ uint8_t getColorCode(void) {
         Serial.println("Unknown");
         break;
     }
-  Serial.println();
+    Serial.println();
   #endif
 
-  // neopixelWrite(RGB_BUILTIN, r, g, b); // commented out because of stm32
+  #ifdef TCS_ENABLE_LED
+    neopixelWrite(RGB_BUILTIN, r, g, b); // commented out because of stm32
+  #endif
+
   return color;
 }

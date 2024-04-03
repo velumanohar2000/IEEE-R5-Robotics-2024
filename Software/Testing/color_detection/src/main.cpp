@@ -16,16 +16,17 @@
 // Defines --------------------------------------------------------------------
 
 // Preprocessor Directives
-#define PRINT_DEBUG
+#define TCS_PRINT_DEBUG
+#define TCS_ENABLE_LED
 
 // I2C Pins
-#define SDA 14
-#define SCL 15
+#define SDA 35
+#define SCL 36
 
 // Ambient color values
-#define R_AMB 14
-#define G_AMB 21
-#define B_AMB 19
+#define R_AMB 17
+#define G_AMB 23
+#define B_AMB 18
 
 // Variables & Constants ------------------------------------------------------
 
@@ -44,6 +45,7 @@ void setup(void) {
 void loop(void) {
   uint8_t start_color = getColorCode();
 
+  /*
   Serial.print("Color is: ");
   switch (start_color)
   {
@@ -75,6 +77,7 @@ void loop(void) {
       Serial.println("Unknown");
       break;
   }
+  */
 
   Serial.println();
 }
