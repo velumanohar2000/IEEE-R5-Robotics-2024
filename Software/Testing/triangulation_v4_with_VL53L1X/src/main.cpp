@@ -22,7 +22,7 @@
 // #define TEST_TURN_TO_HEADING
 
 #define TURN_TO_ANGLE_DIFF 30
-#define DRIVE_TO_ANGLE_DIFF 30
+#define DRIVE_TO_ANGLE_DIFF 20
 #define STATION_A 2,1
 #define STATION_B 6,1
 #define STATION_C 7,2
@@ -34,8 +34,8 @@
 
 
 
-SFEVL53L1X lrf1;
-SFEVL53L1X lrf2;
+SFEVL53L1X lrf1_init;
+SFEVL53L1X lrf2_init;
 
 /*
  * README:
@@ -333,7 +333,7 @@ void turnToHeading(float goal, uint8_t speed)
     // Serial.println(goal);
     angleDiff = goal - currentAngle;
     absVal = abs(angleDiff);
-    if (absVal > (360 - turnDiff))
+    if (absVal > (360 - turnDiff))  // was (absVal > 360 - turnDiff)
     {
       absVal = 359.99 - absVal;
       angleDiff = 359.99 - angleDiff;
@@ -486,6 +486,7 @@ void loop()
   goToCoordinates(STATION_C);
   delay(1500);
   goToCoordinates(STATION_A);
+  // goToCoordinates(4, 4);
   delay(1500);
   while (1)
     ;
