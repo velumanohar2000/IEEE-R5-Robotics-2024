@@ -37,7 +37,7 @@
 // Defines --------------------------------------------------------------------
 
 // Preprocessor directives
-#define IR_PRINT_DEBUG
+// #define IR_PRINT_DEBUG
 
 // Constants & Variables ------------------------------------------------------
 
