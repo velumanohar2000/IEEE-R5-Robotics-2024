@@ -38,9 +38,9 @@
 // Constants & Variables ------------------------------------------------------
 
 // IR
-const uint32_t lit_code = 0x4732DD25; // Amazon button
+const uint32_t lit_code = 0x4E77964E; // Amazon button
 const uint32_t unalive_code = 0x5743D32C; // Netflix button
-extern gpio_num_t ir_pin = GPIO_NUM_10; // pin number of IR receiver(s)
+gpio_num_t ir_pin = GPIO_NUM_17; // pin number of IR receiver(s)
 
 // Structures & Classes -------------------------------------------------------
 
@@ -58,13 +58,13 @@ void setup()
   Serial.begin(115200);
 
   initIR(lit_code, unalive_code);
-  if (wokeFromIR())
+  if (!wokeFromIR())
   {
     timeToSleep();
   }
 
   pinMode(LED_BUILTIN, OUTPUT);
-  
+
   // Regular setup goes here
 }
  void loop()
@@ -75,6 +75,7 @@ void setup()
     timeToSleep();
   }
 
+  Serial.println("Test");
   digitalWrite(LED_BUILTIN, HIGH);
  // Regular loop goes here
 }
