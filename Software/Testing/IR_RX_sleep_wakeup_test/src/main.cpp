@@ -67,6 +67,7 @@ void setup()
 
   // Regular setup goes here
 }
+
  void loop()
 {
   if (sleepCodeReceived())
@@ -75,7 +76,7 @@ void setup()
     timeToSleep();
   }
 
-  Serial.println("Test");
   digitalWrite(LED_BUILTIN, HIGH);
+
  // Regular loop goes here
 }
