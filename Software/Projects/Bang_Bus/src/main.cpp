@@ -261,7 +261,7 @@ void jiggle()
 
   servoPosition += 90;                    // Add 90 because 90 degress is the middle position for the servo (therefore it is the current heading of the car)
   myservo.write(servoPin, servoPosition); // tell servo to go to position in variable 'pos'
-  delay(15);                              // waits 15ms for the servo to reach the position
+  //delay(15);                              // waits 15ms for the servo to reach the position
   lrf1 = getLrfDistanceCm(1);
   lrf2 = getLrfDistanceCm(2); 
   // Serial.print("LRF1: ");

@@ -16,7 +16,7 @@ extern ESP32MotorControl motors;
 // extern int16_t B_RIGHT_MOTOR_OFFSET;
 extern Adafruit_BNO08x bno08x;
 extern sh2_SensorValue_t sensorValue;
-extern float offset;
+extern float offsetForImu;
 
 void setReports(Adafruit_BNO08x *bno08x, sh2_SensorId_t reportType, uint32_t interval)
 {
@@ -29,7 +29,7 @@ void setReports(Adafruit_BNO08x *bno08x, sh2_SensorId_t reportType, uint32_t int
 
 void reports(Adafruit_BNO08x *bno08x)
 {
-  setReports(bno08x, SH2_ARVR_STABILIZED_RV, 5000);
+  setReports(bno08x, SH2_ROTATION_VECTOR, 5000);
 }
 
 void setupBNO085(Adafruit_BNO08x *bno08x)
@@ -77,7 +77,7 @@ float getHeading()
   {
     retVal = calculateHeading(sensorValue.un.arvrStabilizedRV.i, sensorValue.un.arvrStabilizedRV.j, sensorValue.un.arvrStabilizedRV.k, sensorValue.un.arvrStabilizedRV.real);
 
-    retVal -= offset;
+    retVal -= offsetForImu;
     if (retVal < 0)
     {
       retVal += 359.99;
