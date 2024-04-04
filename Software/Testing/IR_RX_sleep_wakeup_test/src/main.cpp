@@ -31,131 +31,52 @@
 // Libraries ------------------------------------------------------------------
 
 #include <Arduino.h>
-#include <IRremoteESP8266.h>
-#include <IRrecv.h>
+#include "IR_switch.h"
 
 // Defines --------------------------------------------------------------------
-
-#define IR_RX_PIN GPIO_NUM_14
 
 // Constants & Variables ------------------------------------------------------
 
 // IR
+const uint32_t lit_code = 0x4E77964E; // Amazon button
 const uint32_t unalive_code = 0x5743D32C; // Netflix button
-const uint32_t lit_code = 0x4732DD25; // Amazon button
-const uint8_t custom_code = 0xF; // For custom remote, will likely not use
-
-// Deep Sleep
-bool go_sleep = true;
-bool check_ir_wake = false;
-esp_sleep_wakeup_cause_t wake_code;
-
-// Misc
-bool led_state = false;
+gpio_num_t ir_pin = GPIO_NUM_17; // pin number of IR receiver(s)
 
 // Structures & Classes -------------------------------------------------------
 
-// IR
-decode_results results;
-IRrecv irrecv(IR_RX_PIN);
-
 // Functions ------------------------------------------------------------------
 
-// On startup, we will check the code of what woke up the esp32
-esp_sleep_wakeup_cause_t getWakeCode()
+void sleepHandler()
 {
-  esp_sleep_wakeup_cause_t code = esp_sleep_get_wakeup_cause();
-
-  switch(code)
-  {
-    case ESP_SLEEP_WAKEUP_EXT0: // Caused by GPIO 17
-      Serial.println("Wakeup caused by external signal using RTC_IO");
-      check_ir_wake = true;
-      break;
-    default: // Woke up some other wake (typically normally)
-      Serial.printf("Wakeup was not caused by deep sleep: %d\n",code);
-      break;
-  }
-
-  return code;
-}
-
-// If woken up by EXT0, check the IR code
-void checkIRWake()
-{
-  if (irrecv.decode(&results)) // Decodes the IR code
-  {
-    if (results.value == lit_code)  // Checks if IR code is wake code
-    {
-      Serial.println("IR code is lit");
-      go_sleep = false; 
-    }
-    else
-    {
-      Serial.print("Wrong code: "); // Print incorrect code
-      Serial.println(results.value, HEX);
-    }
-    irrecv.resume(); // Will start looking for next value
-  }
-  else // Will run if there was no IR code to decode
-  {
-    Serial.println("No IR signal detected");
-  }
-}
-
-// Checks to see if IR sleep code has been sent
-void checkIRSleep()
-{
-  if (irrecv.decode(&results)) // Decodes the IR code
-  {
-    if (results.value == unalive_code)  // Checks if IR code is wake code
-    {
-      Serial.println("Time to sleep");
-      Serial.flush(); // Waits until all serial data is finished
-
-      esp_sleep_enable_ext0_wakeup(IR_RX_PIN, 0); // Wake when IR is low (pressed)
-      esp_deep_sleep_start();
-    }
-    else
-    {
-      Serial.print("Wrong code: "); // Print incorrect code
-      Serial.println(results.value, HEX);
-    }
-    irrecv.resume(); // Will start looking for next value
-  }
+  // turn off peripherals here
+  digitalWrite(LED_BUILTIN, LOW);
+  Serial.end();
 }
 
 void setup()
 {
   Serial.begin(115200);
 
-  irrecv.enableIRIn(); // Enables the IR receiver
-
-  digitalWrite(LED_BUILTIN, LOW);
-
-  delay(40);
-digitalWrite(LED_BUILTIN, LOW);
-  pinMode(IR_RX_PIN, INPUT); // Sets GPIO 17 as input
-
-  wake_code = getWakeCode();
-
-  if (check_ir_wake) // Checks IR code to see if sleep needed
+  initIR(lit_code, unalive_code);
+  if (!wokeFromIR())
   {
-    checkIRWake();
+    timeToSleep();
   }
-  if (go_sleep) // Runs if sleep is needed (bad IR code or normal wake)
-  {
-    Serial.println("Zzz...");
-    Serial.flush(); 
 
-    esp_sleep_enable_ext0_wakeup(IR_RX_PIN, 0); // Wake when IR is low (pressed)
-    esp_deep_sleep_start();
-  }
+  pinMode(LED_BUILTIN, OUTPUT);
+
+  // Regular setup goes here
 }
 
-void loop()
+ void loop()
 {
-  checkIRSleep();
-  delay(40); // There needs to be some time between IR samples
-  neopixelWrite(LED_BUILTIN, 4, 4, 4);
+  if (sleepCodeReceived())
+  {
+    sleepHandler(); // needs to be added in main.cpp
+    timeToSleep();
+  }
+
+  digitalWrite(LED_BUILTIN, HIGH);
+
+ // Regular loop goes here
 }
