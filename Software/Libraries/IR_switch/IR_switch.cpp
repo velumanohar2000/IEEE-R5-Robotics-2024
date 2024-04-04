@@ -37,14 +37,14 @@
 // Defines --------------------------------------------------------------------
 
 // Preprocessor directives
-// #define IR_PRINT_DEBUG
+#define IR_PRINT_DEBUG
 
 // Constants & Variables ------------------------------------------------------
 
 // IR
-uint32_t lit_code = 0x0 // 0x4732DD25; // Amazon button
-uint32_t unalive_code = 0x0 // 0x5743D32C; // Netflix button
-// gpio_num_t ir_pin; // GPIO_NUM_X, this must initialized in main.cpp
+uint32_t lit_code = 0x0; // 0x4732DD25; // Amazon button
+uint32_t unalive_code = 0x0; // 0x5743D32C; // Netflix button
+extern gpio_num_t ir_pin; // GPIO_NUM_X, this must initialized in main.cpp
 
 // Deep Sleep
 bool check_ir_wake = false;
@@ -91,8 +91,11 @@ bool wokeFromIR()
       break;
   }
 
+  Serial.println(check_ir_wake ? "true" : "false");
+
   if (check_ir_wake)
   {
+    Serial.println("entered");
     if (irrecv.decode(&results)) // Decodes the IR code
     {
         if (results.value == lit_code)  // Checks if IR code is wake code
@@ -112,13 +115,13 @@ bool wokeFromIR()
         }
         irrecv.resume(); // Will start looking for next value
     }
-  }
-  else // Will run if there was no IR code to decode
-  {
-    #ifdef IR_PRINT_DEBUG
-      Serial.println("No IR signal detected");
-    #endif
-    woke_from_ir = false;
+    else // Will run if there was no IR code to decode
+    {
+      #ifdef IR_PRINT_DEBUG
+        Serial.println("No IR signal detected");
+      #endif
+      woke_from_ir = false;
+    }
   }
 
   return woke_from_ir;
