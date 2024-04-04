@@ -322,6 +322,27 @@ unsigned long currentMillis = 0;
 unsigned long previousMillis = 0;
 uint32_t interval = 1000;
 
+uint16_t jiggleForRound1()
+{
+  float currentAngle = getCurrentAngle();
+  if(currentAngle >= 0 && currentAngle <= 90)
+  {
+    return (90-currentAngle);
+  }
+  else if(currentAngle >= 270)
+  {
+    return ((360-currentAngle)+90);
+  }
+  else if(currentAngle >= 180 && currentAngle <= 270)
+  {
+    return (90-(currentAngle-180));
+  }
+  else if(currentAngle < 180 && currentAngle >= 90)
+  {
+    return(180 - currentAngle + 90);
+  }
+}
+
 void loop()
 {
 
@@ -347,12 +368,11 @@ void loop()
   stopMotors();
   delay(2000);
   turnToHeading(0, 60);
-  delay(2000);
-  while (getLrfDistanceCm(1) >= 20)
-  {
-    driveToHeading(0);
-  }
   stopMotors();
+
+
+
+
 
   while (1)
   {
