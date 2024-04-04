@@ -21,18 +21,16 @@
 
 // #define TEST_TURN_TO_HEADING
 
-#define TURN_TO_ANGLE_DIFF 30
-#define DRIVE_TO_ANGLE_DIFF 20
-#define STATION_A 2,1
-#define STATION_B 6,1
-#define STATION_C 7,2
-#define STATION_D 7,6
-#define STATION_E 6,7
-#define STATION_F 2,7
-#define STATION_G 1,6
-#define STATION_H 1,2
-
-
+#define TURN_TO_ANGLE_DIFF 20
+#define DRIVE_TO_ANGLE_DIFF 30
+#define STATION_A 2, 1
+#define STATION_B 6, 1
+#define STATION_C 7, 2
+#define STATION_D 7, 6
+#define STATION_E 6, 7
+#define STATION_F 2, 7
+#define STATION_G 1, 6
+#define STATION_H 1, 2
 
 SFEVL53L1X lrf1_init;
 SFEVL53L1X lrf2_init;
@@ -51,11 +49,13 @@ SFEVL53L1X lrf2_init;
  */
 const uint8_t MOTOR_A_IN_1 = 6;
 const uint8_t MOTOR_A_IN_2 = 7;
-
+int16_t A_LEFT_MOTOR_OFFSET = 0;
 
 // RIGHT MOTOR
 const uint8_t MOTOR_B_IN_3 = 5;
 const uint8_t MOTOR_B_IN_4 = 4;
+int16_t B_RIGHT_MOTOR_OFFSET = 2;
+
 ESP32MotorControl motors;
 bool direction = true;
 
@@ -65,6 +65,9 @@ bool direction = true;
  */
 float X_POS;
 float Y_POS;
+
+float OLD_X_POS = 60.96;
+float OLD_Y_POS = 0;
 
 float currentCardinalHeading;
 /*
@@ -78,7 +81,7 @@ uint16_t servoPosition = 90;
  */
 Adafruit_BNO08x bno08x;
 sh2_SensorValue_t sensorValue;
-float offset = 0;
+float offsetForImu = 0;
 
 void setup()
 {
@@ -92,9 +95,9 @@ void setup()
   setupBNO085(&bno08x); // Initialize the IMU
   Serial.println("*****TEST HEADING******\n\n");
   delay(3000);
-  offset = getCurrentAngle(); // Get the offset of the IMU
+  offsetForImu = getCurrentAngle(); // Get the offset of the IMU
   Serial.println("offset: ");
-  Serial.println(offset);
+  Serial.println(offsetForImu);
   float currentAngle = getCurrentAngle();
   Serial.print("Current Angle: ");
   Serial.println(currentAngle);
@@ -189,17 +192,15 @@ void jiggle()
 
   servoPosition += 90;                    // Add 90 because 90 degress is the middle position for the servo (therefore it is the current heading of the car)
   myservo.write(servoPin, servoPosition); // tell servo to go to position in variable 'pos'
-  delay(15);                              // waits 15ms for the servo to reach the position
+  delay(100);                             // waits 15ms for the servo to reach the position
   lrf1 = getLrfDistanceCm(1);
-  lrf2 = getLrfDistanceCm(2); 
+  lrf2 = getLrfDistanceCm(2);
   // Serial.print("LRF1: ");
   // Serial.print(lrf1);
   // Serial.print("\tLRF2: ");
   // Serial.println(lrf2);
   findPosition(cardinalHeading, lrf1, lrf2); // Find the position of the car
 }
-
-
 
 float getNextAngle(float currentX, float currentY, float goalX, float goalY)
 {
@@ -268,7 +269,6 @@ float getNextAngle(float currentX, float currentY, float goalX, float goalY)
     angle += 359.99;
   Serial.printf("next angle = %f\n\n", angle);
 
-
   Serial.printf("Degrees away from Current Angle = %f\n\n", angle - getCurrentAngle());
 
   return angle;
@@ -276,10 +276,10 @@ float getNextAngle(float currentX, float currentY, float goalX, float goalY)
 
 void turnToHeading(float goal, uint8_t speed)
 {
-  stopMotors();
-  // speed = 60;
+  // stopMotors();
+  //  speed = 60;
   printf("Goal: %f\n", goal);
-  //delay(3000);
+  // delay(3000);
   float absVal;
   float angleDiff;
   uint8_t i = 0;
@@ -296,17 +296,30 @@ void turnToHeading(float goal, uint8_t speed)
     absVal = 359.99 - absVal;
     angleDiff = 359.99 - angleDiff;
   }
-  // Serial.println(angleDiff);
-  // Serial.println(absVal);
-  // Serial.println();
+  Serial.println(angleDiff);
+  Serial.println(absVal);
+  Serial.println();
 
   while (absVal > turnDiff)
   {
-    //jiggle();
-    //  Serial.print("abs: ");
-    //  Serial.print(absVal);
-    //  Serial.print(" angle: ");
-    //  Serial.println(currentAngle);
+    // jiggle();
+
+    // if (abs(X_POS - OLD_X_POS) > 30.48 * 3 || abs(Y_POS - OLD_Y_POS) > 30.48 * 3)
+    // {
+
+    //   // X_POS = OLD_X_POS;
+    //   // Y_POS = OLD_Y_POS;
+    //   stopMotors();
+    //   uint8_t i = 0;
+    //   for (i = 0; i < 5; i++)
+    //   {
+    //     jiggle();
+    //   }
+    // }
+    //   Serial.print("abs: ");
+    //   Serial.print(absVal);
+    //   Serial.print(" angle: ");
+    //   Serial.println(currentAngle);
 
     if ((angleDiff >= 0) && (absVal <= 180))
     {
@@ -334,7 +347,7 @@ void turnToHeading(float goal, uint8_t speed)
     // Serial.println(goal);
     angleDiff = goal - currentAngle;
     absVal = abs(angleDiff);
-    if (absVal > (360 - turnDiff))  // was (absVal > 360 - turnDiff)
+    if (absVal > (360 - turnDiff)) // was (absVal > 360 - turnDiff)
     {
       absVal = 359.99 - absVal;
       angleDiff = 359.99 - angleDiff;
@@ -370,18 +383,24 @@ void driveToHeading(float goalHeading)
     absVal = 359.99 - absVal;
     angleDiff = 359.99 - angleDiff;
   }
-  Serial.println(angleDiff);
-  Serial.println(absVal);
-  Serial.println();
+  printf("Angle Diff: %f", angleDiff);
+  printf("\tAbsVal: %f", absVal);
+
+  // Serial.println(absVal);
+  // Serial.println();
 
   if (absVal > turnDiff)
   {
     // stopMotors();
     // delay(20);
-    turnToHeading(goalHeading-10, 60);
+    // turnToHeading(goalHeading - 10, 60);
+    turnToHeading(goalHeading, 60);
+    printf("************************TURNING***********************\n");
   }
-  else if (absVal <= 15 && absVal >= 5)
+  else if (absVal >= 5)
   {
+    printf("************************GREATTER THAN 5***********************\n");
+
     if ((angleDiff >= 0) && (absVal <= 180))
     {
       turn2(COUNTER_CLOCKWISE, 65, 30);
@@ -398,7 +417,6 @@ void driveToHeading(float goalHeading)
     {
       turn2(COUNTER_CLOCKWISE, 65, 30);
     }
-    previousMillis = currentMillis = millis();
   }
   else if (absVal < 5 && absVal >= 2)
   {
@@ -435,7 +453,24 @@ void goToCoordinates(float nextX, float nextY)
   bool goToCoordinates = true;
   while (goToCoordinates)
   {
+
     jiggle();
+
+    if (abs(X_POS - OLD_X_POS) > 30.48 * 3 || abs(Y_POS - OLD_Y_POS) > 30.48 * 3)
+    {
+
+      // X_POS = OLD_X_POS;
+      // Y_POS = OLD_Y_POS;
+      stopMotors();
+      uint8_t i = 0;
+      for (i = 0; i < 5; i++)
+      {
+        jiggle();
+      }
+    }
+    OLD_X_POS = X_POS;
+    OLD_Y_POS = Y_POS;
+
     // get angle for next coordinates
     float nextAngle = getNextAngle(X_POS, Y_POS, nextX, nextY);
     driveToHeading(nextAngle);
@@ -455,6 +490,14 @@ void goToCoordinates(float nextX, float nextY)
       stopMotors();
       goToCoordinates = false;
     }
+    // if (X_POS > 7 * 30.48 || Y_POS > 7 * 30.48 || X_POS < 1 || Y_POS < 1)
+    // {
+    //   stopMotors();
+    //   delay(2000);
+    //   // move(BACKWARD,60);
+    //   // delay(1000);
+    //   // stopMotors();
+    // }
   }
 }
 
