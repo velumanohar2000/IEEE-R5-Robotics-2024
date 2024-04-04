@@ -14,8 +14,8 @@
 #define WHISKER_STOP_DIS 15
 
 #define MAX_PRELIM_DIST 60
-#define MIN_WALL_DIST_CM 10
-#define MAX_WALL_DIST_CM 12
+#define MIN_WALL_DIST_CM 7
+#define MAX_WALL_DIST_CM 14
 
 #define TURN_TO_ANGLE_DIFF 2
 #define DRIVE_TO_ANGLE_DIFF 20
@@ -30,12 +30,12 @@ ESP32MotorControl motors;
 // Left
 const uint8_t MOTOR_A_IN_1 = 6;
 const uint8_t MOTOR_A_IN_2 = 7;
-int16_t A_LEFT_MOTOR_OFFSET = 20;
+int16_t A_LEFT_MOTOR_OFFSET = 0;
 
 // RIGHT MOTOR
 const uint8_t MOTOR_B_IN_3 = 5;
 const uint8_t MOTOR_B_IN_4 = 4;
-int16_t B_RIGHT_MOTOR_OFFSET = 0;
+int16_t B_RIGHT_MOTOR_OFFSET = 2;
 
 /*
   Global Variable for IMU
@@ -90,6 +90,15 @@ void setup()
   Serial.println(currentAngle);
 
   delay(3000);
+
+  for (i = 0; i < 50; i++)
+  {
+    float test = getLrfDistanceCm(1);
+    test = getLrfDistanceCm(2);
+    Serial.printf("LRF1: %f\n", test);
+  }
+  // myservo.write(servoPin, 90);
+  // delay(10000);
 }
 
 // void driveToHeading(float goalHeading)
@@ -318,72 +327,242 @@ void driveToHeading(float goalHeading)
   // }
 }
 
+// void driveToHeadingVl(float goalHeading)
+// {
+//   float currentReading = -1;
+//   float absVal;
+//   float posDiff;
+//   unsigned long currentMillis;
+//   unsigned long previousMillis = 0;
+//   uint32_t interval = 1000;
+//   uint16_t i = 0;
+
+//   // bool goToHeading = true;
+//   // while (goToHeading)
+//   // {
+//   currentReading = getLrfDistanceCm(2);
+
+//   posDiff = 13 - currentReading;
+//   absVal = abs(posDiff);
+//   // uint32_t turnDiff = DRIVE_TO_ANGLE_DIFF;
+//   // // Serial.println(absVal);
+//   // if (absVal > (360 - turnDiff))
+//   // {
+//   //   absVal = 359.99 - absVal;
+//   //   angleDiff = 359.99 - angleDiff;
+//   // }
+//   Serial.println(posDiff);
+//   Serial.println(absVal);
+//   Serial.println();
+
+//   if (absVal > 20)
+//   {
+//     // stopMotors();
+//     // delay(20);
+//     turnToHeading(goalHeading, 60);
+//   }
+//   else if (absVal <= 15 && absVal >= 5)
+//   {
+//     if ((angleDiff >= 0))
+//     {
+//       turn2(COUNTER_CLOCKWISE, 65, 30);
+//     }
+//     else if ((angleDiff < 0) && (absVal <= 180))
+//     {
+//       turn2(CLOCKWISE, 65, 30);
+//     }
+//     else if ((angleDiff >= 0) && (absVal >= 180))
+//     {
+//       turn2(CLOCKWISE, 65, 30);
+//     }
+//     else
+//     {
+//       turn2(COUNTER_CLOCKWISE, 65, 30);
+//     }
+//     previousMillis = currentMillis = millis();
+//   }
+//   else if (absVal < 5 && absVal >= 2)
+//   {
+//     if ((angleDiff >= 0) && (absVal <= 180))
+//     {
+//       turn2(COUNTER_CLOCKWISE, 65, 10);
+//     }
+//     else if ((angleDiff < 0) && (absVal <= 180))
+//     {
+//       turn2(CLOCKWISE, 65, 10);
+//     }
+//     else if ((angleDiff >= 0) && (absVal >= 180))
+//     {
+//       turn2(CLOCKWISE, 65, 10);
+//     }
+//     else
+//     {
+//       turn2(COUNTER_CLOCKWISE, 65, 10);
+//     }
+//   }
+//   else
+//   {
+//     move(FORWARD, 65);
+//   }
+//   // }
+// }
+
 unsigned long currentMillis = 0;
 unsigned long previousMillis = 0;
 uint32_t interval = 1000;
+uint16_t states = 0;
 
-uint16_t jiggleForRound1()
+bool firstRun = true;
+#define INITIAL 0
+#define RIDE_RIGHT_WALL 1
+
+void jiggleForRound1()
 {
+  uint16_t position = 0;
   float currentAngle = getCurrentAngle();
   if(currentAngle >= 0 && currentAngle <= 90)
   {
-    return (90-currentAngle);
+    position =(90-currentAngle);
   }
   else if(currentAngle >= 270)
   {
-    return ((360-currentAngle)+90);
+    position =((360-currentAngle)+90);
   }
   else if(currentAngle >= 180 && currentAngle <= 270)
   {
-    return (90-(currentAngle-180));
+    position =(90-(currentAngle-180));
   }
   else if(currentAngle < 180 && currentAngle >= 90)
   {
-    return(180 - currentAngle + 90);
+    position =(180 - currentAngle + 90);
   }
+  myservo.write(servoPin, position);
 }
 
+uint16_t speed;
 void loop()
 {
+  // if (getLrfDistanceCm(2) >= 25)
+  // {
+  //   turnToHeading(270, 60);
+  //   currentMillis = millis();
+  //   previousMillis = millis();
+  //   while (currentMillis - previousMillis <= 2000)
+  //   {
+  //     printf("Current Angle: %f\n", getCurrentAngle());
+  //     currentMillis = millis();
+  //   }
+  //   // turnToHeading(270, 60);
 
-  if (getLrfDistanceCm(2) >= 15)
+  //   //  delay(3000);
+  //   while (getLrfDistanceCm(1) >= 20)
+  //   {
+  //     driveToHeading(270);
+  //   }
+  // }
+
+
+  // stopMotors();
+  // delay(2000);
+  // turnToHeading(0, 60);
+  // stopMotors();
+  float check = getLrfDistanceCm(2);
+  switch(states)
   {
-    turnToHeading(270, 60);
-    currentMillis = millis();
-    previousMillis = millis();
-    while (currentMillis - previousMillis <= 2000)
+    case INITIAL:
     {
-      printf("Current Angle: %f\n", getCurrentAngle());
-      currentMillis = millis();
-    }
-    // turnToHeading(270, 60);
+      Serial.printf("LRF 2: %f\n", check);
+      if (check >= 19.0)
+      {
+        Serial.printf("here\n");
+        turnToHeading(270, 60);
+        currentMillis = millis();
+        previousMillis = millis();
+        while (currentMillis - previousMillis <= 2000)
+        {
+          printf("Current Angle: %f\n", getCurrentAngle());
+          currentMillis = millis();
+        }
+        // turnToHeading(270, 60);
 
-    //  delay(3000);
-    while (getLrfDistanceCm(1) >= 20)
+        //  delay(3000);
+        while (getLrfDistanceCm(1) >= 20)
+        {
+        Serial.printf("in the while\n");
+          driveToHeading(270);
+        }
+
+      }
+        stopMotors();
+        delay(2000);
+        turnToHeading(0, 60);
+        stopMotors();
+        states = RIDE_RIGHT_WALL;
+      break;
+    }
+    case RIDE_RIGHT_WALL:
     {
-      driveToHeading(270);
+      jiggleForRound1();
+      frontVLcm = getLrfDistanceCm(1);
+      // frontVLcm = getLrfDistanceCm(1)
+      // currentAngle = getHeading();
+      if(frontVLcm > (WHISKER_STOP_DIS))
+      {
+        if(frontVLcm > 1200)
+          speed = 255;
+        else if( frontVLcm > 300)
+          speed = 80;
+        else
+          speed = 50;
+        sideVLcm = getLrfDistanceCm(2);
+
+        Serial.printf("ult dist %f: \n", sideVLcm);
+        if(sideVLcm > MAX_PRELIM_DIST)
+        {
+          stopMotors();
+        }
+        else if(sideVLcm > MAX_WALL_DIST_CM)
+        {
+          turn(CLOCKWISE, speed);
+          delay(80);
+          move(FORWARD, speed);
+          delay(80);
+        }
+        else if(sideVLcm < MIN_WALL_DIST_CM)
+        {
+          turn(COUNTER_CLOCKWISE, speed);
+          delay(80);
+          move(FORWARD, speed);
+          delay(80);
+        }
+        else
+          move(FORWARD, speed);
+      }
+      else
+      {
+        stopMotors();
+        states = 2;
+        // currentAngle = getHeading();
+      }
+      break;
+    }
+    case 2:
+    {
+      while(1)
+      {
+        currentMillis = millis();
+          jiggleForRound1();
+        if (currentMillis - previousMillis >= interval)
+        {
+          printf("LRF 1 (cm): %f\tLRF 2 (cm): %f\n", getLrfDistanceCm(1), getLrfDistanceCm(2));
+          printf("Current Angle: %f\n", getCurrentAngle());
+          previousMillis = millis();
+        }
+      }
+      
     }
   }
-
-  stopMotors();
-  delay(2000);
-  turnToHeading(0, 60);
-  stopMotors();
-
-
-
-
-
-  while (1)
-  {
-    currentMillis = millis();
-    if (currentMillis - previousMillis >= interval)
-    {
-      printf("LRF 1 (cm): %f\tLRF 2 (cm): %f\n", getLrfDistanceCm(1), getLrfDistanceCm(2));
-      printf("Current Angle: %f\n", getCurrentAngle());
-      previousMillis = millis();
-    }
-  }
+  // driveToHeading(0);
 }
 
 // int16_t findCardinalheading()

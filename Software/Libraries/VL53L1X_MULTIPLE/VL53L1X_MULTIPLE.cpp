@@ -58,6 +58,7 @@ void init_2_VL53L1X(void)
   }
   Serial.println("Sensor online LRF2!");
 
+  // lrf2_init.setROI(4, 4, 199); // Set the ROI to 4x4
   lrf2_init.setIntermeasurementPeriod(50); // Set the intermeasurement period to 50 ms
   Serial.println(lrf2_init.getIntermeasurementPeriod()); // Print the intermeasurement period
 
@@ -76,7 +77,7 @@ void init_2_VL53L1X(void)
   //   while (1)
   //     ;
   // }
-
+  lrf1_init.setROI(4, 4, 199); // Set the ROI to 4x4
   lrf1_init.setIntermeasurementPeriod(50); // Set the intermeasurement period to 50 ms
   Serial.println(lrf1_init.getIntermeasurementPeriod()); // Print the intermeasurement period
 

@@ -52,6 +52,7 @@ SFEVL53L1X lrf2_init;
 const uint8_t MOTOR_A_IN_1 = 6;
 const uint8_t MOTOR_A_IN_2 = 7;
 
+
 // RIGHT MOTOR
 const uint8_t MOTOR_B_IN_3 = 5;
 const uint8_t MOTOR_B_IN_4 = 4;
@@ -486,8 +487,8 @@ void loop()
   goToCoordinates(STATION_C);
   delay(1500);
   goToCoordinates(STATION_A);
-  // goToCoordinates(4, 4);
   delay(1500);
+  // goToCoordinates(4, 4);
   while (1)
     ;
 
