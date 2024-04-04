@@ -26,16 +26,6 @@
 #define TCS_PRINT_DEBUG
 #define TCS_ENABLE_LED
 
-// Color states
-#define RED 1
-#define ORANGE 2
-#define YELLOW 3
-#define GREEN 4
-#define GRAY 5
-#define BLACK 6
-#define PURPLE 7
-#define BLUE 8
-
 // Variables & Constants ------------------------------------------------------
 
 // Ambient color values

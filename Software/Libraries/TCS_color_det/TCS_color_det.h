@@ -18,14 +18,14 @@
 
 // Defines --------------------------------------------------------------------
 
-#define RED 1
-#define ORANGE 2
-#define YELLOW 3
-#define GREEN 4
-#define GRAY 5
-#define BLACK 6
-#define PURPLE 7
-#define BLUE 8
+#define RED 0
+#define ORANGE 1
+#define YELLOW 2
+#define GREEN 3
+#define GRAY 4
+#define BLACK 5
+#define PURPLE 6
+#define BLUE 7
 
 // Variables & Constants ------------------------------------------------------
 
