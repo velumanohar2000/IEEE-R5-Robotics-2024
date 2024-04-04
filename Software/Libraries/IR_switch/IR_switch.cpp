@@ -37,7 +37,7 @@
 // Defines --------------------------------------------------------------------
 
 // Preprocessor directives
-// #define IR_PRINT_DEBUG
+#define IR_PRINT_DEBUG
 
 // Constants & Variables ------------------------------------------------------
 
@@ -91,11 +91,8 @@ bool wokeFromIR()
       break;
   }
 
-  Serial.println(check_ir_wake ? "true" : "false");
-
   if (check_ir_wake)
   {
-    Serial.println("entered");
     if (irrecv.decode(&results)) // Decodes the IR code
     {
         if (results.value == lit_code)  // Checks if IR code is wake code
