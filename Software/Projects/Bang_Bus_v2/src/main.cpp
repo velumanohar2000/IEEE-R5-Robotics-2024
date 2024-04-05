@@ -14,8 +14,8 @@
 #define WHISKER_STOP_DIS 15
 
 #define MAX_PRELIM_DIST 60
-#define MIN_WALL_DIST_CM 7
-#define MAX_WALL_DIST_CM 14
+#define MIN_WALL_DIST_CM 11
+#define MAX_WALL_DIST_CM 12
 
 #define TURN_TO_ANGLE_DIFF 2
 #define DRIVE_TO_ANGLE_DIFF 20
@@ -30,12 +30,12 @@ ESP32MotorControl motors;
 // Left
 const uint8_t MOTOR_A_IN_1 = 6;
 const uint8_t MOTOR_A_IN_2 = 7;
-int16_t A_LEFT_MOTOR_OFFSET = 0;
+int16_t A_LEFT_MOTOR_OFFSET = 2;
 
 // RIGHT MOTOR
 const uint8_t MOTOR_B_IN_3 = 5;
 const uint8_t MOTOR_B_IN_4 = 4;
-int16_t B_RIGHT_MOTOR_OFFSET = 2;
+int16_t B_RIGHT_MOTOR_OFFSET = 14;
 
 /*
   Global Variable for IMU
@@ -70,7 +70,7 @@ void setup()
   Serial.begin(115200);
   delay(10);
   Serial.println("*****BANGING THE BUS******\n\n");
-  delay(1000);
+  delay(500);
 
   Wire.begin(9, 8); // init Wire
   init_2_VL53L1X(); // init periscopes
@@ -89,7 +89,7 @@ void setup()
   Serial.print("Current Angle: ");
   Serial.println(currentAngle);
 
-  delay(3000);
+  delay(500);
 
   for (i = 0; i < 50; i++)
   {
@@ -97,8 +97,8 @@ void setup()
     test = getLrfDistanceCm(2);
     Serial.printf("LRF1: %f\n", test);
   }
-  // myservo.write(servoPin, 90);
-  // delay(10000);
+  myservo.write(servoPin, 90);
+  delay(500);
 }
 
 // void driveToHeading(float goalHeading)
@@ -475,7 +475,7 @@ void loop()
       if (check >= 19.0)
       {
         Serial.printf("here\n");
-        turnToHeading(270, 60);
+        turnToHeading(270, 70);
         currentMillis = millis();
         previousMillis = millis();
         while (currentMillis - previousMillis <= 2000)
@@ -486,7 +486,7 @@ void loop()
         // turnToHeading(270, 60);
 
         //  delay(3000);
-        while (getLrfDistanceCm(1) >= 20)
+        while (getLrfDistanceCm(1) >= 12)
         {
         Serial.printf("in the while\n");
           driveToHeading(270);
@@ -494,9 +494,10 @@ void loop()
 
       }
         stopMotors();
-        delay(2000);
-        turnToHeading(0, 60);
+        delay(500);
+        turnToHeading(355, 70);
         stopMotors();
+        delay(500);
         states = RIDE_RIGHT_WALL;
       break;
     }
@@ -524,16 +525,16 @@ void loop()
         else if(sideVLcm > MAX_WALL_DIST_CM)
         {
           turn(CLOCKWISE, speed);
-          delay(80);
+          delay(40);
           move(FORWARD, speed);
-          delay(80);
+          delay(50);
         }
         else if(sideVLcm < MIN_WALL_DIST_CM)
         {
           turn(COUNTER_CLOCKWISE, speed);
-          delay(80);
+          delay(40);
           move(FORWARD, speed);
-          delay(80);
+          delay(50);
         }
         else
           move(FORWARD, speed);
