@@ -90,6 +90,29 @@
 //   }
 // }
 
+uint8_t findMode(uint8_t arr[], uint8_t n)
+{
+  uint8_t maxCount = 0;
+  uint8_t mode = arr[0];
+  uint8_t i = 0;
+  uint8_t j = 0;
+  for (i = 0; i < n; i++)
+  {
+    uint8_t count = 0;
+    for (j = 0; j < n; j++)
+    {
+      if (arr[j] == arr[i])
+        count++;
+    }
+    if (count > maxCount)
+    {
+      maxCount = count;
+      mode = arr[i];
+    }
+  }
+  return mode;
+}
+
 void setup()
 {
   Serial.begin(115200);
@@ -97,20 +120,25 @@ void setup()
   initTCS(R_AMB, G_AMB, B_AMB);
   uint8_t i = 0;
   uint8_t startColorIndex;
-  uint32_t startColorArray[50];
+  uint8_t startColorArray[50];
   delay(3000);
   for (i = 0; i < 50; i++)
   {
     startColorArray[i] = getColorCode();
+    printf("Color Read: %d\n", getColorCode());
   }
+  uint8_t n = sizeof(startColorArray) / sizeof(startColorArray[0]);
+  uint8_t startColorIndex = findMode(startColorArray, n);
+  printf("Start Color Index: %d\n", startColorIndex);
+
 
   // transposestationWaypoints(startColorIndex);
   // loopstationWaypoints(startColorIndex);
 }
 void loop()
 {
-  printf("Color Read: %d\n", getColorCode());
+  // printf("Color Read: %d\n", getColorCode());
 
-  // while (1)
-  //   ;
+  while (1)
+    ;
 }

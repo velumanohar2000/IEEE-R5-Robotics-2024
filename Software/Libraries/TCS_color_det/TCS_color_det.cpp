@@ -19,11 +19,12 @@
 #include <Wire.h>
 #include <SPI.h>
 #include "Adafruit_TCS34725.h"
+#include "TCS_color_det.h"
 
 // Defines --------------------------------------------------------------------
 
 // Preprocessor Directives
-#define TCS_PRINT_DEBUG
+//#define TCS_PRINT_DEBUG
 #define TCS_ENABLE_LED
 
 // Variables & Constants ------------------------------------------------------
