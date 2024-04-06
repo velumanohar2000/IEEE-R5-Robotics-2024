@@ -39,6 +39,9 @@
 // Preprocessor directives
 #define IR_PRINT_DEBUG
 
+// IR Timing
+#define IR_SAMPLE_TIME 100;
+
 // Constants & Variables ------------------------------------------------------
 
 // IR
@@ -66,7 +69,7 @@ void initIR(uint32_t lit, uint32_t unalive)
 
   irrecv.enableIRIn(); // Enables the IR receiver
   pinMode(ir_pin, INPUT);
-  delay(40);
+  delay(100);
 }
 
 bool wokeFromIR()
@@ -91,33 +94,40 @@ bool wokeFromIR()
       break;
   }
 
-  if (check_ir_wake)
+  uint8_t i = 0;
+
+  for (i = 0; i < 20; i++)
   {
-    if (irrecv.decode(&results)) // Decodes the IR code
+    if (check_ir_wake)
     {
-        if (results.value == lit_code)  // Checks if IR code is wake code
-        {
-          #ifdef IR_PRINT_DEBUG
-            Serial.println("IR code is lit");
-          #endif
-          woke_from_ir = true;
-        }
-        else
-        {
-          #ifdef IR_PRINT_DEBUG
-            Serial.print("Wrong code: "); // Print incorrect code
-            Serial.println(results.value, HEX);
-          #endif
-          woke_from_ir = false;
-        }
-        irrecv.resume(); // Will start looking for next value
-    }
-    else // Will run if there was no IR code to decode
-    {
-      #ifdef IR_PRINT_DEBUG
-        Serial.println("No IR signal detected");
-      #endif
-      woke_from_ir = false;
+      if (irrecv.decode(&results)) // Decodes the IR code
+      {
+          if (results.value == lit_code)  // Checks if IR code is wake code
+          {
+            #ifdef IR_PRINT_DEBUG
+              Serial.println("IR code is lit");
+            #endif
+            i = 20;
+            woke_from_ir = true;
+          }
+          else
+          {
+            #ifdef IR_PRINT_DEBUG
+              Serial.print("Wrong code: "); // Print incorrect code
+              Serial.println(results.value, HEX);
+            #endif
+            woke_from_ir = false;
+          }
+          irrecv.resume(); // Will start looking for next value
+      }
+      else // Will run if there was no IR code to decode
+      {
+        #ifdef IR_PRINT_DEBUG
+          Serial.println("No IR signal detected");
+        #endif
+        woke_from_ir = false;
+      }
+      delay(50);
     }
   }
 
