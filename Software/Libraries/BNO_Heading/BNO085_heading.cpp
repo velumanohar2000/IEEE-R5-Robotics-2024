@@ -39,11 +39,12 @@ void reports(Adafruit_BNO08x *bno08x)
   setReports(bno08x, SH2_ROTATION_VECTOR, 5000);
 }
 
-void setupBNO085(Adafruit_BNO08x *bno08x)
+void setupBNO085(Adafruit_BNO08x *bno08x, uint8_t i2c_address, TwoWire *wire,
+                                int32_t sensor_ids)
 {
-  Wire1.begin(20, 21);
+  //Wire1.begin(20, 21);
   delay(1000);
-  while (!bno08x->begin_I2C(0x4A, &Wire1, 1))
+  while (!bno08x->begin_I2C(i2c_address, wire, sensor_ids))
   {
     ESP.restart();
     // delay(1000);

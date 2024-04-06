@@ -33,7 +33,7 @@
 
 // Functions ------------------------------------------------------------------
 
-void initTCS(uint16_t r, uint16_t g, uint16_t b);
+void initTCS(uint16_t r, uint16_t g, uint16_t b, uint8_t addr, TwoWire *theWire);
 uint8_t getColorCode(void);
 
 #endif
