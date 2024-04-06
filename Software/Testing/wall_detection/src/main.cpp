@@ -2,6 +2,7 @@
 #include "SparkFun_VL53L1X.h"
 #include "OPT3101_whisker.h"
 #include "VL53L1X.h"
+#include "motor_control_v2.h"
 
 SFEVL53L1X distanceSensor;
 OPT3101 opt3101;
@@ -75,23 +76,38 @@ float Y_POS = 10;
 float nextX = 0;
 float nextY = 0;
 
+
+
+/*
+* @param pseudo: Must always be set, but is not used
+* @description: acts as a blocking function to goToCoordinates in order to avoid obstacles, then returns
+* to the calling goToCoordinates function
+*/
 void wallDetection(bool pseudo)
 {
   float optDistance;
+
+  // we only want to run this when it matters (ie when we are withing the center 6x6 square) to minimize power consumption
   if(X_POS < 60.48 && Y_POS < 60.48)
   {
+    
     optDistance = getWhiskerDistanceCm();
     if (optDistance < 15)
     {
+      // optDistance = getWhiskerDistanceCm() redundant?
+      // if(optDistance < 15)
+      // {
       while(optDistance < 15)
       {
         turn(CLOCKWISE, 65);
+        delay(500);
       }
+      // }
       stopMotors();
       move(FORWARD, 255);
       delay(500);
       stopMotors();
-      goToCoordinates(COORDINATES);
+      //   goToCoordinates(COORDINATES); no garbage collector, stack gets full
     }
   }
   else

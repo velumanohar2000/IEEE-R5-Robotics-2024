@@ -13,6 +13,7 @@
 #include "VL53L1X_MULTIPLE.h"
 #include "lrf.h"
 #include "OPT3101_whisker.h"
+#include "obj_detection.h"
 // #define TEST_ALL_COMPONENTS
 // #define TEST
 #define ELIM
@@ -444,6 +445,37 @@ void driveToHeading(float goalHeading)
   // }
 }
 
+/*
+void wallDetection(bool pseudo)
+{
+  float optDistance;
+  if(X_POS < 60.48 && Y_POS < 60.48)
+  {
+    optDistance = getWhiskerDistanceCm();
+    if (optDistance < 15)
+    {
+      optDistance = getWhiskerDistanceCm()
+      if(optDistance < 15)
+      {
+        while(optDistance < 15)
+        {
+          turn(CLOCKWISE, 65);
+        }
+      }
+      stopMotors();
+      move(FORWARD, 255);
+      delay(500);
+      stopMotors();
+      goToCoordinates(COORDINATES);
+    }
+  }
+  else
+  {
+    distanceSensor.stopRanging();
+  }
+}
+*/
+
 void goToCoordinates(float nextX, float nextY)
 {
   nextX *= 30.48;
@@ -454,7 +486,11 @@ void goToCoordinates(float nextX, float nextY)
   while (goToCoordinates)
   {
 
+    wallDetection(true);
+
     jiggle();
+     
+    
 
     if (abs(X_POS - OLD_X_POS) > 30.48 * 3 || abs(Y_POS - OLD_Y_POS) > 30.48 * 3)
     {
