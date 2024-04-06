@@ -599,7 +599,7 @@ void goToCoordinates(float nextX, float nextY)
   while (goToCoordinates)
   {
 
-    wallDetection(true);
+    wallDetection(nextX, nextY);
 
     jiggle();
 
