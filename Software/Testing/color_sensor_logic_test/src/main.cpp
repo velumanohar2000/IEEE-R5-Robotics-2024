@@ -6,9 +6,9 @@
 #include <TCS_color_det.h>
 
 // Ambient color values
-#define R_AMB 7
+#define R_AMB 6
 #define G_AMB 6
-#define B_AMB 3
+#define B_AMB 7
 
 #define NUMBER_OF_WAYPOINTS 8
 #define SIZE_OF_COLOR_SENOR_ARRAY 100

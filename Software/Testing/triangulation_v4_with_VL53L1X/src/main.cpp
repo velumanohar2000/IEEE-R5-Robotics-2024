@@ -26,9 +26,9 @@
 #define TURN_TO_ANGLE_DIFF 20
 #define DRIVE_TO_ANGLE_DIFF 30
 
-#define R_AMB 17
-#define G_AMB 23
-#define B_AMB 18
+#define R_AMB 6
+#define G_AMB 6
+#define B_AMB 7
 #define STATION_A 2, 1
 #define STATION_B 6, 1
 #define STATION_C 7, 2
@@ -599,7 +599,7 @@ void goToCoordinates(float nextX, float nextY)
   while (goToCoordinates)
   {
 
-    wallDetection(nextX, nextY);
+    //wallDetection(nextX, nextY);
 
     jiggle();
 
