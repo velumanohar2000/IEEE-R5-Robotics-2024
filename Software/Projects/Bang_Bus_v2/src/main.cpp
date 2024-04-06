@@ -80,8 +80,8 @@ gpio_num_t ir_pin = GPIO_NUM_11; // pin number of IR receiver(s)
 void setup()
 {
   Serial.begin(115200);
-
-  setupBNO085(&bno08x, 0x4A, &Wire1, 1); // Initialize the IMU
+  Wire1.begin(20,21);
+  setupBNO085(&bno08x); // Initialize the IMU
   // pinMode(XSHUT_PIN, OUTPUT);
   // digitalWrite(XSHUT_PIN, 0);
 

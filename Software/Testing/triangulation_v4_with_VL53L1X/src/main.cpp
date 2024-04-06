@@ -204,7 +204,7 @@ void setup()
   init_2_VL53L1X();
   // bno08x.hardwareReset();
   setupBNO085(&bno08x, 0x4A, &Wire1, 1); // Initialize the IMU
-  initTCS(R_AMB, G_AMB, B_AMB, 0x29, &Wire1);
+  //initTCS(R_AMB, G_AMB, B_AMB, 0x29, &Wire1);
 
   Serial.println("*****TEST HEADING******\n\n");
   offsetForImu = getCurrentAngle(); // Get the offset of the IMU

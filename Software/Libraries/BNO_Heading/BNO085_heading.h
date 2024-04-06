@@ -4,8 +4,7 @@
 
 void setReports(Adafruit_BNO08x *bno08x, sh2_SensorId_t reportType, uint32_t interval);
 void reports(Adafruit_BNO08x *bno08x);
-void setupBNO085(Adafruit_BNO08x *bno08x, uint8_t i2c_address, TwoWire *wire,
-                 int32_t sensor_ids);
+void setupBNO085(Adafruit_BNO08x *bno08x);
 void checkReset(Adafruit_BNO08x *bno08x);
 float calculateHeading(float i, float j, float k, float real);
 float getHeading();
