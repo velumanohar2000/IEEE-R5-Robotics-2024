@@ -11,7 +11,7 @@
 #include "SparkFun_VL53L1X.h"
 
 // Whisker
-#define WHISKER_STOP_DIS 15
+#define WHISKER_STOP_DIS 25
 
 #define MAX_PRELIM_DIST 60
 #define MIN_WALL_DIST_CM 11
@@ -412,9 +412,17 @@ unsigned long previousMillis = 0;
 uint32_t interval = 1000;
 uint16_t states = 0;
 
+bool firstButton = true;
 bool firstRun = true;
 #define INITIAL 0
 #define RIDE_RIGHT_WALL 1
+#define TURN_90_DEG 2
+#define TURN_TO_BUTTON 3
+#define HIT_BUTTON 4
+#define MOVE_BACKWARDS 5
+#define TURN_90_DEGREE_AGAIN 6
+#define TURN_OTHER_WAY 7
+#define STOP 8  
 
 void jiggleForRound1()
 {
@@ -542,12 +550,110 @@ void loop()
       else
       {
         stopMotors();
-        states = 2;
+        states = TURN_90_DEG;
         // currentAngle = getHeading();
       }
       break;
     }
-    case 2:
+    case TURN_90_DEG:
+    {
+      float angle = 90;
+      if(!firstButton)
+      {
+        turnToHeading(270, 70);
+        stopMotors();
+        delay(500);
+        angle = 270.0;
+      }
+      else
+      {
+        turnToHeading(90, 70);
+        stopMotors();
+        delay(500);
+      }
+      myservo.write(servoPin, 90);
+      if(getLrfDistanceCm(1) > 35)
+      {
+        while(getLrfDistanceCm(1) < 35)
+        {
+          driveToHeading(angle);
+        }
+      }
+      states = TURN_TO_BUTTON;
+      break;
+    }
+    case TURN_TO_BUTTON:
+    {
+      if(!firstButton)
+      {
+        turnToHeading(180, 70);
+        stopMotors();
+        delay(500);
+      }
+      else
+      {
+        turnToHeading(0, 70);
+        stopMotors();
+        delay(500);
+      }
+      states = HIT_BUTTON;
+      break;
+    }
+    case HIT_BUTTON:
+    {
+      move(FORWARD, 240);
+      delay(500);
+      stopMotors();
+      delay(500);
+      states = MOVE_BACKWARDS;
+      break;
+    }
+    case MOVE_BACKWARDS:
+    {
+      move(BACKWARD, 240);
+      delay(500);
+      stopMotors();
+      delay(500);
+      if(!firstButton)
+      {
+        states = STOP;
+      }
+      else
+      {
+        states = TURN_90_DEGREE_AGAIN;
+      }
+      break;
+    }
+    case TURN_90_DEGREE_AGAIN:
+    {
+        turnToHeading(90, 70);
+        stopMotors();
+        delay(500);
+        while(getLrfDistanceCm(1) > 12)
+        {
+          driveToHeading(90);
+        }
+      
+      states = TURN_OTHER_WAY;
+      break;
+    }
+    case TURN_OTHER_WAY:
+    {
+      turnToHeading(180, 70);
+      stopMotors();
+      delay(500);
+      if(firstButton)
+      {
+        states = RIDE_RIGHT_WALL;
+        firstButton = false;
+      }
+      else
+      {
+        states = STOP;
+      }
+      break;
+    }
+    case STOP:
     {
       while(1)
       {
@@ -560,7 +666,7 @@ void loop()
           previousMillis = millis();
         }
       }
-      
+
     }
   }
   // driveToHeading(0);
