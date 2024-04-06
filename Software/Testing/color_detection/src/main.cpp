@@ -37,9 +37,9 @@
 void setup(void) {
   Serial.begin(115200);
 
-  Wire.begin(SDA, SCL);
+  Wire1.begin(SDA, SCL);
 
-  initTCS(R_AMB, G_AMB, B_AMB);
+  initTCS(R_AMB, G_AMB, B_AMB, 0x29, &Wire1);
 }
 
 void loop(void) {

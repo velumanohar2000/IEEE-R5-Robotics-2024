@@ -81,7 +81,7 @@ void setup()
 {
   Serial.begin(115200);
 
-  setupBNO085(&bno08x);                                                        // init IMU
+  setupBNO085(&bno08x, 0x4A, &Wire1, 1); // Initialize the IMU
   // pinMode(XSHUT_PIN, OUTPUT);
   // digitalWrite(XSHUT_PIN, 0);
 
