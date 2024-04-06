@@ -23,8 +23,15 @@ void setReports(Adafruit_BNO08x *bno08x, sh2_SensorId_t reportType, uint32_t int
   // Serial.println("Setting desired reports");
   if (!bno08x->enableReport(reportType, interval)) // Top frequency is about 250Hz but this report is more accurate
   {
-    // Serial.println("Could not enable stabilized remote vector");
+    Serial.println("Could not enable stabilized remote vector");
   }
+  Serial.println("Reports set");
+  // int status = sh2_setSensorConfig(sensorId, &config);
+  // if (status != 0)
+  // {
+  //   Serial.print("Error setting sensor config: ");
+  //   Serial.println(status);
+  // }
 }
 
 void reports(Adafruit_BNO08x *bno08x)
@@ -35,13 +42,24 @@ void reports(Adafruit_BNO08x *bno08x)
 void setupBNO085(Adafruit_BNO08x *bno08x)
 {
   Wire1.begin(20, 21);
-  if (!bno08x->begin_I2C(0x4A, &Wire1, 1))
+  delay(1000);
+  while (!bno08x->begin_I2C(0x4A, &Wire1, 1))
   {
+    ESP.restart();
+    // delay(1000);
+    Serial.println("BNO085 Not initialized\n");
+    // bno08x->hardwareReset();
+
+
+    /*
     while (1)
     {
       delay(10);
     }
+    */
   }
+  Serial.println("BNO085 Initialized\n");
+
   reports(bno08x);
   delay(1000);
 }
@@ -77,11 +95,30 @@ float getHeading()
   {
     retVal = calculateHeading(sensorValue.un.arvrStabilizedRV.i, sensorValue.un.arvrStabilizedRV.j, sensorValue.un.arvrStabilizedRV.k, sensorValue.un.arvrStabilizedRV.real);
 
+    Serial.println(retVal);
+
     retVal -= offsetForImu;
     if (retVal < 0)
     {
       retVal += 359.99;
     }
+  }
+  if (retVal == -1)
+  {
+    // ESP.restart();
+    Serial.println();
+    Serial.println("ret val is -1!");
+    /*
+    bno08x.hardwareReset();
+    if (bno08x.wasReset())
+    {
+      Serial.println("Hardware reset successful");
+    }
+    Wire1.flush();
+    Wire1.end();
+    Serial.println();
+    ESP.restart();
+    */
   }
   return retVal;
 }
@@ -91,6 +128,7 @@ float getCurrentAngle()
   float currentAngle = -1;
   while (currentAngle == -1)
   {
+
     currentAngle = getHeading();
   }
   return currentAngle;

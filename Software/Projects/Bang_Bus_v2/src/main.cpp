@@ -81,18 +81,16 @@ void setup()
 {
   Serial.begin(115200);
 
-  pinMode(XSHUT_PIN, OUTPUT);
-  digitalWrite(XSHUT_PIN, 0);
-
-  delay(1000);
+  setupBNO085(&bno08x);                                                        // init IMU
+  // pinMode(XSHUT_PIN, OUTPUT);
+  // digitalWrite(XSHUT_PIN, 0);
 
   initIR(lit_code, unalive_code);
   if (!wokeFromIR())
   {
     timeToSleep();
   }
-
-  digitalWrite(XSHUT_PIN, 1);
+  // digitalWrite(XSHUT_PIN, 1);
 
   delay(1000);
 
@@ -103,7 +101,6 @@ void setup()
   Wire.begin(9, 8); // init Wire
   init_2_VL53L1X(); // init periscopes
 
-  setupBNO085(&bno08x);                                                        // init IMU
   motors.attachMotors(MOTOR_B_IN_3, MOTOR_B_IN_4, MOTOR_A_IN_1, MOTOR_A_IN_2); // init motors
 
   uint8_t i = 0;
@@ -131,6 +128,7 @@ void setup()
 
 void sleepHandler()
 {
+    stopMotors();
     Wire.end();
     digitalWrite(XSHUT_PIN, 0);
     delay(100);
@@ -495,7 +493,7 @@ void jiggleForRound1()
 uint16_t speed;
 void loop()
 {
-  void checkSleep();
+  checkSleep();
   // if (getLrfDistanceCm(2) >= 25)
   // {
   //   turnToHeading(270, 60);
