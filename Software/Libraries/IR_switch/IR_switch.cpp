@@ -167,7 +167,7 @@ void timeToSleep()
   #endif   
   Serial.flush(); // Waits until all serial data is finished
   esp_sleep_enable_ext0_wakeup(ir_pin, 0); // Wake when IR is low (pressed)
-  esp_deep_sleep_start(); // Go to sleep
+  esp_light_sleep_start(); // Go to sleep
 }
 
 // Example of how main.cpp would look
