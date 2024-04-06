@@ -6,9 +6,9 @@
 #include <TCS_color_det.h>
 
 // Ambient color values
-#define R_AMB 6
-#define G_AMB 6
-#define B_AMB 7
+#define R_AMB 0
+#define G_AMB 0
+#define B_AMB 0
 
 #define NUMBER_OF_WAYPOINTS 8
 #define SIZE_OF_COLOR_SENOR_ARRAY 100
@@ -136,7 +136,7 @@ void getRoute(uint16_t startColorArray[])
 void setup()
 {
   Serial.begin(115200);
-  Wire.begin(7, 6);
+  Wire.begin(20, 21);
   initTCS(R_AMB, G_AMB, B_AMB, 0x29, &Wire);
   uint16_t startColorArray[SIZE_OF_COLOR_SENOR_ARRAY];
   delay(3000);

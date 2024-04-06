@@ -26,9 +26,10 @@
 #define TURN_TO_ANGLE_DIFF 20
 #define DRIVE_TO_ANGLE_DIFF 30
 
-#define R_AMB 6
-#define G_AMB 6
-#define B_AMB 7
+#define R_AMB 4
+#define G_AMB 3
+#define B_AMB 2
+
 #define STATION_A 2, 1
 #define STATION_B 6, 1
 #define STATION_C 7, 2
@@ -46,15 +47,15 @@
 typedef struct
 {
   char name;
-  uint8_t original_x, original_y;
-  uint8_t new_x, new_y;
+  float original_x, original_y;
+  float new_x, new_y;
   uint8_t nextWaypoint;
 
 } Waypoint;
 
 // Initialize stationWaypoints
 Waypoint stationWaypoints[] = {
-    {'A', 2, 0, 0, 0, 3}, {'B', 6, 0, 0, 0, 6}, {'C', 8, 2, 0, 0, 0}, {'D', 8, 6, 0, 0, 7}, {'E', 6, 8, 0, 0, 2}, {'F', 2, 8, 0, 0, 1}, {'G', 0, 6, 0, 0, 4}, {'H', 0, 2, 0, 0, 5}};
+    {'A', 2, .5, 0, 0, 3}, {'B', 6, .5, 0, 0, 6}, {'C', 7.5, 2, 0, 0, 0}, {'D', 7.5, 6, 0, 0, 7}, {'E', 6, 7.5, 0, 0, 2}, {'F', 2, 7.5, 0, 0, 1}, {'G', .5, 6, 0, 0, 4}, {'H', .5, 2, 0, 0, 5}};
 
 SFEVL53L1X lrf1_init;
 SFEVL53L1X lrf2_init;
@@ -107,8 +108,7 @@ Adafruit_BNO08x bno08x;
 sh2_SensorValue_t sensorValue;
 float offsetForImu = 0;
 
-
-//Positioning Global Vairables
+// Positioning Global Vairables
 uint8_t STARTING_STATION = 0;
 
 // Function to transpose stationWaypoints
@@ -155,7 +155,6 @@ void transposeStationWaypoints(uint8_t startingStation)
 }
 
 // Function to loop through stationWaypoints
-
 
 uint8_t findMode(uint16_t arr[], uint8_t n)
 {
@@ -208,7 +207,6 @@ void setup()
   initTCS(R_AMB, G_AMB, B_AMB, 0x29, &Wire1);
 
   Serial.println("*****TEST HEADING******\n\n");
-  delay(3000);
   offsetForImu = getCurrentAngle(); // Get the offset of the IMU
   Serial.println("offset: ");
   Serial.println(offsetForImu);
@@ -599,7 +597,7 @@ void goToCoordinates(float nextX, float nextY)
   while (goToCoordinates)
   {
 
-    //wallDetection(nextX, nextY);
+    // wallDetection(nextX, nextY);
 
     jiggle();
 
@@ -652,7 +650,7 @@ void loopStationWaypoints(uint8_t startingStation)
 {
   uint8_t i = 0;
   uint8_t index;
-  printf("Starting Location: %c: (%d, %d) Next Waypoint: %d\n",
+  printf("Starting Location: %c: (%f, %f) Next Waypoint: %d\n",
          stationWaypoints[startingStation].name,
          stationWaypoints[startingStation].new_x,
          stationWaypoints[startingStation].new_y, stationWaypoints[startingStation].nextWaypoint);
@@ -663,11 +661,19 @@ void loopStationWaypoints(uint8_t startingStation)
   for (i = 0; i < NUMBER_OF_WAYPOINTS; i++)
   {
 
-    printf("%c: (%d, %d)\n", stationWaypoints[nextStation].name, stationWaypoints[nextStation].new_x,
+    printf("%c: (%f, %f)\n", stationWaypoints[nextStation].name, stationWaypoints[nextStation].new_x,
            stationWaypoints[nextStation].new_y);
-    
+    nextStation = stationWaypoints[nextStation].nextWaypoint;
+  }
+  delay(5000);
+  printf("***************************************************\n");
+  station = startingStation;
+  nextStation = stationWaypoints[startingStation].nextWaypoint;
+  for (i = 0; i < NUMBER_OF_WAYPOINTS; i++)
+  {
+    printf("%c: (%f, %f)\n", stationWaypoints[nextStation].name, stationWaypoints[nextStation].new_x,
+           stationWaypoints[nextStation].new_y);
     goToCoordinates(stationWaypoints[nextStation].new_x, stationWaypoints[nextStation].new_y);
-
     nextStation = stationWaypoints[nextStation].nextWaypoint;
   }
 }

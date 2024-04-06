@@ -24,7 +24,7 @@
 // Defines --------------------------------------------------------------------
 
 // Preprocessor Directives
-//#define TCS_PRINT_DEBUG
+#define TCS_PRINT_DEBUG
 #define TCS_ENABLE_LED
 
 // Variables & Constants ------------------------------------------------------
@@ -103,7 +103,7 @@ uint8_t getColorCode(void) {
     {
       color = RED;
     }
-    else if ((r - g) < 50) // y is bright. if r and g are close its yellow
+    else if ((r - g) < 15) // y is bright. if r and g are close its yellow
     {
       color = YELLOW;
     }
@@ -114,12 +114,13 @@ uint8_t getColorCode(void) {
   }
   else if (b > 30) // checks blue colors
   {
+    /*
     if (g - r)
       color = PURPLE;
     else
       color = BLUE;
-    /**
-    if (r < 5) // if there's barely any red, its blue
+    */
+    if (r < 10) // if there's barely any red, its blue
     {
       color = BLUE;
     }
@@ -127,7 +128,6 @@ uint8_t getColorCode(void) {
     {
       color = PURPLE; // if there's noticably some red, its purple
     }
-    */
   }
   else if (g > 25) // looks for green
   {

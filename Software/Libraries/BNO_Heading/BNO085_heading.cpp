@@ -107,8 +107,8 @@ float getHeading()
   if (retVal == -1)
   {
     // ESP.restart();
-    Serial.println();
-    Serial.println("ret val is -1!");
+    // Serial.println();
+    // Serial.println("ret val is -1!");
     /*
     bno08x.hardwareReset();
     if (bno08x.wasReset())
