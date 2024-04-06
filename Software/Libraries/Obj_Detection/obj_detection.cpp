@@ -1,8 +1,4 @@
-#include <Arduino.h>
-#include "SparkFun_VL53L1X.h"
-#include "OPT3101_whisker.h"
-#include "VL53L1X.h"
-#include "motor_control_v2.h"
+#include <obj_detection.h>
 
 SFEVL53L1X distanceSensor;
 OPT3101 opt3101;
@@ -31,15 +27,6 @@ void fillFirstBuffer()
   }
 }
 
-void setup() {
-  Serial.begin(115200);
-  Wire.begin(9, 8);
-  initOPT3101();
-  initVL53L1X();
-  distanceSensor.startRanging();
-  fillFirstBuffer();
-}
-
 float getVL53L1XDistanceCm()
 {
   while(!distanceSensor.checkForDataReady())
@@ -51,6 +38,10 @@ float getVL53L1XDistanceCm()
   return distance;
 }
 
+
+/*
+This function is for debugging purposes only. It will print out the distance
+*/
 void wallDetection()
 {
   float distance = getWhiskerDistanceCm();
@@ -77,7 +68,6 @@ float nextX = 0;
 float nextY = 0;
 
 
-
 /*
 * @param pseudo: Must always be set, but is not used
 * @description: acts as a blocking function to goToCoordinates in order to avoid obstacles, then returns
@@ -85,29 +75,28 @@ float nextY = 0;
 */
 void wallDetection(bool pseudo)
 {
-  float optDistance;
-
-  // we only want to run this when it matters (ie when we are withing the center 6x6 square) to minimize power consumption
-  if(X_POS < 60.48 && Y_POS < 60.48)
+  float optDistance; // in cm
+  if(X_POS < 60.48 && Y_POS < 60.48)// if x and y are less than 2ft
   {
-    
     optDistance = getWhiskerDistanceCm();
     if (optDistance < 15)
     {
-      // optDistance = getWhiskerDistanceCm() redundant?
-      // if(optDistance < 15)
-      // {
-      while(optDistance < 15)
-      {
+    //   optDistance = getWhiskerDistanceCm() --> redundant?
+    //   if(optDistance < 15)
+    //   {
+    while(optDistance < 15)// turn until we face a direction with no obstacles
+    {
         turn(CLOCKWISE, 65);
         delay(500);
-      }
-      // }
+        opeDistance = getWhiskerDistanceCm();// update distance
+    }
+    //   }
       stopMotors();
+      delay(500); // delay to ensure the robot has stopped (robot has wobble when stopping)
       move(FORWARD, 255);
       delay(500);
       stopMotors();
-      //   goToCoordinates(COORDINATES); no garbage collector, stack gets full
+    //   goToCoordinates(COORDINATES); no garbage collector, stack gets full
     }
   }
   else
@@ -116,18 +105,4 @@ void wallDetection(bool pseudo)
   }
 }
 
-void loop() {
-
-  wallDetection();
-
-  #ifdef TEST_INIT
-  Serial.print("VL53L1X: ");
-  Serial.print(getVL53L1XDistanceCm());
-  distanceSensor.clearInterrupt();
-  Serial.print(" OPT3101: ");
-  Serial.println(getWhiskerDistanceCm());
-  delay(100);
-  #endif
-  // put your main code here, to run repeatedly:
-}
 
