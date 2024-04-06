@@ -40,7 +40,7 @@
 // IR
 const uint32_t lit_code = 0x574309F6; // Amazon button
 const uint32_t unalive_code = 0x5743D32C; // Netflix button
-gpio_num_t ir_pin = GPIO_NUM_18; // pin number of IR receiver(s)
+gpio_num_t ir_pin = GPIO_NUM_11; // pin number of IR receiver(s)
 
 // Structures & Classes -------------------------------------------------------
 
