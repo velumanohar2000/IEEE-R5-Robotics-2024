@@ -86,13 +86,15 @@ void setup()
   // digitalWrite(XSHUT_PIN, 0);
 
   initIR(lit_code, unalive_code);
-  if (!wokeFromIR())
+  while (!wokeFromIR())
   {
     timeToSleep();
   }
   // digitalWrite(XSHUT_PIN, 1);
 
   delay(1000);
+
+
 
   delay(10);
   Serial.println("*****BANGING THE BUS******\n\n");
@@ -252,7 +254,7 @@ void turnToHeading(float goal, uint8_t speed)
 
   while (absVal > turnDiff)
   {
-
+    checkSleep();
     if ((angleDiff >= 0) && (absVal <= 180))
     {
       // Serial.print(" case 1: ");
