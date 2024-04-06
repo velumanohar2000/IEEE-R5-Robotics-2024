@@ -38,6 +38,24 @@
 #define STATION_G 1, 6
 #define STATION_H 1, 2
 
+#define NUMBER_OF_WAYPOINTS 8
+#define SIZE_OF_COLOR_SENOR_ARRAY 100
+
+// #define startingStation 2 // intgrate with color sensor
+//  Define a struct for the stationWaypoints
+typedef struct
+{
+  char name;
+  uint8_t original_x, original_y;
+  uint8_t new_x, new_y;
+  uint8_t nextWaypoint;
+
+} Waypoint;
+
+// Initialize stationWaypoints
+Waypoint stationWaypoints[] = {
+    {'A', 2, 0, 0, 0, 3}, {'B', 6, 0, 0, 0, 6}, {'C', 8, 2, 0, 0, 0}, {'D', 8, 6, 0, 0, 7}, {'E', 6, 8, 0, 0, 2}, {'F', 2, 8, 0, 0, 1}, {'G', 0, 6, 0, 0, 4}, {'H', 0, 2, 0, 0, 5}};
+
 SFEVL53L1X lrf1_init;
 SFEVL53L1X lrf2_init;
 
@@ -90,13 +108,97 @@ sh2_SensorValue_t sensorValue;
 float offsetForImu = 0;
 
 
+//Positioning Global Vairables
+uint8_t STARTING_STATION = 0;
 
+// Function to transpose stationWaypoints
+void transposeStationWaypoints(uint8_t startingStation)
+{
+  uint8_t traverseNum;
+
+  if (startingStation > 1) // if starting at 0 or 1 there is no need to transpose
+  {
+    if (startingStation % 2 == 0)
+    {
+      // even number
+      traverseNum = startingStation;
+      //    printf("Even Number\n");
+    }
+    else
+    {
+      traverseNum = startingStation - 1;
+    }
+  }
+  uint8_t i = 0;
+  uint8_t index;
+  int8_t copyIndex = 0;
+  for (i = 0; i < NUMBER_OF_WAYPOINTS; i++)
+  {
+    index = startingStation + i;
+    if (index > 7)
+    {
+      index = index - NUMBER_OF_WAYPOINTS;
+    }
+    // printf("Index: %d\n", index);
+
+    copyIndex = index - traverseNum;
+    if (copyIndex < 0)
+    {
+      copyIndex = NUMBER_OF_WAYPOINTS - abs(copyIndex);
+    }
+    //    printf("Copy Index: %d\n", copyIndex);
+
+    stationWaypoints[index].new_x = stationWaypoints[copyIndex].original_x;
+    stationWaypoints[index].new_y = stationWaypoints[copyIndex].original_y;
+    // printf("%c: (%d, %d)\n", stationWaypoints[i].name, stationWaypoints[i].new_x, stationWaypoints[i].new_x);
+  }
+}
+
+// Function to loop through stationWaypoints
+
+
+uint8_t findMode(uint16_t arr[], uint8_t n)
+{
+  uint8_t maxCount = 0;
+  uint8_t mode = arr[0];
+  uint8_t i = 0;
+  uint8_t j = 0;
+  for (i = 0; i < n; i++)
+  {
+    uint8_t count = 0;
+    for (j = 0; j < n; j++)
+    {
+      if (arr[j] == arr[i])
+        count++;
+    }
+    if (count > maxCount)
+    {
+      maxCount = count;
+      mode = arr[i];
+    }
+  }
+  return mode;
+}
+
+void getRoute(uint16_t startColorArray[])
+{
+  uint16_t i = 0;
+  for (i = 0; i < SIZE_OF_COLOR_SENOR_ARRAY; i++)
+  {
+    startColorArray[i] = getColorCode();
+    printf("Color Read: %d\n", getColorCode());
+  }
+  // uint16_t n = sizeof(startColorArray) / sizeof(startColorArray[0]);
+  STARTING_STATION = findMode(startColorArray, SIZE_OF_COLOR_SENOR_ARRAY);
+  printf("Start Color Index: %d\n", STARTING_STATION);
+  transposeStationWaypoints(STARTING_STATION);
+}
 
 void setup()
 {
   Serial.begin(115200);
   Wire.begin(9, 8);
-  Wire1.begin(20,21);
+  Wire1.begin(20, 21);
   initOPT3101();
   motors.attachMotors(MOTOR_B_IN_3, MOTOR_B_IN_4, MOTOR_A_IN_1, MOTOR_A_IN_2);
   // Wire1.begin(20, 21); //20 sda, 21 scl
@@ -104,7 +206,7 @@ void setup()
   // bno08x.hardwareReset();
   setupBNO085(&bno08x, 0x4A, &Wire1, 1); // Initialize the IMU
   initTCS(R_AMB, G_AMB, B_AMB, 0x29, &Wire1);
-  
+
   Serial.println("*****TEST HEADING******\n\n");
   delay(3000);
   offsetForImu = getCurrentAngle(); // Get the offset of the IMU
@@ -113,14 +215,6 @@ void setup()
   float currentAngle = getCurrentAngle();
   Serial.print("Current Angle: ");
   Serial.println(currentAngle);
-
-  
-
-  
-  
-
-
-
 }
 
 void printCurrentAngle()
@@ -508,8 +602,6 @@ void goToCoordinates(float nextX, float nextY)
     wallDetection(true);
 
     jiggle();
-     
-    
 
     if (abs(X_POS - OLD_X_POS) > 30.48 * 3 || abs(Y_POS - OLD_Y_POS) > 30.48 * 3)
     {
@@ -556,8 +648,31 @@ void goToCoordinates(float nextX, float nextY)
   }
 }
 
-bool firstRun = true;
+void loopStationWaypoints(uint8_t startingStation)
+{
+  uint8_t i = 0;
+  uint8_t index;
+  printf("Starting Location: %c: (%d, %d) Next Waypoint: %d\n",
+         stationWaypoints[startingStation].name,
+         stationWaypoints[startingStation].new_x,
+         stationWaypoints[startingStation].new_y, stationWaypoints[startingStation].nextWaypoint);
 
+  uint8_t station = startingStation;
+  uint8_t nextStation = stationWaypoints[startingStation].nextWaypoint;
+
+  for (i = 0; i < NUMBER_OF_WAYPOINTS; i++)
+  {
+
+    printf("%c: (%d, %d)\n", stationWaypoints[nextStation].name, stationWaypoints[nextStation].new_x,
+           stationWaypoints[nextStation].new_y);
+    
+    goToCoordinates(stationWaypoints[nextStation].new_x, stationWaypoints[nextStation].new_y);
+
+    nextStation = stationWaypoints[nextStation].nextWaypoint;
+  }
+}
+
+bool firstRun = true;
 void loop()
 {
 #ifdef ELIM
@@ -567,25 +682,29 @@ void loop()
     uint16_t i = 0;
     for (i = 0; i < 30; i++)
       jiggle();
+    uint16_t startColorArray[SIZE_OF_COLOR_SENOR_ARRAY];
+    getRoute(startColorArray);
     firstRun = false;
   }
-  // set current coordinates
-  goToCoordinates(STATION_D);
-  delay(1500);
-  goToCoordinates(STATION_H);
-  delay(1500);
-  goToCoordinates(STATION_F);
-  delay(1500);
-  goToCoordinates(STATION_B);
-  delay(1500);
-  goToCoordinates(STATION_G);
-  delay(1500);
-  goToCoordinates(STATION_E);
-  delay(1500);
-  goToCoordinates(STATION_C);
-  delay(1500);
-  goToCoordinates(STATION_A);
-  delay(1500);
+  loopStationWaypoints(STARTING_STATION);
+
+  // // set current coordinates
+  // goToCoordinates(STATION_D);
+  // delay(1500);
+  // goToCoordinates(STATION_H);
+  // delay(1500);
+  // goToCoordinates(STATION_F);
+  // delay(1500);
+  // goToCoordinates(STATION_B);
+  // delay(1500);
+  // goToCoordinates(STATION_G);
+  // delay(1500);
+  // goToCoordinates(STATION_E);
+  // delay(1500);
+  // goToCoordinates(STATION_C);
+  // delay(1500);
+  // goToCoordinates(STATION_A);
+  // delay(1500);
   // goToCoordinates(4, 4);
   while (1)
     ;

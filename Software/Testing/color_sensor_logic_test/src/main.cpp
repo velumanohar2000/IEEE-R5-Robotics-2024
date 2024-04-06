@@ -138,7 +138,6 @@ void setup()
   Serial.begin(115200);
   Wire.begin(7, 6);
   initTCS(R_AMB, G_AMB, B_AMB, 0x29, &Wire);
-  uint16_t i = 0;
   uint16_t startColorArray[SIZE_OF_COLOR_SENOR_ARRAY];
   delay(3000);
   getRoute(startColorArray);
