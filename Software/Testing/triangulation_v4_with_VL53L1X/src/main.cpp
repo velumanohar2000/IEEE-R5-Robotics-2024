@@ -13,6 +13,7 @@
 #include "VL53L1X_MULTIPLE.h"
 #include "lrf.h"
 #include "OPT3101_whisker.h"
+#include "TCS_color_det.h"
 // #define TEST_ALL_COMPONENTS
 // #define TEST
 #define ELIM
@@ -23,6 +24,10 @@
 
 #define TURN_TO_ANGLE_DIFF 20
 #define DRIVE_TO_ANGLE_DIFF 30
+
+#define R_AMB 17
+#define G_AMB 23
+#define B_AMB 18
 #define STATION_A 2, 1
 #define STATION_B 6, 1
 #define STATION_C 7, 2
@@ -83,16 +88,22 @@ Adafruit_BNO08x bno08x;
 sh2_SensorValue_t sensorValue;
 float offsetForImu = 0;
 
+
+
+
 void setup()
 {
   Serial.begin(115200);
   Wire.begin(9, 8);
+  Wire1.begin(20,21);
   initOPT3101();
   motors.attachMotors(MOTOR_B_IN_3, MOTOR_B_IN_4, MOTOR_A_IN_1, MOTOR_A_IN_2);
   // Wire1.begin(20, 21); //20 sda, 21 scl
   init_2_VL53L1X();
   // bno08x.hardwareReset();
-  setupBNO085(&bno08x); // Initialize the IMU
+  setupBNO085(&bno08x, 0x4A, &Wire1, 1); // Initialize the IMU
+  initTCS(R_AMB, G_AMB, B_AMB, 0x29, &Wire1);
+  
   Serial.println("*****TEST HEADING******\n\n");
   delay(3000);
   offsetForImu = getCurrentAngle(); // Get the offset of the IMU
@@ -101,6 +112,14 @@ void setup()
   float currentAngle = getCurrentAngle();
   Serial.print("Current Angle: ");
   Serial.println(currentAngle);
+
+  
+
+  
+  
+
+
+
 }
 
 void printCurrentAngle()

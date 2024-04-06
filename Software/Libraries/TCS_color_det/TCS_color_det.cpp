@@ -40,8 +40,8 @@ Adafruit_TCS34725 tcs = Adafruit_TCS34725(TCS34725_INTEGRATIONTIME_50MS, TCS3472
 
 // Functions ------------------------------------------------------------------
 
-void initTCS(uint16_t r, uint16_t g, uint16_t b) {
-  if (tcs.begin()) {
+void initTCS(uint16_t r, uint16_t g, uint16_t b, uint8_t addr, TwoWire *theWire) {
+  if (tcs.begin(addr, theWire)) {
     Serial.println("Found sensor");
   } else {
     Serial.println("No TCS34725 found ... check your connections");
