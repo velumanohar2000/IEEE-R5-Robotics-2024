@@ -9,6 +9,7 @@
 #include "BNO085_heading.h"
 #include "motor_control_v2.h"
 #include "SparkFun_VL53L1X.h"
+#include "IR_switch.h"
 
 // Whisker
 #define WHISKER_STOP_DIS 25
@@ -19,6 +20,9 @@
 
 #define TURN_TO_ANGLE_DIFF 2
 #define DRIVE_TO_ANGLE_DIFF 20
+
+// Sleep
+#define XSHUT_PIN 18
 
 // Variables & Constants ------------------------------------------------------
 
@@ -65,12 +69,36 @@ Servo myservo = Servo();
 uint8_t servoPin = 2;
 uint16_t servoPosition = 90;
 
+/*
+  Globals for IR sensor & sleep
+*/
+const uint32_t lit_code = 0x574309F6; // Amazon button
+const uint32_t unalive_code = 0x5743D32C; // Netflix button
+gpio_num_t ir_pin = GPIO_NUM_11; // pin number of IR receiver(s)
+
+
 void setup()
 {
   Serial.begin(115200);
+
+  pinMode(XSHUT_PIN, OUTPUT);
+  digitalWrite(XSHUT_PIN, 0);
+
+  delay(1000);
+
+  initIR(lit_code, unalive_code);
+  if (!wokeFromIR())
+  {
+    timeToSleep();
+  }
+
+  digitalWrite(XSHUT_PIN, 1);
+
+  delay(1000);
+
   delay(10);
   Serial.println("*****BANGING THE BUS******\n\n");
-  delay(500);
+  delay(500);  
 
   Wire.begin(9, 8); // init Wire
   init_2_VL53L1X(); // init periscopes
@@ -99,6 +127,23 @@ void setup()
   }
   myservo.write(servoPin, 90);
   delay(500);
+}
+
+void sleepHandler()
+{
+    Wire.end();
+    digitalWrite(XSHUT_PIN, 0);
+    delay(100);
+}
+
+void checkSleep()
+{
+  if (sleepCodeReceived())
+  {
+    sleepHandler();
+    timeToSleep();
+    ESP.restart();
+  }
 }
 
 // void driveToHeading(float goalHeading)
@@ -450,6 +495,7 @@ void jiggleForRound1()
 uint16_t speed;
 void loop()
 {
+  void checkSleep();
   // if (getLrfDistanceCm(2) >= 25)
   // {
   //   turnToHeading(270, 60);
@@ -657,6 +703,7 @@ void loop()
     {
       while(1)
       {
+        void checkSleep();
         currentMillis = millis();
           jiggleForRound1();
         if (currentMillis - previousMillis >= interval)
