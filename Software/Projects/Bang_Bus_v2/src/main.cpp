@@ -7,16 +7,16 @@
 #include <ESP32MotorControl.h>
 #include <VL53L1X_MULTIPLE.h>
 #include "BNO085_heading.h"
-#include "motor_control_v2.h"
+#include "motor_control_v2.h",
 #include "SparkFun_VL53L1X.h"
 #include "IR_switch.h"
 
 // Whisker
-#define WHISKER_STOP_DIS 25
+uint8_t WHISKER_STOP_DIS = 30;
 
 #define MAX_PRELIM_DIST 60
-#define MIN_WALL_DIST_CM 11
-#define MAX_WALL_DIST_CM 12
+#define MIN_WALL_DIST_CM 10
+#define MAX_WALL_DIST_CM 11
 
 #define TURN_TO_ANGLE_DIFF 2
 #define DRIVE_TO_ANGLE_DIFF 20
@@ -34,12 +34,12 @@ ESP32MotorControl motors;
 // Left
 const uint8_t MOTOR_A_IN_1 = 6;
 const uint8_t MOTOR_A_IN_2 = 7;
-int16_t A_LEFT_MOTOR_OFFSET = 2;
+int16_t A_LEFT_MOTOR_OFFSET = 15;
 
 // RIGHT MOTOR
 const uint8_t MOTOR_B_IN_3 = 5;
 const uint8_t MOTOR_B_IN_4 = 4;
-int16_t B_RIGHT_MOTOR_OFFSET = 14;
+int16_t B_RIGHT_MOTOR_OFFSET = 15;
 
 /*
   Global Variable for IMU
@@ -72,15 +72,14 @@ uint16_t servoPosition = 90;
 /*
   Globals for IR sensor & sleep
 */
-const uint32_t lit_code = 0x574309F6; // Amazon button
+const uint32_t lit_code = 0x574309F6;     // Amazon button
 const uint32_t unalive_code = 0x5743D32C; // Netflix button
-gpio_num_t ir_pin = GPIO_NUM_11; // pin number of IR receiver(s)
-
+gpio_num_t ir_pin = GPIO_NUM_11;          // pin number of IR receiver(s)
 
 void setup()
 {
   Serial.begin(115200);
-  Wire1.begin(20,21);
+
   setupBNO085(&bno08x); // Initialize the IMU
   // pinMode(XSHUT_PIN, OUTPUT);
   // digitalWrite(XSHUT_PIN, 0);
@@ -94,11 +93,9 @@ void setup()
 
   delay(1000);
 
-
-
   delay(10);
   Serial.println("*****BANGING THE BUS******\n\n");
-  delay(500);  
+  delay(500);
 
   Wire.begin(9, 8); // init Wire
   init_2_VL53L1X(); // init periscopes
@@ -130,10 +127,10 @@ void setup()
 
 void sleepHandler()
 {
-    stopMotors();
-    Wire.end();
-    digitalWrite(XSHUT_PIN, 0);
-    delay(100);
+  stopMotors();
+  Wire.end();
+  digitalWrite(XSHUT_PIN, 0);
+  delay(100);
 }
 
 void checkSleep()
@@ -454,6 +451,7 @@ void driveToHeading(float goalHeading)
 
 unsigned long currentMillis = 0;
 unsigned long previousMillis = 0;
+bool runMillis = 1;
 uint32_t interval = 1000;
 uint16_t states = 0;
 
@@ -467,32 +465,37 @@ bool firstRun = true;
 #define MOVE_BACKWARDS 5
 #define TURN_90_DEGREE_AGAIN 6
 #define TURN_OTHER_WAY 7
-#define STOP 8  
+#define STOP 8
 
 void jiggleForRound1()
 {
   uint16_t position = 0;
   float currentAngle = getCurrentAngle();
-  if(currentAngle >= 0 && currentAngle <= 90)
+  if (currentAngle >= 0 && currentAngle <= 90)
   {
-    position =(90-currentAngle);
+    position = (90 - currentAngle);
   }
-  else if(currentAngle >= 270)
+  else if (currentAngle >= 270)
   {
-    position =((360-currentAngle)+90);
+    position = ((360 - currentAngle) + 90);
   }
-  else if(currentAngle >= 180 && currentAngle <= 270)
+  else if (currentAngle >= 180 && currentAngle <= 270)
   {
-    position =(90-(currentAngle-180));
+    position = (90 - (currentAngle - 180));
   }
-  else if(currentAngle < 180 && currentAngle >= 90)
+  else if (currentAngle < 180 && currentAngle >= 90)
   {
-    position =(180 - currentAngle + 90);
+    position = (180 - currentAngle + 90);
   }
   myservo.write(servoPin, position);
 }
 
 uint16_t speed;
+unsigned long currentMillisLoop;
+unsigned long previousMillisLoop;
+;
+uint16_t intervalMillisLoop = 7000;
+
 void loop()
 {
   checkSleep();
@@ -515,206 +518,221 @@ void loop()
   //   }
   // }
 
-
   // stopMotors();
   // delay(2000);
   // turnToHeading(0, 60);
   // stopMotors();
   float check = getLrfDistanceCm(2);
-  switch(states)
+  switch (states)
   {
-    case INITIAL:
+  case INITIAL:
+  {
+    Serial.printf("LRF 2: %f\n", check);
+    if (check >= 19.0)
     {
-      Serial.printf("LRF 2: %f\n", check);
-      if (check >= 19.0)
+      Serial.printf("here\n");
+      turnToHeading(270, 70);
+      currentMillis = millis();
+      previousMillis = millis();
+      while (currentMillis - previousMillis <= 2000)
       {
-        Serial.printf("here\n");
-        turnToHeading(270, 70);
+        printf("Current Angle: %f\n", getCurrentAngle());
         currentMillis = millis();
-        previousMillis = millis();
-        while (currentMillis - previousMillis <= 2000)
-        {
-          printf("Current Angle: %f\n", getCurrentAngle());
-          currentMillis = millis();
-        }
-        // turnToHeading(270, 60);
+      }
+      // turnToHeading(270, 60);
 
-        //  delay(3000);
-        while (getLrfDistanceCm(1) >= 12)
-        {
+      //  delay(3000);
+      while (getLrfDistanceCm(1) >= 15)
+      {
         Serial.printf("in the while\n");
-          driveToHeading(270);
-        }
-
+        driveToHeading(270);
       }
-        stopMotors();
-        delay(500);
-        turnToHeading(355, 70);
-        stopMotors();
-        delay(500);
-        states = RIDE_RIGHT_WALL;
-      break;
     }
-    case RIDE_RIGHT_WALL:
+    stopMotors();
+    delay(500);
+    turnToHeading(355, 70);
+    stopMotors();
+    delay(500);
+    states = RIDE_RIGHT_WALL;
+    break;
+  }
+  case RIDE_RIGHT_WALL:
+  {
+    jiggleForRound1();
+    currentMillisLoop = millis();
+    if (runMillis == 1)
     {
-      jiggleForRound1();
+      previousMillisLoop = millis();
+      runMillis = 0;
+    }
+    if (currentMillisLoop - previousMillisLoop >= intervalMillisLoop)
+    {
       frontVLcm = getLrfDistanceCm(1);
-      // frontVLcm = getLrfDistanceCm(1)
-      // currentAngle = getHeading();
-      if(frontVLcm > (WHISKER_STOP_DIS))
-      {
-        if(frontVLcm > 1200)
-          speed = 255;
-        else if( frontVLcm > 300)
-          speed = 80;
-        else
-          speed = 50;
-        sideVLcm = getLrfDistanceCm(2);
+    }
+    else
+    {
+      frontVLcm = 50;
+    }
+    //frontVLcm = getLrfDistanceCm(1);
+    // frontVLcm = getLrfDistanceCm(1)
+    // currentAngle = getHeading();
+    if(!firstButton){
+      WHISKER_STOP_DIS = 25;
+    }
+    if (frontVLcm > (WHISKER_STOP_DIS))
+    {
+      if (frontVLcm > 1200)
+        speed = 255;
+      else if (frontVLcm > 300)
+        speed = 80;
+      else
+        speed = 50;
+      sideVLcm = getLrfDistanceCm(2);
 
-        Serial.printf("ult dist %f: \n", sideVLcm);
-        if(sideVLcm > MAX_PRELIM_DIST)
-        {
-          stopMotors();
-        }
-        else if(sideVLcm > MAX_WALL_DIST_CM)
-        {
-          turn(CLOCKWISE, speed);
-          delay(40);
-          move(FORWARD, speed);
-          delay(50);
-        }
-        else if(sideVLcm < MIN_WALL_DIST_CM)
-        {
-          turn(COUNTER_CLOCKWISE, speed);
-          delay(40);
-          move(FORWARD, speed);
-          delay(50);
-        }
-        else
-          move(FORWARD, speed);
+      Serial.printf("ult dist %f: \n", sideVLcm);
+      if (sideVLcm > MAX_PRELIM_DIST)
+      {
+        stopMotors();
+      }
+      else if (sideVLcm > MAX_WALL_DIST_CM)
+      {
+        turn(CLOCKWISE, speed);
+        delay(40);
+        move(FORWARD, speed);
+        delay(40);
+      }
+      else if (sideVLcm < MIN_WALL_DIST_CM)
+      {
+        turn(COUNTER_CLOCKWISE, speed);
+        delay(40);
+        move(FORWARD, speed);
+        delay(40);
       }
       else
-      {
-        stopMotors();
-        states = TURN_90_DEG;
-        // currentAngle = getHeading();
-      }
-      break;
+        move(FORWARD, speed);
     }
-    case TURN_90_DEG:
+    else
     {
-      float angle = 90;
-      if(!firstButton)
-      {
-        turnToHeading(270, 70);
-        stopMotors();
-        delay(500);
-        angle = 270.0;
-      }
-      else
-      {
-        turnToHeading(90, 70);
-        stopMotors();
-        delay(500);
-      }
-      myservo.write(servoPin, 90);
-      if(getLrfDistanceCm(1) > 35)
-      {
-        while(getLrfDistanceCm(1) < 35)
-        {
-          driveToHeading(angle);
-        }
-      }
-      states = TURN_TO_BUTTON;
-      break;
+      stopMotors();
+      states = TURN_90_DEG;
+      // currentAngle = getHeading();
     }
-    case TURN_TO_BUTTON:
+    break;
+  }
+  case TURN_90_DEG:
+  {
+    float angle = 90;
+    if (!firstButton)
     {
-      if(!firstButton)
-      {
-        turnToHeading(180, 70);
-        stopMotors();
-        delay(500);
-      }
-      else
-      {
-        turnToHeading(0, 70);
-        stopMotors();
-        delay(500);
-      }
-      states = HIT_BUTTON;
-      break;
-    }
-    case HIT_BUTTON:
-    {
-      move(FORWARD, 240);
-      delay(500);
+      turnToHeading(270, 70);
       stopMotors();
       delay(500);
-      states = MOVE_BACKWARDS;
-      break;
+      angle = 270.0;
     }
-    case MOVE_BACKWARDS:
+    else
     {
-      move(BACKWARD, 240);
-      delay(500);
+      turnToHeading(90, 70);
       stopMotors();
       delay(500);
-      if(!firstButton)
-      {
-        states = STOP;
-      }
-      else
-      {
-        states = TURN_90_DEGREE_AGAIN;
-      }
-      break;
     }
-    case TURN_90_DEGREE_AGAIN:
+    myservo.write(servoPin, 90);
+    if (getLrfDistanceCm(1) > 35)
     {
-        turnToHeading(90, 70);
-        stopMotors();
-        delay(500);
-        while(getLrfDistanceCm(1) > 12)
-        {
-          driveToHeading(90);
-        }
-      
-      states = TURN_OTHER_WAY;
-      break;
+      while (getLrfDistanceCm(1) < 30)
+      {
+        driveToHeading(angle);
+      }
     }
-    case TURN_OTHER_WAY:
+    states = TURN_TO_BUTTON;
+    break;
+  }
+  case TURN_TO_BUTTON:
+  {
+    if (!firstButton)
     {
       turnToHeading(180, 70);
       stopMotors();
       delay(500);
-      if(firstButton)
-      {
-        states = RIDE_RIGHT_WALL;
-        firstButton = false;
-      }
-      else
-      {
-        states = STOP;
-      }
-      break;
     }
-    case STOP:
+    else
     {
-      while(1)
-      {
-        void checkSleep();
-        currentMillis = millis();
-          jiggleForRound1();
-        if (currentMillis - previousMillis >= interval)
-        {
-          printf("LRF 1 (cm): %f\tLRF 2 (cm): %f\n", getLrfDistanceCm(1), getLrfDistanceCm(2));
-          printf("Current Angle: %f\n", getCurrentAngle());
-          previousMillis = millis();
-        }
-      }
-
+      turnToHeading(0, 70);
+      stopMotors();
+      delay(500);
     }
+    states = HIT_BUTTON;
+    break;
+  }
+  case HIT_BUTTON:
+  {
+    move(FORWARD, 240);
+    delay(300);
+    stopMotors();
+    delay(500);
+    states = MOVE_BACKWARDS;
+    break;
+  }
+  case MOVE_BACKWARDS:
+  {
+    move(BACKWARD, 240);
+    delay(500);
+    stopMotors();
+    delay(500);
+    if (!firstButton)
+    {
+      states = STOP;
+    }
+    else
+    {
+      states = TURN_90_DEGREE_AGAIN;
+    }
+    break;
+  }
+  case TURN_90_DEGREE_AGAIN:
+  {
+    turnToHeading(90, 70);
+    stopMotors();
+    delay(500);
+    while (getLrfDistanceCm(1) > 17)
+    {
+      driveToHeading(90);
+    }
+
+    states = TURN_OTHER_WAY;
+    break;
+  }
+  case TURN_OTHER_WAY:
+  {
+    turnToHeading(180, 70);
+    stopMotors();
+    delay(500);
+    if (firstButton)
+    {
+      states = RIDE_RIGHT_WALL;
+      firstButton = false;
+      runMillis = 1;
+    }
+    else
+    {
+      states = STOP;
+    }
+    break;
+  }
+  case STOP:
+  {
+    while (1)
+    {
+      void checkSleep();
+      currentMillis = millis();
+      jiggleForRound1();
+      if (currentMillis - previousMillis >= interval)
+      {
+        printf("LRF 1 (cm): %f\tLRF 2 (cm): %f\n", getLrfDistanceCm(1), getLrfDistanceCm(2));
+        printf("Current Angle: %f\n", getCurrentAngle());
+        previousMillis = millis();
+      }
+    }
+  }
   }
   // driveToHeading(0);
 }
