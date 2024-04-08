@@ -94,9 +94,9 @@ Adafruit_BNO08x bno08x;
 sh2_SensorValue_t sensorValue;
 float offsetForImu = 0;
 
-
-const uint32_t lit_code = 0x574309F6;
-const uint32_t unalive_code = 0x5743D32C;
+// Buttons for TCL - Roku TV Remote
+const uint32_t lit_code = 0x57E3B34C;// Hulu code
+const uint32_t unalive_code = 0x57E34BB4; // Netflix code
 
 gpio_num_t ir_pin = GPIO_NUM_11;
 
