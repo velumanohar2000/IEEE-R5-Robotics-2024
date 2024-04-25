@@ -1,0 +1,5 @@
+(sym_lib_table
+  (version 7)
+  (lib (name "esp32s3")(type "KiCad")(uri "/home/govivid/Downloads/kiCad footprints/ESP32-S3-DEVKITC-1-N8R2.kicad_sym")(options "")(descr ""))
+  (lib (name "BNO08x")(type "KiCad")(uri "/home/govivid/Downloads/kiCad footprints/4754.kicad_sym")(options "")(descr ""))
+)
