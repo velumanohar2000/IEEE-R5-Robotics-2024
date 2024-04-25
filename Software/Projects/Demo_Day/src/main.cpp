@@ -454,15 +454,11 @@ void goToCoordinates(float nextX, float nextY)
   while (goToCoordinates)
   {
     checkSleep();
-    // wallDetection(nextX, nextY); // have do X_POS and Y_POS update in wallDetection automatically? Or must we return COORDINATE strcut and update manually?
 
     jiggle();
 
     if (abs(X_POS - OLD_X_POS) > 30.48 * 3 || abs(Y_POS - OLD_Y_POS) > 30.48 * 3)
     {
-
-      // X_POS = OLD_X_POS;
-      // Y_POS = OLD_Y_POS;
       stopMotors();
       uint8_t i = 0;
       for (i = 0; i < 5; i++)
@@ -547,7 +543,7 @@ void manualLoop()
   uint16_t i = 0;
   for (i = 0; i < 30; i++)
     jiggle();
-  
+
   while (1)
   {
     // TODO 
