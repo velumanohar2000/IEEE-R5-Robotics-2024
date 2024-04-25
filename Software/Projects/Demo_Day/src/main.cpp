@@ -543,12 +543,14 @@ void manualLoop()
   uint16_t i = 0;
   for (i = 0; i < 30; i++)
     jiggle();
+  stopMotors();
 
   while (1)
   {
     // TODO 
     // wait for ir input
     // read ir code and then go to coordinate
+    // if incorrect code or no code then nothing should happen because motors should be stopped. No default case needed.
     uint32_t input = 0; 
 
     switch (input)
