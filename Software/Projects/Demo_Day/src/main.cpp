@@ -16,9 +16,12 @@
 #include "TCS_color_det.h"
 #include "obj_detection.h"
 #include "IR_switch.h"
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
 // #define TEST_ALL_COMPONENTS
 // #define TEST
-#define ELIM
+// #define ELIM
+
 
 #define XSHUT_PIN 18
 
@@ -43,14 +46,14 @@
 #define STATION_H 0.75, 2
 
 // TODO:
-#define STATION_A_CODE 0 // Change this to ir code
-#define STATION_B_CODE 1 // Change this to ir code
-#define STATION_C_CODE 2 // Change this to ir code
-#define STATION_D_CODE 3 // Change this to ir code
-#define STATION_E_CODE 4 // Change this to ir code
-#define STATION_F_CODE 5 // Change this to ir code
-#define STATION_G_CODE 6 // Change this to ir code
-#define STATION_H_CODE 7 // Change this to ir code
+#define STATION_A_CODE 0x400E40BF // Change this to ir code
+#define STATION_B_CODE 0x400EC03F // Change this to ir code
+#define STATION_C_CODE 0x400E20DF // Change this to ir code
+#define STATION_D_CODE 0x400EA05F // Change this to ir code
+#define STATION_E_CODE 0x400E609F // Change this to ir code
+#define STATION_F_CODE 0x400EE01F // Change this to ir code
+#define STATION_G_CODE 0x400E10EF // Change this to ir code
+#define STATION_H_CODE 0x400E906F // Change this to ir code
 
 SFEVL53L1X lrf1_init;
 SFEVL53L1X lrf2_init;
@@ -104,19 +107,24 @@ sh2_SensorValue_t sensorValue;
 float offsetForImu = 0;
 
 // Buttons for TCL - Roku TV Remote
-const uint32_t lit_code = 0x57E3B34C;     // Hulu code: follow path
-const uint32_t unalive_code = 0x57E34BB4; // Netflix code
+const uint32_t lit_code = 0xE0E040BF;     // Hulu code: follow path
+const uint32_t unalive_code = 0x400E00FF; // Netflix code
 
-// TODO:
-const uint32_t lit_code_manual = 0x999999999; // Vudu code: manual mode //change this to ir code
 
 gpio_num_t ir_pin = GPIO_NUM_11;
+
+#define SCREEN_WIDTH 128
+#define SCREEN_HEIGHT 64
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
 
 void setup()
 {
   Serial.begin(115200);
   Wire.begin(9, 8);
+
   setupBNO085(&bno08x); // Initialize the IMU
+  display.begin(SSD1306_SWITCHCAPVCC, 0x3C);
+  display.clearDisplay();
 
   // Wire1.begin(20,21);s
   // initOPT3101();
@@ -126,6 +134,12 @@ void setup()
   initIR(lit_code, unalive_code);
   while (!wokeFromIR())
   {
+    display.clearDisplay();
+    display.setCursor(0, 0);
+    display.setTextSize(2);
+    display.setTextColor(WHITE);
+    display.println("Zzz...");
+    display.display();
     timeToSleep();
   }
   // Wire1.begin(20, 21); //20 sda, 21 scl
@@ -149,6 +163,17 @@ void sleephandler()
   Wire.end();
   digitalWrite(XSHUT_PIN, 0);
   delay(100);
+}
+
+void displayText(uint8_t x, uint8_t y, char station) {
+  display.clearDisplay();
+  display.setTextSize(3);
+  display.setTextColor(WHITE);
+  display.setCursor(0, 6);
+  display.printf("DEST: %c",station);
+  display.setCursor(13, 36);
+  display.printf("(%d, %d)", x, y);
+  display.display();
 }
 
 void checkSleep()
@@ -444,7 +469,7 @@ void driveToHeading(float goalHeading)
   }
 }
 
-void goToCoordinates(float nextX, float nextY)
+void goToCoordinates(float nextX, float nextY, char station)
 {
   nextX *= 30.48;
   nextY *= 30.48;
@@ -453,6 +478,7 @@ void goToCoordinates(float nextX, float nextY)
   bool goToCoordinates = true;
   while (goToCoordinates)
   {
+    displayText((uint8_t)((X_POS+0.5)/30.48), (uint8_t)((Y_POS+0.5)/30.48), station);
     checkSleep();
 
     jiggle();
@@ -485,108 +511,156 @@ void goToCoordinates(float nextX, float nextY)
 
 bool firstRun = true;
 
+// void loop()
+// {
+// #ifdef ELIM
+
+//   if (firstRun)
+//   {
+//     uint16_t i = 0;
+//     for (i = 0; i < 30; i++)
+//       jiggle();
+//     firstRun = false;
+//   }
+//   // set current coordinates starting at A
+
+//   goToCoordinates(STATION_D);
+//   delay(1500);
+//   goToCoordinates(STATION_H);
+//   delay(1500);
+//   goToCoordinates(STATION_F);
+//   delay(1500);
+//   goToCoordinates(STATION_B);
+//   delay(1500); // comment these
+//   goToCoordinates(STATION_G);
+//   delay(1500);
+//   goToCoordinates(STATION_E);
+//   delay(1500);
+//   goToCoordinates(STATION_C);
+//   delay(1500);
+//   goToCoordinates(STATION_A);
+//   delay(1500);
+
+//   /*
+//   goToCoordinates(STATION_G);
+//   delay(1500);
+//   goToCoordinates(STATION_E);
+//   delay(1500);
+//   goToCoordinates(STATION_C);
+//   delay(1500);
+//   goToCoordinates(STATION_A);
+//   delay(1500);                    // comment these
+//   goToCoordinates(STATION_D);
+//   delay(1500);
+//   goToCoordinates(STATION_H);
+//   delay(1500);
+//   goToCoordinates(STATION_F);
+//   delay(1500);
+//   goToCoordinates(STATION_B);
+//   delay(1500);          //gecadhfb
+//   */
+
+// #endif
+// }
+
 void loop()
 {
-#ifdef ELIM
-
-  if (firstRun)
-  {
-    uint16_t i = 0;
-    for (i = 0; i < 30; i++)
-      jiggle();
-    firstRun = false;
-  }
-  // set current coordinates starting at A
-
-  goToCoordinates(STATION_D);
-  delay(1500);
-  goToCoordinates(STATION_H);
-  delay(1500);
-  goToCoordinates(STATION_F);
-  delay(1500);
-  goToCoordinates(STATION_B);
-  delay(1500); // comment these
-  goToCoordinates(STATION_G);
-  delay(1500);
-  goToCoordinates(STATION_E);
-  delay(1500);
-  goToCoordinates(STATION_C);
-  delay(1500);
-  goToCoordinates(STATION_A);
-  delay(1500);
-
-  /*
-  goToCoordinates(STATION_G);
-  delay(1500);
-  goToCoordinates(STATION_E);
-  delay(1500);
-  goToCoordinates(STATION_C);
-  delay(1500);
-  goToCoordinates(STATION_A);
-  delay(1500);                    // comment these
-  goToCoordinates(STATION_D);
-  delay(1500);
-  goToCoordinates(STATION_H);
-  delay(1500);
-  goToCoordinates(STATION_F);
-  delay(1500);
-  goToCoordinates(STATION_B);
-  delay(1500);          //gecadhfb
-  */
-
-#endif
-}
-
-void manualLoop()
-{
-
+  // displayText("(2, 1)", 'A');
+  display.clearDisplay();
+  display.setCursor(0, 0);
+  display.setTextSize(2);
+  display.setTextColor(WHITE);
+  display.println("Init...");
+  display.display();
   uint16_t i = 0;
   for (i = 0; i < 30; i++)
     jiggle();
   stopMotors();
 
+  display.clearDisplay();
+  display.setCursor(0, 0);
+  display.setTextSize(2);
+  display.setTextColor(WHITE);
+  display.println("Waiting");
+  display.display();
+
+  uint32_t input = 0; 
   while (1)
   {
     // TODO 
     // wait for ir input
     // read ir code and then go to coordinate
     // if incorrect code or no code then nothing should happen because motors should be stopped. No default case needed.
-    uint32_t input = 0; 
+    while(input == 0)
+    {
+      input = getDestination();
+    }
+
+    Serial.println("out of while loop");
 
     switch (input)
     {
-    case STATION_A_CODE:
-      goToCoordinates(STATION_A);
+    case 1:
+      goToCoordinates(STATION_A, 'A');
+      // displayText("(2, 1)", 'A');
       stopMotors();
       break;
-    case STATION_B_CODE:
-      goToCoordinates(STATION_B);
+    case 2:
+      goToCoordinates(STATION_B, 'B');
+      // displayText("(6, 1)", 'B');
       stopMotors();
       break;
-    case STATION_C_CODE:
-      goToCoordinates(STATION_C);
+    case 3:
+      goToCoordinates(STATION_C, 'C');
+      // displayText("(7, 2)", 'C');
       stopMotors();
       break;
-    case STATION_D_CODE:
-      goToCoordinates(STATION_D);
+    case 4:
+      goToCoordinates(STATION_D, 'D');
+      // displayText("(7, 6)", 'D');
       stopMotors();
       break;
-    case STATION_E_CODE:
-      goToCoordinates(STATION_E);
+    case 5:
+      goToCoordinates(STATION_E, 'E');
+      // displayText("(6, 7)", 'E');
       stopMotors();
       break;
-    case STATION_F_CODE:
-      goToCoordinates(STATION_F);
+    case 6:
+      goToCoordinates(STATION_F, 'F');
+      // displayText("(2, 7)", 'F');
       stopMotors();
       break;
-    case STATION_G_CODE:
-      goToCoordinates(STATION_G);
+    case 7:
+      goToCoordinates(STATION_G, 'G');
+      // displayText("(1, 6)", 'G');
       stopMotors();
       break;
-    case STATION_H_CODE:
-      goToCoordinates(STATION_H);
+    case 8:
+      goToCoordinates(STATION_H, 'H');
+      // displayText("(1, 2)", 'H');
       stopMotors();
+      break;
+    case 20:
+    {
+      goToCoordinates(STATION_D, 'D');
+      delay(1500);
+      goToCoordinates(STATION_H, 'H');
+      delay(1500);
+      goToCoordinates(STATION_F, 'F');
+      delay(1500);
+      goToCoordinates(STATION_B, 'B');
+      delay(1500); // comment these
+      goToCoordinates(STATION_G, 'G');
+      delay(1500);
+      goToCoordinates(STATION_E, 'E');
+      delay(1500);
+      goToCoordinates(STATION_C, 'C');
+      delay(1500);
+      goToCoordinates(STATION_A, 'A');
+      delay(1500);
       break;
     }
+    }
+    input = 0;
   }
 }
