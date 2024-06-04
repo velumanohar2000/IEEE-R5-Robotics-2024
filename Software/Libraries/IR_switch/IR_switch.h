@@ -50,6 +50,7 @@ extern gpio_num_t ir_pin; // GPIO_NUM_X, this must initialized in main.cpp
 void initIR(uint32_t lit, uint32_t unalive);
 bool wokeFromIR();
 bool sleepCodeReceived();
+uint8_t getDestination();
 void timeToSleep();
 
 #endif

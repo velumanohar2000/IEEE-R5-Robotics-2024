@@ -47,6 +47,17 @@
 // IR
 uint32_t lit_code = 0x0; // 0x4732DD25; // Amazon button
 uint32_t unalive_code = 0x0; // 0x5743D32C; // Netflix button
+
+#define STATION_A_CODE 0x400E40BFL // 1
+#define STATION_B_CODE 0x400EC03FL // 2
+#define STATION_C_CODE 0x400E20DFL // 3
+#define STATION_D_CODE 0x400EA05FL // 4
+#define STATION_E_CODE 0x400E609FL // 5
+#define STATION_F_CODE 0x400EE01FL // 6
+#define STATION_G_CODE 0x400E10EFL // 7
+#define STATION_H_CODE 0x400E906FL // 8
+#define PREDETERMINED_PATH 0x400ED02F // 0 
+
 extern gpio_num_t ir_pin; // GPIO_NUM_X, this must initialized in main.cpp
 
 // Deep Sleep
@@ -158,6 +169,59 @@ bool sleepCodeReceived()
   }
 
   return go_sleep;
+}
+
+uint8_t getDestination()
+{
+  uint8_t retVal = 0;
+  if (irrecv.decode(&results)) // Decodes the IR code
+  {
+    switch (results.value)
+    {
+    case STATION_A_CODE:
+      Serial.println("Station A");
+      retVal = 1;
+      break;
+    case STATION_B_CODE:
+      Serial.println("Station B");
+      retVal = 2;
+      break;
+    case STATION_C_CODE:
+      Serial.println("Station C");
+      retVal = 3;
+      break;
+    case STATION_D_CODE:
+      Serial.println("Station D");
+      retVal = 4;
+      break;
+    case STATION_E_CODE:
+      Serial.println("Station E");
+      retVal = 5;
+      break;
+    case STATION_F_CODE:
+      Serial.println("Station F");
+      retVal = 6;
+      break;
+    case STATION_G_CODE:
+      Serial.println("Station G");
+      retVal = 7;
+      break;
+    case STATION_H_CODE:
+      Serial.println("Station H");
+      retVal = 8;
+      break;
+    case PREDETERMINED_PATH:
+      Serial.println("Predetermined Path");
+      retVal = 20;
+      break;
+    default:
+      Serial.println("No station selected");
+      retVal = 0;
+      break;
+    }
+    irrecv.resume(); // Will start looking for next value
+  }
+  return retVal;
 }
 
 void timeToSleep()
